@@ -1,1 +1,1 @@
-yet another database writen from scratch
+yet another tiny database
