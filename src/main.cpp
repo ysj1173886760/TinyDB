@@ -1,9 +1,7 @@
-#include "gcd.h"
+#include "logger.h"
 
 #include <iostream>
 
 int main() {
-    test t;
-    std::cout << t.calc(84, 35);
     return 0;
 }
