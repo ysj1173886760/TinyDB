@@ -1,4 +1,4 @@
-file(GLOB TINY_TEST_SOURCES "${PROJECT_SOURCE_DIR}/test/*.cpp")
+file(GLOB TINY_TEST_SOURCES "${PROJECT_SOURCE_DIR}/test/*/*.cpp")
 
 include(GoogleTest)
 

@@ -77,6 +77,8 @@ TEST(DiskManagerTest, StrongTest) {
         delete[] data_list[i];
     }
 
+    delete dm2;
+
     remove(filename.c_str());
 }
 
