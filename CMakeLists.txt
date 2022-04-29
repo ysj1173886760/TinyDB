@@ -15,7 +15,9 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROJECT_SOURCE_DIR}/src/include)
+include_directories(${PROJECT_SOURCE_DIR}/test/include)
+include_directories(BEFORE src)
 
 add_subdirectory(src)
 add_subdirectory(test)

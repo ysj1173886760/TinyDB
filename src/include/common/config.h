@@ -16,11 +16,12 @@
 
 namespace TinyDB {
 
-    // size of a page, which is the basic unit of our database
-    static constexpr int PAGE_SIZE = 4096;
+// size of a page, which is the basic unit of our database
+static constexpr int PAGE_SIZE = 4096;
 
-    using page_id_t = int32_t;
-    using frame_id_t = int32_t;
+using page_id_t = int32_t;
+using frame_id_t = int32_t;
+
 };
 
 #endif

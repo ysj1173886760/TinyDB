@@ -19,8 +19,8 @@
 #include <cstring>
 #include <assert.h>
 
-#include "disk_manager.h"
-#include "logger.h"
+#include "common/logger.h"
+#include "storage/disk/disk_manager.h"
 
 namespace TinyDB {
 

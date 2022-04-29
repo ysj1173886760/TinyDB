@@ -1,13 +1,14 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "disk_manager.h"
-#include "logger.h"
+#include "storage/disk/disk_manager.h"
+#include "common/logger.h"
 
 namespace TinyDB {
 
 TEST(DiskManagerTest, SimpleIOTest) {
-    DiskManager diskManager("test.db");
+    std::string filename = "test.db";
+    DiskManager diskManager(filename);
 
     std::string testString1 = "hello world";
     std::string testString2 = "hello tinydb";
@@ -35,6 +36,7 @@ TEST(DiskManagerTest, SimpleIOTest) {
     res = strcmp(readBuffer, testString2.c_str());
     EXPECT_EQ(0, res);
 
+    remove(filename.c_str());
 }
 
 }
