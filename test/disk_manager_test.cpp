@@ -2,6 +2,7 @@
 #include <string>
 
 #include "disk_manager.h"
+#include "logger.h"
 
 namespace TinyDB {
 
@@ -22,14 +23,13 @@ TEST(DiskManagerTest, SimpleIOTest) {
 
     char readBuffer[4096];
     diskManager.readPage(0, readBuffer);
-    // TODO: using log to print here
-    printf("%s\n", readBuffer);
+    LOG_INFO("%s", readBuffer);
 
     int res = strcmp(readBuffer, testString1.c_str());
     EXPECT_EQ(0, res);
 
     diskManager.readPage(1, readBuffer);
-    printf("%s\n", readBuffer);
+    LOG_INFO("%s\n", readBuffer);
     res = strcmp(readBuffer, testString2.c_str());
     EXPECT_EQ(0, res);
 
