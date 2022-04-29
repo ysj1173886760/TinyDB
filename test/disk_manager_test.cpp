@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <string>
+#include <random>
+#include <cstring>
 
 #include "storage/disk/disk_manager.h"
 #include "common/logger.h"
@@ -35,6 +37,45 @@ TEST(DiskManagerTest, SimpleIOTest) {
     // LOG_DEBUG("%s\n", readBuffer);
     res = strcmp(readBuffer, testString2.c_str());
     EXPECT_EQ(0, res);
+
+    remove(filename.c_str());
+}
+
+TEST(DiskManagerTest, StrongTest) {
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dis(0, 255);
+    std::string filename = "test.db";
+    auto dm = new DiskManager(filename);
+    const int test_num = 100;
+    std::vector<char *> data_list(test_num);
+
+    for (int i = 0; i < test_num; i++) {
+        int pgid = dm->allocatePage();
+
+        // generate a page trash
+        char *data = new char[PAGE_SIZE];
+        for (int j = 0; j < PAGE_SIZE; j++) {
+            data[j] = dis(mt);
+        }
+
+        dm->writePage(pgid, data);
+        data_list[i] = data;
+    }
+    delete dm;
+
+    // reopen it and test whether the content is stable
+    auto dm2 = new DiskManager(filename);
+
+    for (int i = 0; i < test_num; i++) {
+        char buffer[PAGE_SIZE];
+        dm2->readPage(i, buffer);
+
+        EXPECT_EQ(std::memcmp(buffer, data_list[i], PAGE_SIZE), 0);
+
+        // free memory
+        delete[] data_list[i];
+    }
 
     remove(filename.c_str());
 }

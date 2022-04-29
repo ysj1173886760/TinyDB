@@ -56,7 +56,9 @@ page_id_t DiskManager::allocatePage() {
 }
 
 void DiskManager::readPage(page_id_t pageId, char *data) {
-    assert(pageId < next_page_id_);
+    // disable this check for now, we shall add it back 
+    // once we figured out how to store the metadata
+    // assert(pageId < next_page_id_);
 
     int offset = pageId * PAGE_SIZE;
     
@@ -86,7 +88,7 @@ void DiskManager::readPage(page_id_t pageId, char *data) {
 }
 
 void DiskManager::writePage(page_id_t pageId, const char *data) {
-    assert(pageId < next_page_id_);
+    // assert(pageId < next_page_id_);
 
     int offset = pageId * PAGE_SIZE;
     db_file_.seekp(offset);
