@@ -67,9 +67,9 @@ private:
     int getFileSize(const std::string &filename);
 
 private:
-    std::string _filename;
-    std::fstream _dbFile;
-    page_id_t _currentPageId;
+    std::string filename_;
+    std::fstream db_file_;
+    page_id_t next_page_id_;
 
 };
 

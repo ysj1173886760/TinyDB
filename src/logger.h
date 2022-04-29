@@ -1,7 +1,7 @@
 /**
  * @file logger.h
  * @author sheep
- * @brief logger
+ * @brief simple logger from bustub
  * @version 0.1
  * @date 2021-10-20
  * 
@@ -43,6 +43,9 @@ static constexpr int LOG_LEVEL_ALL = 0;
 
 #define LOG_LOG_TIME_FORMAT "%Y-%m-%d %H:%M:%S"
 #define LOG_OUTPUT_STREAM stdout
+
+// uncomment this line to disable all log
+// #define LOG_LEVEL 1000
 
 // Compile Option
 #ifndef LOG_LEVEL

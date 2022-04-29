@@ -16,83 +16,95 @@
 #include <fstream>
 #include <exception>
 #include <sys/stat.h>
+#include <cstring>
+#include <assert.h>
 
 #include "disk_manager.h"
+#include "logger.h"
 
 namespace TinyDB {
-    DiskManager::DiskManager(const std::string &filename)
-        : _filename(filename), _currentPageId(0) {
 
-        _dbFile.open(_filename, std::ios::binary | std::ios::in | std::ios::out);
-        if (!_dbFile.is_open()) {
-            // is not opened, then we create it
-            _dbFile.clear();
-            // std::ios::in will fail us when the file is not exist 
-            _dbFile.open(_filename, std::ios::binary | std::ios::trunc | std::ios::out);
-            _dbFile.close();
+DiskManager::DiskManager(const std::string &filename)
+    : filename_(filename), next_page_id_(0) {
 
-            // open it again
-            _dbFile.open(_filename, std::ios::binary | std::ios::in | std::ios::out);
-            if (!_dbFile.is_open()) {
-                throw std::runtime_error("failed to open db file");
-            }
+    db_file_.open(filename_, std::ios::binary | std::ios::in | std::ios::out);
+    if (!db_file_.is_open()) {
+        // is not opened, then we create it
+        db_file_.clear();
+        // std::ios::in will fail us when the file is not exist 
+        db_file_.open(filename_, std::ios::binary | std::ios::trunc | std::ios::out);
+        db_file_.close();
+
+        // open it again
+        db_file_.open(filename_, std::ios::binary | std::ios::in | std::ios::out);
+        if (!db_file_.is_open()) {
+            throw std::runtime_error("failed to open db file");
         }
     }
+}
 
-    DiskManager::~DiskManager() {
-        if (_dbFile.is_open()) {
-            _dbFile.close();
-        }
+DiskManager::~DiskManager() {
+    if (db_file_.is_open()) {
+        db_file_.close();
+    }
+}
+
+page_id_t DiskManager::allocatePage() {
+    // currently, simply add the page count
+    // TODO: use bitmap to manage free pages
+    return next_page_id_++;
+}
+
+void DiskManager::readPage(page_id_t pageId, char *data) {
+    assert(pageId < next_page_id_);
+
+    int offset = pageId * PAGE_SIZE;
+    
+    // getFileSize everytime, really?
+    // TODO: we need to cache it
+    if (offset > getFileSize(filename_)) {
+        LOG_ERROR("read past end of file");
+        return;
     }
 
-    page_id_t DiskManager::allocatePage() {
-        // currently, simply add the page count
-        return _currentPageId++;
+    // seekp and seekg works the same in file stream, so don't worry here
+    db_file_.seekp(offset);
+    db_file_.read(data, PAGE_SIZE);
+    if (db_file_.bad()) {
+        LOG_ERROR("I/O error while reading");
+        return;
     }
 
-    void DiskManager::readPage(page_id_t pageId, char *data) {
-        int offset = pageId * PAGE_SIZE;
-        
-        // getFileSize everytime, really?
-        // TODO: we need to cache it
-        if (offset > getFileSize(_filename)) {
-            throw std::runtime_error("read past end of file");
-        }
+    int readCount = db_file_.gcount();
+    if (readCount < PAGE_SIZE) {
+        LOG_DEBUG("read less than a page");
+        db_file_.clear();
 
-        // seekp and seekg works the same in file stream, so don't worry here
-        _dbFile.seekp(offset);
-        _dbFile.read(data, PAGE_SIZE);
-        if (_dbFile.bad()) {
-            // TODO: log here
-            throw std::runtime_error("IO error while reading");
-            return;
-        }
+        // set those random data to 0
+        memset(data + readCount, 0, PAGE_SIZE - readCount);
+    }
+}
 
-        int readCount = _dbFile.gcount();
-        if (readCount < PAGE_SIZE) {
-            // TODO: read less than a page. Add Log here
-            _dbFile.clear();
-        }
+void DiskManager::writePage(page_id_t pageId, const char *data) {
+    assert(pageId < next_page_id_);
+
+    int offset = pageId * PAGE_SIZE;
+    db_file_.seekp(offset);
+    db_file_.write(data, PAGE_SIZE);
+
+    if (db_file_.bad()) {
+        LOG_ERROR("I/O error while writing");
+        return;
     }
 
-    void DiskManager::writePage(page_id_t pageId, const char *data) {
-        int offset = pageId * PAGE_SIZE;
-        _dbFile.seekp(offset);
-        _dbFile.write(data, PAGE_SIZE);
+    db_file_.flush();
+}
 
-        if (_dbFile.bad()) {
-            // TODO: log here
-            return;
-        }
-
-        _dbFile.flush();
-    }
-
-    int DiskManager::getFileSize(const std::string &filename) {
-        struct stat stat_buf;
-        int rc = stat(filename.c_str(), &stat_buf);
-        return rc == 0 ? static_cast<int> (stat_buf.st_size) : -1;
-    }
+int DiskManager::getFileSize(const std::string &filename) {
+    struct stat stat_buf;
+    int rc = stat(filename.c_str(), &stat_buf);
+    return rc == 0 ? static_cast<int> (stat_buf.st_size) : -1;
+}
 
 }
 
