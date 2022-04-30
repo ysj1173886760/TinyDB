@@ -13,6 +13,7 @@
 #define CONFIG_H
 
 #include <cstdint>
+#include <stddef.h>
 
 namespace TinyDB {
 
