@@ -69,8 +69,9 @@ TEST(RWLatchTest, WaitTest) {
         counter += 1;
         latch.WUnlock();
     }));
-
-    std::this_thread::sleep_for(200ms);
+    
+    // i decide not to introduce waiting to unit test
+    // std::this_thread::sleep_for(200ms);
 
     // unless we release the latch, no writer can enter the critical section
     EXPECT_EQ(counter, 0);
