@@ -55,6 +55,10 @@ page_id_t DiskManager::AllocatePage() {
     return next_page_id_++;
 }
 
+void DiskManager::DeallocatePage(page_id_t page_id) {
+    // same as above
+}
+
 void DiskManager::ReadPage(page_id_t pageId, char *data) {
     // disable this check for now, we shall add it back 
     // once we figured out how to store the metadata

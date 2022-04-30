@@ -56,6 +56,13 @@ public:
      * @return page_id_t the id of allocated page
      */
     page_id_t AllocatePage();
+
+    /**
+     * @brief 
+     * Deallocate a page on disk
+     * @param page_id 
+     */
+    void DeallocatePage(page_id_t page_id);
     
 private:
     /**

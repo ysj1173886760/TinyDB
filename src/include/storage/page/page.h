@@ -17,11 +17,12 @@
 #include <assert.h>
 
 #include "common/config.h"
-#include "rwlatch.h"
+#include "common/rwlatch.h"
 
 namespace TinyDB {
 
 class Page {
+    friend class BufferPoolManager;
 public:
     Page() { ZeroData(); }
     ~Page() = default;
