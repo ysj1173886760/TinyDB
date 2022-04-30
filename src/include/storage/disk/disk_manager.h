@@ -40,7 +40,7 @@ public:
      * @param pageId id of the page you want to write
      * @param data corresponding data you want to write
      */
-    void writePage(page_id_t pageId, const char *data);
+    void WritePage(page_id_t pageId, const char *data);
 
     /**
      * @brief read the page from disk
@@ -48,14 +48,14 @@ public:
      * @param pageId id of the page you want to read
      * @param data buffer which will store the result
      */
-    void readPage(page_id_t pageId, char *data);
+    void ReadPage(page_id_t pageId, char *data);
 
     /**
      * @brief allocate a new page
      * 
      * @return page_id_t the id of allocated page
      */
-    page_id_t allocatePage();
+    page_id_t AllocatePage();
     
 private:
     /**
@@ -64,7 +64,7 @@ private:
      * @param filename 
      * @return int size of file
      */
-    int getFileSize(const std::string &filename);
+    int GetFileSize(const std::string &filename);
 
 private:
     std::string filename_;

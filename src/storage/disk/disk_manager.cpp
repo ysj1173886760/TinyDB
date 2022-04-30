@@ -49,13 +49,13 @@ DiskManager::~DiskManager() {
     }
 }
 
-page_id_t DiskManager::allocatePage() {
+page_id_t DiskManager::AllocatePage() {
     // currently, simply add the page count
     // TODO: use bitmap to manage free pages
     return next_page_id_++;
 }
 
-void DiskManager::readPage(page_id_t pageId, char *data) {
+void DiskManager::ReadPage(page_id_t pageId, char *data) {
     // disable this check for now, we shall add it back 
     // once we figured out how to store the metadata
     // assert(pageId < next_page_id_);
@@ -64,7 +64,7 @@ void DiskManager::readPage(page_id_t pageId, char *data) {
     
     // getFileSize everytime, really?
     // TODO: we need to cache it
-    if (offset > getFileSize(filename_)) {
+    if (offset > GetFileSize(filename_)) {
         LOG_ERROR("read past end of file");
         return;
     }
@@ -87,7 +87,7 @@ void DiskManager::readPage(page_id_t pageId, char *data) {
     }
 }
 
-void DiskManager::writePage(page_id_t pageId, const char *data) {
+void DiskManager::WritePage(page_id_t pageId, const char *data) {
     // assert(pageId < next_page_id_);
 
     int offset = pageId * PAGE_SIZE;
@@ -102,7 +102,7 @@ void DiskManager::writePage(page_id_t pageId, const char *data) {
     db_file_.flush();
 }
 
-int DiskManager::getFileSize(const std::string &filename) {
+int DiskManager::GetFileSize(const std::string &filename) {
     struct stat stat_buf;
     int rc = stat(filename.c_str(), &stat_buf);
     return rc == 0 ? static_cast<int> (stat_buf.st_size) : -1;

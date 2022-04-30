@@ -15,25 +15,25 @@ TEST(DiskManagerTest, SimpleIOTest) {
     std::string testString1 = "hello world";
     std::string testString2 = "hello tinydb";
     
-    char writeBuffer[4096];
+    char writeBuffer[PAGE_SIZE];
     memset(writeBuffer, 0, sizeof(writeBuffer));
     strcpy(writeBuffer, testString1.c_str());
-    int page0 = diskManager.allocatePage();
-    diskManager.writePage(page0, writeBuffer);
+    int page0 = diskManager.AllocatePage();
+    diskManager.WritePage(page0, writeBuffer);
 
     memset(writeBuffer, 0, sizeof(writeBuffer));
     strcpy(writeBuffer, testString2.c_str());
-    int page1 = diskManager.allocatePage();
-    diskManager.writePage(page1, writeBuffer);
+    int page1 = diskManager.AllocatePage();
+    diskManager.WritePage(page1, writeBuffer);
 
-    char readBuffer[4096];
-    diskManager.readPage(page0, readBuffer);
+    char readBuffer[PAGE_SIZE];
+    diskManager.ReadPage(page0, readBuffer);
     // LOG_DEBUG("%s", readBuffer);
 
     int res = strcmp(readBuffer, testString1.c_str());
     EXPECT_EQ(0, res);
 
-    diskManager.readPage(page1, readBuffer);
+    diskManager.ReadPage(page1, readBuffer);
     // LOG_DEBUG("%s\n", readBuffer);
     res = strcmp(readBuffer, testString2.c_str());
     EXPECT_EQ(0, res);
@@ -51,7 +51,7 @@ TEST(DiskManagerTest, StrongTest) {
     std::vector<char *> data_list(test_num);
 
     for (int i = 0; i < test_num; i++) {
-        int pgid = dm->allocatePage();
+        int pgid = dm->AllocatePage();
 
         // generate a page trash
         char *data = new char[PAGE_SIZE];
@@ -59,7 +59,7 @@ TEST(DiskManagerTest, StrongTest) {
             data[j] = dis(mt);
         }
 
-        dm->writePage(pgid, data);
+        dm->WritePage(pgid, data);
         data_list[i] = data;
     }
     delete dm;
@@ -69,7 +69,7 @@ TEST(DiskManagerTest, StrongTest) {
 
     for (int i = 0; i < test_num; i++) {
         char buffer[PAGE_SIZE];
-        dm2->readPage(i, buffer);
+        dm2->ReadPage(i, buffer);
 
         EXPECT_EQ(std::memcmp(buffer, data_list[i], PAGE_SIZE), 0);
 
