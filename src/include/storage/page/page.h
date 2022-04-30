@@ -14,6 +14,7 @@
 #define PAGE_H
 
 #include <cstring>
+#include <assert.h>
 
 #include "common/config.h"
 #include "rwlatch.h"
@@ -22,8 +23,67 @@ namespace TinyDB {
 
 class Page {
 public:
-    Page();
+    Page() { ZeroData(); }
     ~Page() = default;
+
+    /**
+     * @brief get the data array stored in this page
+     * @return actual data array
+     */
+    inline char *GetData() {
+        return data_;
+    }
+
+    /**
+     * @brief get id of this page
+     * @return page_id_t 
+     */
+    inline page_id_t GetPageId() {
+        return page_id_;
+    }
+
+    /**
+     * @brief get ping count of this page
+     * @return int
+     */
+    inline int GetPinCount() {
+        return pin_count_;
+    }
+
+    /**
+     * @brief return whether the page is dirty.
+     * i.e. the content is different from disk
+     * 
+     * @return bool
+     */
+    inline bool IsDirty() {
+        return is_dirty_;
+    }
+
+    inline void WLatch() {
+        rwlatch_.WLock();
+    }
+
+    inline void WUnlatch() {
+        rwlatch_.WUnlock();
+    }
+
+    inline void RLatch() {
+        rwlatch_.RLock();
+    }
+
+    inline void RUnlatch() {
+        rwlatch_.RUnlock();
+    }
+
+    // TODO: maintain recovery related information. i.e. lsn
+
+protected:
+    static_assert(sizeof(page_id_t) == 4);
+
+    // 4 byte for page id
+    // 4 byte for lsn
+    static constexpr size_t PAGE_HEADER_SIZE = 8;
 
 private:
     // zero out the data
