@@ -27,20 +27,20 @@ LRUReplacer::~LRUReplacer() {
     // just destruct those containers in std library
 }
 
-bool LRUReplacer::Victim(frame_id_t *frame_id) {
+bool LRUReplacer::Evict(frame_id_t *victim) {
     std::lock_guard<std::mutex> guard(mu_);
 
     if (list_.empty()) {
         return false;
     }
 
-    // we shouldn't just evicit a frame without knowing who he is
+    // we shouldn't just evict a frame without knowing who he is
     // because that way we would leak a page
-    assert(frame_id != nullptr);
+    assert(victim != nullptr);
 
-    *frame_id = list_.back();
+    *victim = list_.back();
     list_.pop_back();
-    table_.erase(*frame_id);
+    table_.erase(*victim);
     return true;
 }
 

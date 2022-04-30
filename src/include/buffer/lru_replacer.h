@@ -41,7 +41,7 @@ public:
 
     // inherited methods from Replacer
 
-    bool Victim(frame_id_t *frame_id) override;
+    bool Evict(frame_id_t *victim) override;
 
     void Pin(frame_id_t frame_id) override;
 

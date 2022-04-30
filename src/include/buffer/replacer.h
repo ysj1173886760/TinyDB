@@ -32,18 +32,16 @@ public:
      * @brief 
      * Remove the victim frame. we should use new frame to store
      * our new page.
-     * I borrowed this api name from bustub and i'm thinking, is
-     * "Evict" a better choice?
      * @param frame_id id of frame that was removed
      * @return true when a victim frame was found
      * @return false when failed to find a victim
      */
-    virtual bool Victim(frame_id_t *frame_id) = 0;
+    virtual bool Evict(frame_id_t *victim) = 0;
 
     /**
      * @brief 
      * Pin a frame. this frame will be removed from replacer.
-     * i.e. replacer can't evicit it from memory
+     * i.e. replacer can't evict it from memory
      * @param frame_id id of frame to pin
      */
     virtual void Pin(frame_id_t frame_id) = 0;

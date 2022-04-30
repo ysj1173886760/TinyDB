@@ -33,29 +33,31 @@ TEST(LRUReplacerTest, SimpleTest) {
 
     // get victims from lru
     int value;
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(1, value);
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(2, value);
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(3, value);
 
     // pin frames in replacer
-    // since 3 is evicited, so pin 3 should have no effect
+    // since 3 is evicted, so pin 3 should have no effect
     lru.Pin(3);
     lru.Pin(4);
     EXPECT_EQ(2, lru.Size());
 
     lru.Unpin(4);
     
-    // evicit them all
+    // evict them all
     // we expect to see 5, 6, 4 since we have used 4 recently
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(5, value);
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(6, value);
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(4, value);
+
+    EXPECT_EQ(false, lru.Evict(&value));
 
     EXPECT_EQ(0, lru.Size());
 }
@@ -78,27 +80,29 @@ TEST(LRUReplacerTest, SimpleTest2) {
     lru.Pin(1);
     lru.Unpin(1);
 
-    // evicit 2
-    lru.Victim(&value);
+    // evict 2
+    lru.Evict(&value);
     EXPECT_EQ(2, value);
 
     // insert 3
     lru.Unpin(3);
     EXPECT_EQ(2, lru.Size());
 
-    // evicit 1
-    lru.Victim(&value);
+    // evict 1
+    lru.Evict(&value);
     EXPECT_EQ(1, value);
 
     // insert 4
     lru.Unpin(4);
     EXPECT_EQ(2, lru.Size());
 
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(3, value);
 
-    lru.Victim(&value);
+    lru.Evict(&value);
     EXPECT_EQ(4, value);
+
+    EXPECT_EQ(false, lru.Evict(&value));
 }
 
 }
