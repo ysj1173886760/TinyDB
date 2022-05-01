@@ -12,7 +12,6 @@
 #ifndef TYPE_H
 #define TYPE_H
 
-#include "type/value.h"
 #include "type/type_id.h"
 
 #include <stddef.h>
@@ -48,12 +47,14 @@ public:
     virtual ~Type() = default;
 
     // Get the size of this data type in bytes
-    static uint64_t GetTypeSize(TypeId type_id);
+    static uint64_t GetTypeSize(const TypeId type_id);
 
     // for debug
-    static std::string ToString(TypeId type_id);
+    static std::string TypeToString(const TypeId type_id);
 
     inline TypeId GetTypeId() const { return type_id_; }
+
+    inline static Type *GetInstance(const TypeId type_id) { return k_types_[type_id]; }
 
     // virtual functions
     // define the generic operations, we will apply those operations
@@ -108,7 +109,7 @@ public:
     // /
     virtual Value Divide(const Value &left, const Value &right) const;
     // %
-    virtual Value Divide(const Value &left, const Value &right) const;
+    virtual Value Modulo(const Value &left, const Value &right) const;
     // min
     virtual Value Min(const Value &left, const Value &right) const;
     // max
@@ -134,7 +135,7 @@ public:
     // RID -> SerializedValue
     // thus we can exploit this api to use KVS as storage engine
     // serialize this value to string. i wonder is this dupliated with ToString?
-    virtual void SerializeToString(const Value &val) const;
+    virtual std::string SerializeToString(const Value &val) const;
 
     // deserialize value from string
     virtual Value DeserializeFromString(const std::string &data) const;
@@ -160,8 +161,10 @@ public:
     virtual uint32_t GetLength(const Value &val) const;
 
 protected:
+    // Type id
     TypeId type_id_;
-
+    // instances
+    static Type *k_types_[20];
 };
 
 }

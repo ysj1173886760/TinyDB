@@ -14,6 +14,7 @@
 
 #include <climits>
 #include <limits>
+#include <cfloat>
 #include <cstdint>
 
 namespace TinyDB {
@@ -36,7 +37,9 @@ static constexpr int16_t TINYDB_INT16_NULL = SHRT_MIN;
 static constexpr int32_t TINYDB_INT32_NULL = INT_MIN;
 static constexpr int64_t TINYDB_INT64_NULL = LLONG_MIN;
 static constexpr int8_t TINYDB_BOOLEAN_NULL = SCHAR_MIN;
-
+static constexpr double TINYDB_DECIMAL_NULL = std::numeric_limits<double>::lowest();
+static constexpr uint64_t TINYDB_TIMESTAMP_NULL = ULLONG_MAX;
+static constexpr uint64_t TINYDB_DATE_NULL = 0;
 }
 
 #endif
