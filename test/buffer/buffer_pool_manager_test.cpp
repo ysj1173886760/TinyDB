@@ -5,6 +5,9 @@
 #include <string>
 #include <random>
 #include <cstring>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 namespace TinyDB {
 
@@ -66,6 +69,82 @@ TEST(BufferPoolManagerTest, BinaryDataTest) {
     page0 = bpm->FetchPage(page_id[0]);
     EXPECT_EQ(0, std::memcmp(page0->GetData(), random_binary_data, PAGE_SIZE));
     EXPECT_EQ(true, bpm->UnpinPage(page_id[0], true));
+
+    delete bpm;
+    delete disk_manager;
+
+    remove(filename.c_str());
+}
+
+TEST(BufferPoolManagerTest, ConcurrentTest) {
+    const std::string filename = "test.db";
+    const size_t buffer_pool_size = 8;
+    const size_t worker_size = 6;
+    const size_t total_page_size = 10;
+    const size_t iteration_num = 10;
+
+    auto disk_manager = new DiskManager(filename);
+    auto bpm = new BufferPoolManager(buffer_pool_size, disk_manager);
+
+    std::vector<page_id_t> page_list(total_page_size);
+    // allocate total_page_size pages
+    for (size_t i = 0; i < total_page_size; i++) {
+        EXPECT_NE(bpm->NewPage(&page_list[i]), nullptr);
+        EXPECT_EQ(bpm->UnpinPage(page_list[i], false), true);
+    }
+
+    const size_t BEGIN_OFFSET = 0;
+    const size_t MIDDLE_OFFSET = PAGE_SIZE / 2;
+    const size_t END_OFFSET = PAGE_SIZE - sizeof(int);
+
+    std::vector<std::thread> worker_list;
+    for (size_t i = 0; i < worker_size; i++) {
+        worker_list.emplace_back(std::thread([&]() {
+            // thread local random engine
+            std::random_device rd;
+            std::mt19937 mt(rd());
+            std::vector<page_id_t> access_list = page_list;
+            
+            for (size_t i = 0; i < iteration_num; i++) {
+                // shuffle the access list
+                std::shuffle(access_list.begin(), access_list.end(), mt);
+
+                for (auto page_id : access_list) {
+                    // increase the counter that is located at three area
+                    auto page = bpm->FetchPage(page_id);
+                    // first lock this page
+                    page->WLatch();
+                    int *begin_ptr = reinterpret_cast<int *> (page->GetData() + BEGIN_OFFSET);
+                    *begin_ptr = *begin_ptr + 1;
+                    int *middle_ptr = reinterpret_cast<int *> (page->GetData() + MIDDLE_OFFSET);
+                    *middle_ptr = *middle_ptr + 1;
+                    int *end_ptr = reinterpret_cast<int *> (page->GetData() + END_OFFSET);
+                    *end_ptr = *end_ptr + 1;
+                    page->WUnlatch();
+                    // unpin the page and mark it dirty
+                    bpm->UnpinPage(page_id, true);
+                }
+            }
+        }));
+    }
+
+    // wait for the thread
+    for (size_t i = 0; i < worker_size; i++) {
+        worker_list[i].join();
+    }
+
+    // check the value
+    for (auto page_id : page_list) {
+        auto page = bpm->FetchPage(page_id);
+        EXPECT_NE(page, nullptr);
+        int *begin_ptr = reinterpret_cast<int *> (page->GetData() + BEGIN_OFFSET);
+        EXPECT_EQ(*begin_ptr, iteration_num * worker_size);
+        int *middle_ptr = reinterpret_cast<int *> (page->GetData() + MIDDLE_OFFSET);
+        EXPECT_EQ(*middle_ptr, iteration_num * worker_size);
+        int *end_ptr = reinterpret_cast<int *> (page->GetData() + END_OFFSET);
+        EXPECT_EQ(*end_ptr, iteration_num * worker_size);
+        bpm->UnpinPage(page_id, false);
+    }
 
     delete bpm;
     delete disk_manager;

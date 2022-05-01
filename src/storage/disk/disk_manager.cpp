@@ -50,9 +50,17 @@ DiskManager::~DiskManager() {
 }
 
 page_id_t DiskManager::AllocatePage() {
-    // currently, simply add the page count
     // TODO: use bitmap to manage free pages
-    return next_page_id_++;
+
+    // flush a empty page to disk
+    // to prevent reading past file
+    // or we can flush it lazily until we write something really
+    page_id_t new_page_id = next_page_id_++;
+    char data[PAGE_SIZE] = {0};
+    int offset = new_page_id * PAGE_SIZE;
+    db_file_.seekp(offset);
+    db_file_.write(data, PAGE_SIZE);
+    return new_page_id;
 }
 
 void DiskManager::DeallocatePage(page_id_t page_id) {
@@ -69,7 +77,7 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
     // getFileSize everytime, really?
     // TODO: we need to cache it
     if (offset > GetFileSize(filename_)) {
-        LOG_ERROR("read past end of file");
+        LOG_ERROR("read past end of file, page_id: %d", pageId);
         return;
     }
 
@@ -83,7 +91,7 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
 
     int readCount = db_file_.gcount();
     if (readCount < PAGE_SIZE) {
-        LOG_DEBUG("read less than a page");
+        LOG_DEBUG("read less than a page, page_id: %d", pageId);
         db_file_.clear();
 
         // set those random data to 0
