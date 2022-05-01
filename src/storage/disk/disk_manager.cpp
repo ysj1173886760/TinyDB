@@ -20,6 +20,7 @@
 #include <assert.h>
 
 #include "common/logger.h"
+#include "common/exception.h"
 #include "storage/disk/disk_manager.h"
 
 namespace TinyDB {
@@ -38,7 +39,8 @@ DiskManager::DiskManager(const std::string &filename)
         // open it again
         db_file_.open(filename_, std::ios::binary | std::ios::in | std::ios::out);
         if (!db_file_.is_open()) {
-            throw std::runtime_error("failed to open db file");
+            throw IOException(
+                std::string("failed to open db file, filename: %s", filename.c_str()));
         }
     }
 }
@@ -85,13 +87,13 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
     db_file_.seekp(offset);
     db_file_.read(data, PAGE_SIZE);
     if (db_file_.bad()) {
-        LOG_ERROR("I/O error while reading");
+        LOG_ERROR("I/O error while reading page %d", pageId);
         return;
     }
 
     int readCount = db_file_.gcount();
     if (readCount < PAGE_SIZE) {
-        LOG_DEBUG("read less than a page, page_id: %d", pageId);
+        LOG_ERROR("read less than a page, page_id: %d", pageId);
         db_file_.clear();
 
         // set those random data to 0
@@ -107,7 +109,7 @@ void DiskManager::WritePage(page_id_t pageId, const char *data) {
     db_file_.write(data, PAGE_SIZE);
 
     if (db_file_.bad()) {
-        LOG_ERROR("I/O error while writing");
+        LOG_ERROR("I/O error while writing page %d", pageId);
         return;
     }
 
