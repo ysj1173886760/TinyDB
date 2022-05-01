@@ -9,6 +9,11 @@ else()
     message(STATUS " tinydb/test found valgrind at ${VALGRIND_BIN}")
 endif()
 
+# "make check-tests"
+##########################################
+add_custom_target(build-tests COMMAND ${CMAKE_CTEST_COMMAND} --show-only)
+add_custom_target(check-tests COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
+
 ##########################################
 # "make XYZ_test"
 ##########################################
@@ -22,18 +27,20 @@ foreach (tiny_test_source ${TINY_TEST_SOURCES})
     target_link_libraries(${tiny_test_name} gtest_main ${CMAKE_PROJECT_NAME}_lib)
 
     # Set test target properties and dependencies.
-    # set_target_properties(${tiny_test_name}
-    #     PROPERTIES
-    #     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
-    #     COMMAND ${tiny_test_name}
-    # )
+    # Specify the output directory. So we can integrate it into ctest directly
+    # using path
+    set_target_properties(${tiny_test_name}
+        PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/test"
+        COMMAND ${tiny_test_name}
+    )
 
     # Add the test under CTest.
-    # add_test(${tiny_test_name} ${VALGRIND_BIN} ${VALGRIND_OPTIONS}
-    # --suppressions=${VALGRIND_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${tiny_test_name}
-    # --gtest_color=yes --gtest_output=xml:${CMAKE_BINARY_DIR}/test/unit_${test_name}.xml)
-    # add_test(${tiny_test_name} ${CMAKE_BINARY_DIR}/test/${tiny_test_name} --gtest_color=yes
-    #         --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${tiny_test_name}.xml)
+    add_test(${tiny_test_name} ${VALGRIND_BIN} ${VALGRIND_OPTIONS}
+    --suppressions=${VALGRIND_SUPPRESSIONS_FILE} ${CMAKE_BINARY_DIR}/test/${tiny_test_name}
+    --gtest_color=yes --gtest_output=xml:${CMAKE_BINARY_DIR}/test/unit_${test_name}.xml)
+    add_test(${tiny_test_name} ${CMAKE_BINARY_DIR}/test/${tiny_test_name} --gtest_color=yes
+            --gtest_output=xml:${CMAKE_BINARY_DIR}/test/${tiny_test_name}.xml)
     gtest_discover_tests(${tiny_test_name})
 
 endforeach(tiny_test_source ${tiny_TEST_SOURCES})
