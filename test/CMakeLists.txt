@@ -9,10 +9,10 @@ else()
     message(STATUS " tinydb/test found valgrind at ${VALGRIND_BIN}")
 endif()
 
-# "make check-tests"
+# "make test all"
 ##########################################
-add_custom_target(build-tests COMMAND ${CMAKE_CTEST_COMMAND} --show-only)
-add_custom_target(check-tests COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
+add_custom_target(show-tests COMMAND ${CMAKE_CTEST_COMMAND} --show-only)
+add_custom_target(test-all COMMAND ${CMAKE_CTEST_COMMAND} --verbose)
 
 ##########################################
 # "make XYZ_test"
