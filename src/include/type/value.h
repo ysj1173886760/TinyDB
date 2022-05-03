@@ -31,7 +31,7 @@ public:
     explicit Value(const TypeId type_id)
         : type_id_(type_id) {
         // initialize value as null
-        size_.len_ = TINYDB_VALUE_NULL;
+        len_ = TINYDB_VALUE_NULL;
     }
     // constructors
 
@@ -39,7 +39,6 @@ public:
     Value(TypeId type_id, int8_t i);
     // Decimal
     Value(TypeId type_id, double d);
-    Value(TypeId type_id, float f);
     // Small int
     Value(TypeId type_id, int16_t i);
     // Integer
@@ -60,7 +59,7 @@ public:
 
     friend void Swap(Value &first, Value &second) {
         std::swap(first.value_, second.value_);
-        std::swap(first.size_, second.size_);
+        std::swap(first.len_, second.len_);
         std::swap(first.type_id_, second.type_id_);
     }
 
@@ -130,8 +129,8 @@ public:
         return Type::GetInstance(type_id_)->IsZero(*this);
     }
     inline bool IsNull() const {
-        // size_.len_ = TINYDB_VALUE_NULL means this value is null
-        return size_.len_ == TINYDB_VALUE_NULL;
+        // len_ = TINYDB_VALUE_NULL means this value is null
+        return len_ == TINYDB_VALUE_NULL;
     }
 
     // other special functions
@@ -182,11 +181,9 @@ private:
         const char *const_varlen_;
     } value_;
     
-    // size or elem type for varlen type
-    union {
-        uint32_t len_;
-        TypeId elem_type_id_;
-    } size_;
+    // size of value
+    // or indicate null when it is special value corresponding to type
+    uint32_t len_;
 
     TypeId type_id_;
 };
