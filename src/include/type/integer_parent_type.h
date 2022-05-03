@@ -148,7 +148,63 @@ template <class T1, class T2>
 Value IntegerParentType::MultiplyValue(const Value &lhs, const Value &rhs) const {
     auto x = lhs.GetAs<T1>();
     auto y = rhs.GetAs<T2>();
+    auto prod1 = static_cast<T1> (x * y);
+    auto prod2 = static_cast<T2> (x * y);
+    if ((x * y) != prod1 && (x * y) != prod2) {
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+    }
 
+    if (sizeof(x) >= sizeof(y)) {
+        if ((x > 0 && y < 0 && prod1 < 0) ||
+            (x < 0 && y > 0 && prod1 > 0)) {
+            throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+        }
+        return Value(lhs.GetTypeId(), prod1);
+    }
+
+    if ((x > 0 && y < 0 && prod2 < 0) ||
+        (x < 0 && y > 0 && prod2 > 0)) {
+        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+    }
+    return Value(rhs.GetTypeId(), prod2);
+}
+
+template <class T1, class T2>
+Value IntegerParentType::DivideValue(const Value &lhs, const Value &rhs) const {
+    auto x = lhs.GetAs<T1>();
+    auto y = rhs.GetAs<T2>();
+    
+    if (y == 0) {
+        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+    }
+
+    auto quot1 = static_cast<T1> (x / y);
+    auto quot2 = static_cast<T2> (x / y);
+
+    if (sizeof(x) >= sizeof(y)) {
+        return Value(lhs.GetTypeId(), quot1);
+    }
+
+    return Value(rhs.GetTypeId(), quot2);
+}
+
+template <class T1, class T2>
+Value IntegerParentType::ModuloValue(const Value &lhs, const Value &rhs) const {
+    auto x = lhs.GetAs<T1>();
+    auto y = rhs.GetAs<T2>();
+    
+    if (y == 0) {
+        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+    }
+
+    auto rem1 = static_cast<T1> (x % y);
+    auto rem2 = static_cast<T2> (x % y);
+
+    if (sizeof(x) >= sizeof(y)) {
+        return Value(lhs.GetTypeId(), rem1);
+    }
+
+    return Value(rhs.GetTypeId(), rem2);
 }
 
 }
