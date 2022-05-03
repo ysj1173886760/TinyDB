@@ -167,6 +167,17 @@ public:
         return Type::GetInstance(type_id_)->Copy(*this);
     }
 
+    // this is language-level casting, instead of dbms-level casting
+    // i.e. for official casting, please use CastAs which will aware the type
+    // GetAs is just reinterpret casting, and may cause unknown error
+    // i'm really not sure what compiler will do to this function
+    // hopefully this will provide us zero-cost abstraction
+    // i think it will? since we just interpreting memory
+    template <class T>
+    inline T GetAs() const {
+        return *reinterpret_cast<const T *>(&value_);
+    }
+
 private:
     // data it's self
     union Val {
