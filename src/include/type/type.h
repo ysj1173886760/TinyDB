@@ -116,7 +116,7 @@ public:
     virtual Value Max(const Value &left, const Value &right) const;
     // sqrt
     virtual Value Sqrt(const Value &val) const;
-    // TODO: figure out what is this
+    // operation when some one is null
     virtual Value OperateNull(const Value &val, const Value &right) const;
     // not sure whether empty string is zero element for string type
     virtual bool IsZero(const Value &val) const;
