@@ -131,12 +131,14 @@ public:
     // i.e. serialize it to string
     virtual std::string ToString(const Value &val) const;
 
+    // !!! deprecated !!!
     // another approach is serialize to string, then we can store data to some kvs
     // RID -> SerializedValue
     // thus we can exploit this api to use KVS as storage engine
     // serialize this value to string. i wonder is this dupliated with ToString?
     virtual std::string SerializeToString(const Value &val) const;
 
+    // !!! deprecated !!!
     // deserialize value from string
     virtual Value DeserializeFromString(const std::string &data) const;
     

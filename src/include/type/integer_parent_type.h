@@ -43,12 +43,12 @@ public:
     Value OperateNull(const Value &val, const Value &right) const override = 0;
     bool IsZero(const Value &val) const override = 0;
 
-    CmpBool CompareEquals(const Value &left, const Value &right) const = 0;
-    CmpBool CompareNotEquals(const Value &left, const Value &right) const = 0;
-    CmpBool CompareLessThan(const Value &left, const Value &right) const = 0;
-    CmpBool CompareLessThanEquals(const Value &left, const Value &right) const = 0;
-    CmpBool CompareGreaterThan(const Value &left, const Value &right) const = 0;
-    CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const = 0;
+    CmpBool CompareEquals(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareNotEquals(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareLessThan(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareGreaterThan(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override = 0;
 
     // integer types are always inlined
     bool IsInlined(const Value &val) const override { return true; }
@@ -87,6 +87,8 @@ protected:
 // template code should stay in header file
 // otherwise you will fail to instantiate the functions
 
+// TODO: check for null value. i.e. when result represent null value, throw an exception
+
 // FIXME: is this too expensive?
 template <class T1, class T2>
 Value IntegerParentType::AddValue(const Value &lhs, const Value &rhs) const {
@@ -112,7 +114,7 @@ Value IntegerParentType::AddValue(const Value &lhs, const Value &rhs) const {
         (x < 0 && y < 0 && sum2 > 0)) {
         throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value out of range");
     }
-    return Value(right.GetTypeId(), sum2);
+    return Value(rhs.GetTypeId(), sum2);
 }
 
 template <class T1, class T2>

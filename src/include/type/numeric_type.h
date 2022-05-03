@@ -27,6 +27,8 @@ public:
     ~NumericType() override = default;
 
     // enforce the numeric type to implement those operations
+    // we didn't support comparsion functions for decimal type value
+
     Value Add(const Value &left, const Value &right) const override = 0;
     Value Subtract(const Value &left, const Value &right) const override = 0;
     Value Multiply(const Value &left, const Value &right) const override = 0;
@@ -35,8 +37,10 @@ public:
     Value Min(const Value &left, const Value &right) const override = 0;
     Value Max(const Value &left, const Value &right) const override = 0;
     Value Sqrt(const Value &val) const override = 0;
-    Value OperateNull(const Value &val, const Value &right) const override = 0;
+
     bool IsZero(const Value &val) const override = 0;
+    // maybe we should hide this function
+    Value OperateNull(const Value &val, const Value &right) const override = 0;
 
 protected:
     // modulo for float point values

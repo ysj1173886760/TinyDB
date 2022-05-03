@@ -22,11 +22,18 @@
 
 namespace TinyDB {
 
+inline CmpBool GetCmpBool(bool boolean) { return boolean ? CmpBool::CmpTrue : CmpBool::CmpFalse; }
+
 // comments from bustub
 // A value is an abstract class that represents a view over SQL data stored in
 // some materialized state. All values have a type and comparison functions, but
 // subclasses implement other type-specific functionality.
 class Value {
+    friend class Type;
+    friend class NumericType;
+    friend class IntegerParentType;
+    friend class TinyintType;
+
 public:
     explicit Value(const TypeId type_id)
         : type_id_(type_id) {
@@ -177,6 +184,11 @@ public:
     inline T GetAs() const {
         return *reinterpret_cast<const T *>(&value_);
     }
+
+    // check whether value is integer
+    bool CheckInteger() const;
+    // check whether we can compare with rhs
+    bool CheckComparable(const Value &rhs) const;
 
 private:
     // data it's self

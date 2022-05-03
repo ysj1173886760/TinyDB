@@ -145,6 +145,8 @@ Value::Value(TypeId type_id, const std::string &data): Value(type_id) {
     switch(type_id) {
     case TypeId::VARCHAR:
         len_ = data.length();
+        // TODO: figure out whether do we need + 1
+        // maybe we need? since we may need cstring lib
         value_.varlen_ = new char[len_];
         memcpy(value_.varlen_, data.c_str(), len_);
         break;
@@ -163,6 +165,49 @@ Value::~Value() {
     }
 }
 
+bool Value::CheckComparable(const Value &rhs) const {
+    switch (type_id_) {
+    case TypeId::BOOLEAN:
+        return (rhs.GetTypeId() == TypeId::BOOLEAN ||
+                rhs.GetTypeId() == TypeId::VARCHAR);
+    case TypeId::TINYINT:
+    case TypeId::SMALLINT:
+    case TypeId::INTEGER:
+    case TypeId::BIGINT:
+    case TypeId::DECIMAL:
+        // i'm missing rust
+        switch (rhs.GetTypeId()) {
+        case TypeId::TINYINT:
+        case TypeId::SMALLINT:
+        case TypeId::INTEGER:
+        case TypeId::BIGINT:
+        case TypeId::DECIMAL:
+        case TypeId::VARCHAR:
+            return true;
+        default:
+            break;
+        }
+        break;
+    case TypeId::VARCHAR:
+        // Anything can be cast to a string
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool Value::CheckInteger() const {
+    switch (type_id_) {
+    case TypeId::TINYINT:
+    case TypeId::SMALLINT:
+    case TypeId::INTEGER:
+    case TypeId::BIGINT:
+        return true;
+    default:
+        return false;
+    }
+}
 
 }
 
