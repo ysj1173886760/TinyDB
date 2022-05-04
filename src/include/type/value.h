@@ -33,6 +33,7 @@ class Value {
     friend class NumericType;
     friend class IntegerParentType;
     friend class TinyintType;
+    friend class SmallintType;
 
 public:
     explicit Value(const TypeId type_id)

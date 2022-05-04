@@ -149,7 +149,6 @@ Value IntegerParentType::MultiplyValue(const Value &lhs, const Value &rhs) const
     auto prod2 = static_cast<T2> (x * y);
     if ((x * y) != prod1 && (x * y) != prod2) {
         // i'm thinking, if user intend to do this. should we return with the truncated value?
-        LOG_ERROR("%d %d %d", x * y, prod1, prod2);
         THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
 

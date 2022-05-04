@@ -200,8 +200,8 @@ Value TinyintType::OperateNull(const Value &left, const Value &rhs) const {
 }
 
 // code reuse is zero
-// i'm nearly destroyed while writng this code
-// it makes me feel like i'm just a coding machine
+// fuck me
+// i'm missing procedure macro
 
 CmpBool TinyintType::CompareEquals(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
