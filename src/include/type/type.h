@@ -52,6 +52,9 @@ public:
     // for debug
     static std::string TypeToString(const TypeId type_id);
 
+    // return the null value corresponding to the type
+    static Value Null(const TypeId type_id);
+
     inline TypeId GetTypeId() const { return type_id_; }
 
     inline static Type *GetInstance(const TypeId type_id) { return k_types_[type_id]; }

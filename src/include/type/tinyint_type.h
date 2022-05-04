@@ -28,11 +28,13 @@ public:
     Value Multiply(const Value &left, const Value &right) const override;
     Value Divide(const Value &left, const Value &right) const override;
     Value Modulo(const Value &left, const Value &right) const override;
-    Value Min(const Value &left, const Value &right) const override;
-    Value Max(const Value &left, const Value &right) const override;
     Value Sqrt(const Value &val) const override;
     Value OperateNull(const Value &val, const Value &right) const override;
     bool IsZero(const Value &val) const override;
+
+    // inherit these two from numeric_type
+    // Value Min(const Value &left, const Value &right) const override;
+    // Value Max(const Value &left, const Value &right) const override;
 
     CmpBool CompareEquals(const Value &left, const Value &right) const override;
     CmpBool CompareNotEquals(const Value &left, const Value &right) const override;
@@ -44,10 +46,6 @@ public:
     // for debug purpose
     std::string ToString(const Value &val) const override;
 
-    // serialize/deserialize for string
-    std::string SerializeToString(const Value &val) const override;
-    Value DeserializeFromString(const std::string &data) const override;
-    
     // serialize/deserialize for storage
     void SerializeTo(const Value &val, char *storage) const override;
     Value DeserializeFrom(const char *storage) const override;

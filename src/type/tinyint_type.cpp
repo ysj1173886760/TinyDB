@@ -118,7 +118,7 @@ Value TinyintType::Divide(const Value &lhs, const Value &rhs) const {
     }
 
     if (rhs.IsZero()) {
-        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+        THROW_DIVIDE_BY_ZERO_EXCEPTION("Division by zero");
     }
 
     TINYINT_MODIFY_FUNC(DivideValue, /);
@@ -135,7 +135,7 @@ Value TinyintType::Modulo(const Value &lhs, const Value &rhs) const {
     }
 
     if (rhs.IsZero()) {
-        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+        THROW_DIVIDE_BY_ZERO_EXCEPTION("Division by zero");
     }
 
     // because % can only applied on integer
@@ -169,7 +169,7 @@ Value TinyintType::Sqrt(const Value &val) const {
         return Value(TypeId::DECIMAL, TINYDB_DECIMAL_NULL);
     }
     if (val.value_.tinyint_ < 0) {
-        throw Exception(ExceptionType::DECIMAL, "trying to apply sqrt on negative number");
+        THROW_DECIMAL_EXCEPTION("trying to apply sqrt on negative number");
     }
 
     return Value(TypeId::DECIMAL, std::sqrt(val.value_.tinyint_));
@@ -312,36 +312,22 @@ Value TinyintType::Copy(const Value &val) const {
 // corresponding to the type
 
 Value TinyintType::CastAs(const Value &val, const TypeId type_id) const {
+    if (val.IsNull()) {
+        return Type::Null(type_id);
+    }
+
     switch (type_id) {
     case TypeId::TINYINT:
-        if (val.IsNull()) {
-            return Value(type_id, TINYDB_INT8_NULL);
-        }
         return Copy(val);
     case TypeId::SMALLINT:
-        if (val.IsNull()) {
-            return Value(type_id, TINYDB_INT16_NULL);
-        }
         return Value(type_id, static_cast<int16_t>(val.value_.tinyint_));
     case TypeId::INTEGER:
-        if (val.IsNull()) {
-            return Value(type_id, TINYDB_INT32_NULL);
-        }
         return Value(type_id, static_cast<int32_t>(val.value_.tinyint_));
     case TypeId::BIGINT:
-        if (val.IsNull()) {
-            return Value(type_id, TINYDB_INT64_NULL);
-        }
         return Value(type_id, static_cast<int64_t>(val.value_.tinyint_));
     case TypeId::DECIMAL:
-        if (val.IsNull()) {
-            return Value(type_id, TINYDB_DECIMAL_NULL);
-        }
         return Value(type_id, static_cast<double>(val.value_.tinyint_));
     case TypeId::VARCHAR:
-        if (val.IsNull()) {
-            return Value(type_id, nullptr, 0);
-        }
         return Value(type_id, val.ToString());
     default:
         break;

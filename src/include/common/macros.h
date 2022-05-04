@@ -12,6 +12,8 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#include "common/macros.h"
+
 #include <cassert>
 #include <stdexcept>
 
@@ -19,7 +21,8 @@ namespace TinyDB {
 
 #define TINYDB_ASSERT(expr, message) assert((expr) && (message))
 
-#define UNREACHABLE(message) throw std::logic_error(message)
+#define UNREACHABLE(message) \
+    THROW_UNREACHABLE_EXCEPTION(message)
 
 // disable copying and moving
 

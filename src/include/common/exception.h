@@ -14,6 +14,8 @@
 
 #include <stdexcept>
 #include <iostream>
+#include <string>
+#include <regex>
 
 namespace TinyDB {
 
@@ -40,8 +42,11 @@ enum class ExceptionType {
     NOT_IMPLEMENTED = 9,
     // io related error
     IO = 10,
+    // unreachable, this should belong to logic error
+    UNREACHABLE = 11,
 };
 
+// we don't use try catch, so any exception will cause a crash
 class Exception : public std::runtime_error {
 public:
     explicit Exception(const std::string &message)
@@ -50,11 +55,14 @@ public:
         std::cerr << exception_message;
     }
 
-    Exception(ExceptionType type, const std::string &message)
+    Exception(ExceptionType type, const std::string &message, const char *file, int line)
         : std::runtime_error(message), type_(type) {
+
+        std::string loc = std::string(file) + "; line " + std::to_string(line);
         std::string exception_message = 
             "Exception Type :: " + ExceptionTypeToString(type) + "\n" +
-            "Message :: " + message + "\n";
+            "Message :: " + message + "\n" +
+            "@ Location: " + loc + "\n";
         std::cerr << exception_message;
     }
 
@@ -82,6 +90,8 @@ public:
                 return "Not Implemented";
             case ExceptionType::IO:
                 return "IO";
+            case ExceptionType::UNREACHABLE:
+                return "Unreachable";
             default:
                 return "Unknown Exception Type";
         }
@@ -90,19 +100,38 @@ private:
     ExceptionType type_;
 };
 
-class NotImplementedException : public Exception {
-public:
-    NotImplementedException() = delete;
-    explicit NotImplementedException(const std::string &message)
-        : Exception(ExceptionType::NOT_IMPLEMENTED, message) {}
-};
+#define THROW_NOT_IMPLEMENT_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::NOT_IMPLEMENTED, msg, __FILE__, __LINE__);
 
-class IOException : public Exception {
-public:
-    IOException() = delete;
-    explicit IOException(const std::string &message)
-        : Exception(ExceptionType::IO, message) {}
-};
+#define THROW_OUT_OF_RANGE_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::OUT_OF_RANGE, msg, __FILE__, __LINE__);
+
+#define THROW_CONVERSION_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::CONVERSION, msg, __FILE__, __LINE__);
+
+#define THROW_UNKNOWN_TYPE_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::UNKNOWN_TYPE, msg, __FILE__, __LINE__);
+
+#define THROW_DECIMAL_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::DECIMAL, msg, __FILE__, __LINE__);
+
+#define THROW_MISMATCH_TYPE_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::MISMATCH_TYPE, msg, __FILE__, __LINE__);
+
+#define THROW_DIVIDE_BY_ZERO_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::DIVIDE_BY_ZERO, msg, __FILE__, __LINE__);
+
+#define THROW_INCOMPATIBLE_TYPE_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::INCOMPATIBLE_TYPE, msg, __FILE__, __LINE__);
+
+#define THROW_OUT_OF_MEMORY_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::OUT_OF_MEMORY, msg, __FILE__, __LINE__);
+
+#define THROW_IO_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::IO, msg, __FILE__, __LINE__);
+
+#define THROW_UNREACHABLE_EXCEPTION(msg)  \
+    throw Exception(ExceptionType::UNREACHABLE, msg, __FILE__, __LINE__);
 
 }
 

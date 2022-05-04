@@ -56,7 +56,7 @@ Value::Value(TypeId type_id, int8_t i): Value(type_id) {
         len_ = (value_.tinyint_ == TINYDB_INT8_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for one-byte value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for one-byte value constructor")
     }
 }
 
@@ -68,7 +68,7 @@ Value::Value(TypeId type_id, int16_t i): Value(type_id) {
         len_ = (value_.smallint_ == TINYDB_INT16_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for two-byte value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for two-byte value constructor")
     }
 }
 
@@ -80,7 +80,7 @@ Value::Value(TypeId type_id, int32_t i): Value(type_id) {
         len_ = (value_.integer_ == TINYDB_INT32_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for four-byte value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for four-byte value constructor")
     }
 }
 
@@ -92,7 +92,7 @@ Value::Value(TypeId type_id, int64_t i): Value(type_id) {
         len_ = (value_.bigint_ == TINYDB_INT64_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for eight-byte value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for eight-byte value constructor")
     }
 }
 
@@ -104,7 +104,7 @@ Value::Value(TypeId type_id, uint64_t i): Value(type_id) {
         len_ = (value_.timestamp_ == TINYDB_TIMESTAMP_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for timestamp value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for timestamp value constructor")
     }
 }
 
@@ -116,7 +116,7 @@ Value::Value(TypeId type_id, double d) : Value(type_id) {
         len_ = (value_.decimal_ == TINYDB_DECIMAL_NULL ? TINYDB_VALUE_NULL : 0);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for decimal value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for decimal value constructor")
     }
 }
 
@@ -137,7 +137,7 @@ Value::Value(TypeId type_id, const char *data, uint32_t len): Value(type_id) {
         }
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for varchar value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for varchar value constructor");
     }
 }
 
@@ -151,7 +151,7 @@ Value::Value(TypeId type_id, const std::string &data): Value(type_id) {
         memcpy(value_.varlen_, data.c_str(), len_);
         break;
     default:
-        throw Exception(ExceptionType::INCOMPATIBLE_TYPE, "Invalid Type for varchar value constructor");
+        THROW_INCOMPATIBLE_TYPE_EXCEPTION("Invalid Type for varchar value constructor");
     }
 }
 

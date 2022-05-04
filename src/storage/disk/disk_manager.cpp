@@ -39,7 +39,7 @@ DiskManager::DiskManager(const std::string &filename)
         // open it again
         db_file_.open(filename_, std::ios::binary | std::ios::in | std::ios::out);
         if (!db_file_.is_open()) {
-            throw IOException(
+            THROW_IO_EXCEPTION(
                 std::string("failed to open db file, filename: %s", filename.c_str()));
         }
     }

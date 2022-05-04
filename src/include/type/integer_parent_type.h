@@ -13,8 +13,9 @@
 #define INTEGER_PARENT_TYPE_H
 
 #include "type/numeric_type.h"
-#include "common/exception.h"
 #include "type/value.h"
+#include "common/exception.h"
+#include "common/logger.h"
 
 #include <string>
 
@@ -23,7 +24,7 @@ namespace TinyDB {
 // integer value of common sizes
 class IntegerParentType: public NumericType {
 public: 
-    explicit IntegerParentType(TypeId type_id);
+    explicit IntegerParentType(TypeId type_id) : NumericType(type_id) {}
     ~IntegerParentType() override = default;
 
     // whether you declare it's virtual or not, it will be virtual
@@ -37,8 +38,6 @@ public:
     Value Multiply(const Value &left, const Value &right) const override = 0;
     Value Divide(const Value &left, const Value &right) const override = 0;
     Value Modulo(const Value &left, const Value &right) const override = 0;
-    Value Min(const Value &left, const Value &right) const override = 0;
-    Value Max(const Value &left, const Value &right) const override = 0;
     Value Sqrt(const Value &val) const override = 0;
     Value OperateNull(const Value &val, const Value &right) const override = 0;
     bool IsZero(const Value &val) const override = 0;
@@ -56,10 +55,6 @@ public:
     // for debug purpose
     std::string ToString(const Value &val) const override = 0;
 
-    
-    std::string SerializeToString(const Value &val) const override = 0;
-    Value DeserializeFromString(const std::string &data) const override = 0;
-    
     void SerializeTo(const Value &val, char *storage) const override = 0;
     Value DeserializeFrom(const char *storage) const override = 0;
 
@@ -98,21 +93,21 @@ Value IntegerParentType::AddValue(const Value &lhs, const Value &rhs) const {
     auto sum2 = static_cast<T2> (x + y);
 
     if ((x + y) != sum1 && (x + y) != sum2) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value out of range");
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
 
     // overflow detection
     if (sizeof(x) >= sizeof(y)) {
         if ((x > 0 && y > 0 && sum1 < 0) || 
             (x < 0 && y < 0 && sum1 > 0)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value out of range");
+            THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
         }
         return Value(lhs.GetTypeId(), sum1);
     }
 
     if ((x > 0 && y > 0 && sum2 < 0) || 
         (x < 0 && y < 0 && sum2 > 0)) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value out of range");
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
     return Value(rhs.GetTypeId(), sum2);
 }
@@ -128,20 +123,20 @@ Value IntegerParentType::SubtractValue(const Value &lhs, const Value &rhs) const
     // by only do the up casting
     // i.e. convert x and y to the bigger type then do numeric operation
     if ((x - y) != diff1 && (x - y) != diff2) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
 
     if (sizeof(x) >= sizeof(y)) {
         if ((x > 0 && y < 0 && diff1 < 0) ||
             (x < 0 && y > 0 && diff1 > 0)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+            THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
         }
         return Value(lhs.GetTypeId(), diff1);
     }
 
     if ((x > 0 && y < 0 && diff2 < 0) ||
         (x < 0 && y > 0 && diff2 > 0)) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
     return Value(rhs.GetTypeId(), diff2);
 }
@@ -153,20 +148,22 @@ Value IntegerParentType::MultiplyValue(const Value &lhs, const Value &rhs) const
     auto prod1 = static_cast<T1> (x * y);
     auto prod2 = static_cast<T2> (x * y);
     if ((x * y) != prod1 && (x * y) != prod2) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+        // i'm thinking, if user intend to do this. should we return with the truncated value?
+        LOG_ERROR("%d %d %d", x * y, prod1, prod2);
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
 
     if (sizeof(x) >= sizeof(y)) {
         if ((x > 0 && y < 0 && prod1 < 0) ||
             (x < 0 && y > 0 && prod1 > 0)) {
-            throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+            THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
         }
         return Value(lhs.GetTypeId(), prod1);
     }
 
     if ((x > 0 && y < 0 && prod2 < 0) ||
         (x < 0 && y > 0 && prod2 > 0)) {
-        throw Exception(ExceptionType::OUT_OF_RANGE, "Integer value our of range");
+        THROW_OUT_OF_RANGE_EXCEPTION("Integer value out of range");
     }
     return Value(rhs.GetTypeId(), prod2);
 }
@@ -177,7 +174,7 @@ Value IntegerParentType::DivideValue(const Value &lhs, const Value &rhs) const {
     auto y = rhs.GetAs<T2>();
     
     if (y == 0) {
-        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+        THROW_DIVIDE_BY_ZERO_EXCEPTION("Division by zero");
     }
 
     auto quot1 = static_cast<T1> (x / y);
@@ -196,7 +193,7 @@ Value IntegerParentType::ModuloValue(const Value &lhs, const Value &rhs) const {
     auto y = rhs.GetAs<T2>();
     
     if (y == 0) {
-        throw Exception(ExceptionType::DIVIDE_BY_ZERO, "Division by zero");
+        THROW_DIVIDE_BY_ZERO_EXCEPTION("Division by zero");
     }
 
     auto rem1 = static_cast<T1> (x % y);

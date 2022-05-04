@@ -13,8 +13,10 @@
 #define NUMERIC_TYPE_H
 
 #include "type/type.h"
+#include "type/value.h"
 
 #include <cmath>
+#include <assert.h>
 
 namespace TinyDB {
 // comments from bustub
@@ -29,18 +31,40 @@ public:
     // enforce the numeric type to implement those operations
     // we didn't support comparsion functions for decimal type value
 
-    Value Add(const Value &left, const Value &right) const override = 0;
-    Value Subtract(const Value &left, const Value &right) const override = 0;
-    Value Multiply(const Value &left, const Value &right) const override = 0;
-    Value Divide(const Value &left, const Value &right) const override = 0;
-    Value Modulo(const Value &left, const Value &right) const override = 0;
-    Value Min(const Value &left, const Value &right) const override = 0;
-    Value Max(const Value &left, const Value &right) const override = 0;
+    Value Add(const Value &lhs, const Value &rhs) const override = 0;
+    Value Subtract(const Value &lhs, const Value &rhs) const override = 0;
+    Value Multiply(const Value &lhs, const Value &rhs) const override = 0;
+    Value Divide(const Value &lhs, const Value &rhs) const override = 0;
+    Value Modulo(const Value &lhs, const Value &rhs) const override = 0;
     Value Sqrt(const Value &val) const override = 0;
 
     bool IsZero(const Value &val) const override = 0;
     // maybe we should hide this function
-    Value OperateNull(const Value &val, const Value &right) const override = 0;
+    Value OperateNull(const Value &val, const Value &rhs) const override = 0;
+
+    Value Min(const Value &lhs, const Value &rhs) const override {
+        assert(lhs.CheckComparable(rhs));
+        if (lhs.IsNull() || rhs.IsNull()) {
+            return lhs.OperateNull(rhs);
+        }
+
+        if (lhs.CompareLessThan(rhs) == CmpBool::CmpTrue) {
+            return lhs.Copy();
+        }
+        return rhs.Copy();
+    }
+
+    Value Max(const Value &lhs, const Value &rhs) const override {
+        assert(lhs.CheckComparable(rhs));
+        if (lhs.IsNull() || rhs.IsNull()) {
+            return lhs.OperateNull(rhs);
+        }
+
+        if (lhs.CompareLessThan(rhs) == CmpBool::CmpTrue) {
+            return rhs.Copy();
+        }
+        return lhs.Copy();
+    }
 
 protected:
     // modulo for float point values
