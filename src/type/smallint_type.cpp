@@ -172,6 +172,7 @@ Value SmallintType::Sqrt(const Value &val) const {
     return Value(TypeId::DECIMAL, std::sqrt(val.value_.smallint_));
 }
 
+// TODO: simplify the code using Type::Null
 Value SmallintType::OperateNull(const Value &left, const Value &rhs) const {
     switch (rhs.GetTypeId()) {
     case TypeId::TINYINT:
@@ -288,7 +289,7 @@ void SmallintType::SerializeTo(const Value &val, char *storage) const {
 }
 
 Value SmallintType::DeserializeFrom(const char *storage) const {
-    int8_t val = *reinterpret_cast<const int16_t *>(storage);
+    int16_t val = *reinterpret_cast<const int16_t *>(storage);
     return Value(type_id_, val);
 }
 

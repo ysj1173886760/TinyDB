@@ -17,6 +17,7 @@
 #include "type/type.h"
 #include "type/value.h"
 #include "type/tinyint_type.h"
+#include "type/smallint_type.h"
 
 #include <string>
 
@@ -30,6 +31,17 @@ Type *Type::k_types_[] = {
     // place holder for bool
     new Type(TypeId::INVALID),
     new TinyintType(),
+    new SmallintType(),
+    // integer
+    new Type(TypeId::INVALID),
+    // bigint
+    new Type(TypeId::INVALID),
+    // decimal
+    new Type(TypeId::INVALID),
+    // varchar
+    new Type(TypeId::INVALID),
+    // timestamp
+    new Type(TypeId::INVALID),
 };
 
 uint64_t Type::GetTypeSize(const TypeId type_id) {
