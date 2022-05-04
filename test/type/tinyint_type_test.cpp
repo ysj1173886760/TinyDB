@@ -89,6 +89,24 @@ TEST(TinyintTest, NullTest) {
     EXPECT_EQ(x.CompareLessThanEquals(y), CmpBool::CmpNull);
 }
 
+TEST(TinyintTest, SerializeDeserializeTest) {
+    auto x = Value(TypeId::TINYINT, static_cast<int8_t>(16));
+    auto y = Type::Null(TypeId::TINYINT);
+
+    char buffer[40] = {0};
+
+    x.SerializeTo(buffer);
+    auto tmp = Value::DeserializeFrom(buffer, TypeId::TINYINT);
+
+    EXPECT_EQ(x.CompareEquals(tmp), CmpBool::CmpTrue);
+
+    y.SerializeTo(buffer);
+    tmp = Value::DeserializeFrom(buffer, TypeId::TINYINT);
+
+    EXPECT_EQ(y.IsNull(), true);
+    EXPECT_EQ(tmp.CompareEquals(y), CmpBool::CmpNull);
+}
+
 }
 
 #endif
