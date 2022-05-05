@@ -40,7 +40,7 @@ public:
 
     bool IsZero(const Value &val) const override = 0;
     // maybe we should hide this function
-    Value OperateNull(const Value &val, const Value &rhs) const override = 0;
+    Value OperateNull(const Value &lhs, const Value &rhs) const override = 0;
 
     Value Min(const Value &lhs, const Value &rhs) const override {
         assert(lhs.CheckComparable(rhs));

@@ -23,25 +23,25 @@ public:
 
     // implement all of the functions that is pure in base type
 
-    Value Add(const Value &left, const Value &right) const override;
-    Value Subtract(const Value &left, const Value &right) const override;
-    Value Multiply(const Value &left, const Value &right) const override;
-    Value Divide(const Value &left, const Value &right) const override;
-    Value Modulo(const Value &left, const Value &right) const override;
+    Value Add(const Value &lhs, const Value &rhs) const override;
+    Value Subtract(const Value &lhs, const Value &rhs) const override;
+    Value Multiply(const Value &lhs, const Value &rhs) const override;
+    Value Divide(const Value &lhs, const Value &rhs) const override;
+    Value Modulo(const Value &lhs, const Value &rhs) const override;
     Value Sqrt(const Value &val) const override;
-    Value OperateNull(const Value &val, const Value &right) const override;
+    Value OperateNull(const Value &lhs, const Value &rhs) const override;
     bool IsZero(const Value &val) const override;
 
     // inherit these two from numeric_type
     // Value Min(const Value &left, const Value &right) const override;
     // Value Max(const Value &left, const Value &right) const override;
 
-    CmpBool CompareEquals(const Value &left, const Value &right) const override;
-    CmpBool CompareNotEquals(const Value &left, const Value &right) const override;
-    CmpBool CompareLessThan(const Value &left, const Value &right) const override;
-    CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override;
-    CmpBool CompareGreaterThan(const Value &left, const Value &right) const override;
-    CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override;
+    CmpBool CompareEquals(const Value &lhs, const Value &rhs) const override;
+    CmpBool CompareNotEquals(const Value &lhs, const Value &rhs) const override;
+    CmpBool CompareLessThan(const Value &lhs, const Value &rhs) const override;
+    CmpBool CompareLessThanEquals(const Value &lhs, const Value &rhs) const override;
+    CmpBool CompareGreaterThan(const Value &lhs, const Value &rhs) const override;
+    CmpBool CompareGreaterThanEquals(const Value &lhs, const Value &rhs) const override;
 
     // for debug purpose
     std::string ToString(const Value &val) const override;

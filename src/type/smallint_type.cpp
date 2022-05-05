@@ -172,25 +172,9 @@ Value SmallintType::Sqrt(const Value &val) const {
     return Value(TypeId::DECIMAL, std::sqrt(val.value_.smallint_));
 }
 
-// TODO: simplify the code using Type::Null
-Value SmallintType::OperateNull(const Value &left, const Value &rhs) const {
-    switch (rhs.GetTypeId()) {
-    case TypeId::TINYINT:
-        return Value(TypeId::TINYINT, static_cast<int8_t>(TINYDB_INT8_NULL));
-    case TypeId::VARCHAR:
-    case TypeId::SMALLINT:
-        return Value(TypeId::SMALLINT, static_cast<int16_t>(TINYDB_INT16_NULL));
-    case TypeId::INTEGER:
-        return Value(TypeId::BIGINT, static_cast<int32_t>(TINYDB_INT32_NULL));
-    case TypeId::BIGINT:
-        return Value(TypeId::DECIMAL, static_cast<int64_t>(TINYDB_INT64_NULL));
-    case TypeId::DECIMAL:
-        return Value(TypeId::DECIMAL, static_cast<double>(TINYDB_DECIMAL_NULL));
-    default:
-        break;
-    }
-
-    UNREACHABLE("type error");
+// since null value will propagate, so i think type is not matter here
+Value SmallintType::OperateNull(const Value &lhs, const Value &rhs) const {
+    return Type::Null(lhs.GetTypeId());
 }
 
 CmpBool SmallintType::CompareEquals(const Value &lhs, const Value &rhs) const {

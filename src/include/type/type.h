@@ -86,17 +86,17 @@ public:
     // (2) Keep the interface consistent by making all functions purely virtual.
 
     // =
-    virtual CmpBool CompareEquals(const Value &left, const Value &right) const;
+    virtual CmpBool CompareEquals(const Value &lhs, const Value &rhs) const;
     // !=
-    virtual CmpBool CompareNotEquals(const Value &left, const Value &right) const;
+    virtual CmpBool CompareNotEquals(const Value &lhs, const Value &rhs) const;
     // <
-    virtual CmpBool CompareLessThan(const Value &left, const Value &right) const;
+    virtual CmpBool CompareLessThan(const Value &lhs, const Value &rhs) const;
     // <=
-    virtual CmpBool CompareLessThanEquals(const Value &left, const Value &right) const;
+    virtual CmpBool CompareLessThanEquals(const Value &lhs, const Value &rhs) const;
     // >
-    virtual CmpBool CompareGreaterThan(const Value &left, const Value &right) const;
+    virtual CmpBool CompareGreaterThan(const Value &lhs, const Value &rhs) const;
     // >=
-    virtual CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const;
+    virtual CmpBool CompareGreaterThanEquals(const Value &lhs, const Value &rhs) const;
 
     // mathematical functions
     // TODO: figure out should we define inplace operations?
@@ -104,23 +104,25 @@ public:
     // e.g. more types, more operators
 
     // +
-    virtual Value Add(const Value &left, const Value &right) const;
+    virtual Value Add(const Value &lhs, const Value &rhs) const;
     // -
-    virtual Value Subtract(const Value &left, const Value &right) const;
+    virtual Value Subtract(const Value &lhs, const Value &rhs) const;
     // *
-    virtual Value Multiply(const Value &left, const Value &right) const;
+    virtual Value Multiply(const Value &lhs, const Value &rhs) const;
     // /
-    virtual Value Divide(const Value &left, const Value &right) const;
+    virtual Value Divide(const Value &lhs, const Value &rhs) const;
     // %
-    virtual Value Modulo(const Value &left, const Value &right) const;
+    virtual Value Modulo(const Value &lhs, const Value &rhs) const;
     // min
-    virtual Value Min(const Value &left, const Value &right) const;
+    virtual Value Min(const Value &lhs, const Value &rhs) const;
     // max
-    virtual Value Max(const Value &left, const Value &right) const;
+    virtual Value Max(const Value &lhs, const Value &rhs) const;
     // sqrt
     virtual Value Sqrt(const Value &val) const;
     // operation when some one is null
-    virtual Value OperateNull(const Value &val, const Value &right) const;
+    // since any value operate with null will get null, so we will return null value directly
+    // and i think type is not matter here, so we will return null value corresponding to lhs type
+    virtual Value OperateNull(const Value &lhs, const Value &right) const;
     // not sure whether empty string is zero element for string type
     virtual bool IsZero(const Value &val) const;
 

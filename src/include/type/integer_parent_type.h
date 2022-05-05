@@ -33,21 +33,21 @@ public:
     // fallback to base class to throw exception
     // i.e. use compiler to force the implementation, instead of runtime exception
 
-    Value Add(const Value &left, const Value &right) const override = 0;
-    Value Subtract(const Value &left, const Value &right) const override = 0;
-    Value Multiply(const Value &left, const Value &right) const override = 0;
-    Value Divide(const Value &left, const Value &right) const override = 0;
-    Value Modulo(const Value &left, const Value &right) const override = 0;
+    Value Add(const Value &lhs, const Value &rhs) const override = 0;
+    Value Subtract(const Value &lhs, const Value &rhs) const override = 0;
+    Value Multiply(const Value &lhs, const Value &rhs) const override = 0;
+    Value Divide(const Value &lhs, const Value &rhs) const override = 0;
+    Value Modulo(const Value &lhs, const Value &rhs) const override = 0;
     Value Sqrt(const Value &val) const override = 0;
-    Value OperateNull(const Value &val, const Value &right) const override = 0;
+    Value OperateNull(const Value &lhs, const Value &rhs) const override = 0;
     bool IsZero(const Value &val) const override = 0;
 
-    CmpBool CompareEquals(const Value &left, const Value &right) const override = 0;
-    CmpBool CompareNotEquals(const Value &left, const Value &right) const override = 0;
-    CmpBool CompareLessThan(const Value &left, const Value &right) const override = 0;
-    CmpBool CompareLessThanEquals(const Value &left, const Value &right) const override = 0;
-    CmpBool CompareGreaterThan(const Value &left, const Value &right) const override = 0;
-    CmpBool CompareGreaterThanEquals(const Value &left, const Value &right) const override = 0;
+    CmpBool CompareEquals(const Value &lhs, const Value &rhs) const override = 0;
+    CmpBool CompareNotEquals(const Value &lhs, const Value &rhs) const override = 0;
+    CmpBool CompareLessThan(const Value &lhs, const Value &rhs) const override = 0;
+    CmpBool CompareLessThanEquals(const Value &lhs, const Value &rhs) const override = 0;
+    CmpBool CompareGreaterThan(const Value &lhs, const Value &rhs) const override = 0;
+    CmpBool CompareGreaterThanEquals(const Value &lhs, const Value &rhs) const override = 0;
 
     // integer types are always inlined
     bool IsInlined(const Value &val) const override { return true; }

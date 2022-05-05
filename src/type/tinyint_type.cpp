@@ -175,28 +175,8 @@ Value TinyintType::Sqrt(const Value &val) const {
     return Value(TypeId::DECIMAL, std::sqrt(val.value_.tinyint_));
 }
 
-// TODO: figure out what type should we really return
-// i think return tinyint_null should be ok?
-Value TinyintType::OperateNull(const Value &left, const Value &rhs) const {
-    switch (rhs.GetTypeId()) {
-    case TypeId::TINYINT:
-        // not sure what type should we return while using varchar
-        // since normal operation will return tinyint, so currently we will return tinyint
-    case TypeId::VARCHAR:
-        return Value(TypeId::TINYINT, static_cast<int8_t>(TINYDB_INT8_NULL));
-    case TypeId::SMALLINT:
-        return Value(TypeId::SMALLINT, static_cast<int16_t>(TINYDB_INT16_NULL));
-    case TypeId::INTEGER:
-        return Value(TypeId::BIGINT, static_cast<int32_t>(TINYDB_INT32_NULL));
-    case TypeId::BIGINT:
-        return Value(TypeId::DECIMAL, static_cast<int64_t>(TINYDB_INT64_NULL));
-    case TypeId::DECIMAL:
-        return Value(TypeId::DECIMAL, static_cast<double>(TINYDB_DECIMAL_NULL));
-    default:
-        break;
-    }
-
-    UNREACHABLE("type error");
+Value TinyintType::OperateNull(const Value &lhs, const Value &rhs) const {
+    return Type::Null(lhs.GetTypeId());
 }
 
 // code reuse is zero
