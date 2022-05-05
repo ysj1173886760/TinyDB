@@ -20,6 +20,7 @@
 #include "type/smallint_type.h"
 #include "type/boolean_type.h"
 #include "type/integer_type.h"
+#include "type/bigint_type.h"
 
 #include <string>
 
@@ -34,8 +35,7 @@ Type *Type::k_types_[] = {
     new TinyintType(),
     new SmallintType(),
     new IntegerType(),
-    // bigint
-    new Type(TypeId::INVALID),
+    new BigintType(),
     // decimal
     new Type(TypeId::INVALID),
     // varchar

@@ -36,6 +36,7 @@ class Value {
     friend class SmallintType;
     friend class BooleanType;
     friend class IntegerType;
+    friend class BigintType;
 
 public:
     explicit Value(const TypeId type_id)
