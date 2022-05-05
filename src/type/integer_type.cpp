@@ -1,18 +1,15 @@
 /**
- * @file smallint_type.cpp
+ * @file integer_type.cpp
  * @author sheep
- * @brief smallint implementation
+ * @brief integer type implementation
  * @version 0.1
- * @date 2022-05-04
+ * @date 2022-05-05
  * 
  * @copyright Copyright (c) 2022
  * 
  */
 
-#ifndef SMALLINT_TYPE_CPP
-#define SMALLINT_TYPE_CPP
-
-#include "type/smallint_type.h"
+#include "type/integer_type.h"
 #include "common/macros.h"
 
 #include <string>
@@ -21,52 +18,52 @@
 namespace TinyDB {
 
 // helper macro
-#define SMALLINT_COMPARE_FUNC(OP)                                           \
+#define INTEGER_COMPARE_FUNC(OP)                                            \
     switch (rhs.GetTypeId()) {                                              \
     case TypeId::TINYINT:                                                   \
-        return GetCmpBool(lhs.value_.smallint_ OP rhs.value_.tinyint_);     \
+        return GetCmpBool(lhs.value_.integer_ OP rhs.value_.tinyint_);      \
     case TypeId::SMALLINT:                                                  \
-        return GetCmpBool(lhs.value_.smallint_ OP rhs.value_.smallint_);    \
+        return GetCmpBool(lhs.value_.integer_ OP rhs.value_.smallint_);     \
     case TypeId::INTEGER:                                                   \
-        return GetCmpBool(lhs.value_.smallint_ OP rhs.value_.integer_);     \
+        return GetCmpBool(lhs.value_.integer_ OP rhs.value_.integer_);      \
     case TypeId::BIGINT:                                                    \
-        return GetCmpBool(lhs.value_.smallint_ OP rhs.value_.bigint_);      \
+        return GetCmpBool(lhs.value_.integer_ OP rhs.value_.bigint_);       \
     case TypeId::DECIMAL:                                                   \
-        return GetCmpBool(lhs.value_.smallint_ OP rhs.value_.decimal_);     \
+        return GetCmpBool(lhs.value_.integer_ OP rhs.value_.decimal_);      \
     case TypeId::VARCHAR: {                                                 \
-        auto val = rhs.CastAs(TypeId::SMALLINT);                            \
-        return GetCmpBool(lhs.value_.smallint_ OP val.value_.smallint_);    \
+        auto val = rhs.CastAs(TypeId::INTEGER);                             \
+        return GetCmpBool(lhs.value_.integer_ OP val.value_.integer_);      \
     }                                                                       \
     default:                                                                \
         break;                                                              \
     }
 
 // method stands for our helper function defined in parent class
-#define SMALLINT_MODIFY_FUNC(METHOD, OP)                                                \
+#define INTEGER_MODIFY_FUNC(METHOD, OP)                                                 \
     switch (rhs.GetTypeId()) {                                                          \
     case TypeId::TINYINT:                                                               \
-        return METHOD<int16_t, int8_t>(lhs, rhs);                                       \
+        return METHOD<int32_t, int8_t>(lhs, rhs);                                       \
     case TypeId::SMALLINT:                                                              \
-        return METHOD<int16_t, int16_t>(lhs, rhs);                                      \
+        return METHOD<int32_t, int16_t>(lhs, rhs);                                      \
     case TypeId::INTEGER:                                                               \
-        return METHOD<int16_t, int32_t>(lhs, rhs);                                      \
+        return METHOD<int32_t, int32_t>(lhs, rhs);                                      \
     case TypeId::BIGINT:                                                                \
-        return METHOD<int16_t, int64_t>(lhs, rhs);                                      \
+        return METHOD<int32_t, int64_t>(lhs, rhs);                                      \
     case TypeId::DECIMAL:                                                               \
-        return Value(TypeId::DECIMAL, lhs.value_.smallint_ OP rhs.value_.decimal_);     \
+        return Value(TypeId::DECIMAL, lhs.value_.integer_ OP rhs.value_.decimal_);      \
     case TypeId::VARCHAR: {                                                             \
-        auto val = rhs.CastAs(TypeId::SMALLINT);                                        \
-        return METHOD<int16_t, int16_t>(lhs, val);                                      \
+        auto val = rhs.CastAs(TypeId::INTEGER);                                         \
+        return METHOD<int32_t, int32_t>(lhs, val);                                      \
     }                                                                                   \
     default:                                                                            \
         break;                                                                          \
     }
 
-bool SmallintType::IsZero(const Value &val) const {
-    return val.value_.smallint_ == 0;
+bool IntegerType::IsZero(const Value &val) const {
+    return val.value_.integer_ == 0;
 }
 
-Value SmallintType::Add(const Value &lhs, const Value &rhs) const {
+Value IntegerType::Add(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
     
@@ -75,12 +72,12 @@ Value SmallintType::Add(const Value &lhs, const Value &rhs) const {
         return lhs.OperateNull(rhs);
     }
 
-    SMALLINT_MODIFY_FUNC(AddValue, +);
+    INTEGER_MODIFY_FUNC(AddValue, +);
 
     UNREACHABLE("type error");
 }
 
-Value SmallintType::Subtract(const Value &lhs, const Value &rhs) const {
+Value IntegerType::Subtract(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -88,12 +85,12 @@ Value SmallintType::Subtract(const Value &lhs, const Value &rhs) const {
         return lhs.OperateNull(rhs);
     }
 
-    SMALLINT_MODIFY_FUNC(SubtractValue, -);
+    INTEGER_MODIFY_FUNC(SubtractValue, -);
 
     UNREACHABLE("type error");
 }
 
-Value SmallintType::Multiply(const Value &lhs, const Value &rhs) const {
+Value IntegerType::Multiply(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -101,12 +98,12 @@ Value SmallintType::Multiply(const Value &lhs, const Value &rhs) const {
         return lhs.OperateNull(rhs);
     }
 
-    SMALLINT_MODIFY_FUNC(MultiplyValue, *);
+    INTEGER_MODIFY_FUNC(MultiplyValue, *);
 
     UNREACHABLE("type error");
 }
 
-Value SmallintType::Divide(const Value &lhs, const Value &rhs) const {
+Value IntegerType::Divide(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -118,12 +115,12 @@ Value SmallintType::Divide(const Value &lhs, const Value &rhs) const {
         THROW_DIVIDE_BY_ZERO_EXCEPTION("Division by zero");
     }
 
-    SMALLINT_MODIFY_FUNC(DivideValue, /);
+    INTEGER_MODIFY_FUNC(DivideValue, /);
 
     UNREACHABLE("type error");
 }
 
-Value SmallintType::Modulo(const Value &lhs, const Value &rhs) const {
+Value IntegerType::Modulo(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -138,18 +135,18 @@ Value SmallintType::Modulo(const Value &lhs, const Value &rhs) const {
     // because % can only applied on integer
     switch (rhs.GetTypeId()) {                                                    
     case TypeId::TINYINT:                                                         
-        return ModuloValue<int16_t, int8_t>(lhs, rhs);                                  
+        return ModuloValue<int32_t, int8_t>(lhs, rhs);                                  
     case TypeId::SMALLINT:                                                        
-        return ModuloValue<int16_t, int16_t>(lhs, rhs);                                 
+        return ModuloValue<int32_t, int16_t>(lhs, rhs);                                 
     case TypeId::INTEGER:                                                         
-        return ModuloValue<int16_t, int32_t>(lhs, rhs);                                 
+        return ModuloValue<int32_t, int32_t>(lhs, rhs);                                 
     case TypeId::BIGINT:                                                          
-        return ModuloValue<int16_t, int64_t>(lhs, rhs);                                 
+        return ModuloValue<int32_t, int64_t>(lhs, rhs);                                 
     case TypeId::DECIMAL:                                                         
-        return Value(TypeId::DECIMAL, ValMod(lhs.value_.smallint_, rhs.value_.decimal_));
+        return Value(TypeId::DECIMAL, ValMod(lhs.value_.integer_, rhs.value_.decimal_));
     case TypeId::VARCHAR: {                                                       
-        auto val = rhs.CastAs(TypeId::SMALLINT);                                   
-        return ModuloValue<int16_t, int16_t>(lhs, val);                                  
+        auto val = rhs.CastAs(TypeId::INTEGER);                                   
+        return ModuloValue<int32_t, int32_t>(lhs, val);                                  
     }                                                                             
     default:                                                                      
         break;                                                                    
@@ -158,26 +155,26 @@ Value SmallintType::Modulo(const Value &lhs, const Value &rhs) const {
     UNREACHABLE("type error");
 }
 
-Value SmallintType::Sqrt(const Value &val) const {
+Value IntegerType::Sqrt(const Value &val) const {
     assert(val.CheckInteger());
     
     if (val.IsNull()) {
         // should we return decimal or integer?
         return Value(TypeId::DECIMAL, TINYDB_DECIMAL_NULL);
     }
-    if (val.value_.smallint_ < 0) {
+    if (val.value_.integer_ < 0) {
         THROW_DECIMAL_EXCEPTION("trying to apply sqrt on negative number");
     }
 
-    return Value(TypeId::DECIMAL, std::sqrt(val.value_.smallint_));
+    return Value(TypeId::DECIMAL, std::sqrt(val.value_.integer_));
 }
 
 // since null value will propagate, so i think type is not matter here
-Value SmallintType::OperateNull(const Value &lhs, const Value &rhs) const {
+Value IntegerType::OperateNull(const Value &lhs, const Value &rhs) const {
     return Type::Null(lhs.GetTypeId());
 }
 
-CmpBool SmallintType::CompareEquals(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareEquals(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -185,12 +182,12 @@ CmpBool SmallintType::CompareEquals(const Value &lhs, const Value &rhs) const {
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(==);
+    INTEGER_COMPARE_FUNC(==);
 
     UNREACHABLE("type error");
 }
 
-CmpBool SmallintType::CompareNotEquals(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareNotEquals(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -198,12 +195,12 @@ CmpBool SmallintType::CompareNotEquals(const Value &lhs, const Value &rhs) const
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(!=);
+    INTEGER_COMPARE_FUNC(!=);
 
     UNREACHABLE("type error");
 }
 
-CmpBool SmallintType::CompareLessThan(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareLessThan(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -211,12 +208,12 @@ CmpBool SmallintType::CompareLessThan(const Value &lhs, const Value &rhs) const 
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(<);
+    INTEGER_COMPARE_FUNC(<);
 
     UNREACHABLE("type error");
 }
 
-CmpBool SmallintType::CompareLessThanEquals(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareLessThanEquals(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -224,12 +221,12 @@ CmpBool SmallintType::CompareLessThanEquals(const Value &lhs, const Value &rhs) 
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(<=);
+    INTEGER_COMPARE_FUNC(<=);
 
     UNREACHABLE("type error");
 }
 
-CmpBool SmallintType::CompareGreaterThan(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareGreaterThan(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -237,12 +234,12 @@ CmpBool SmallintType::CompareGreaterThan(const Value &lhs, const Value &rhs) con
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(>);
+    INTEGER_COMPARE_FUNC(>);
 
     UNREACHABLE("type error");
 }
 
-CmpBool SmallintType::CompareGreaterThanEquals(const Value &lhs, const Value &rhs) const {
+CmpBool IntegerType::CompareGreaterThanEquals(const Value &lhs, const Value &rhs) const {
     assert(lhs.CheckInteger());
     assert(lhs.CheckComparable(rhs));
 
@@ -250,39 +247,39 @@ CmpBool SmallintType::CompareGreaterThanEquals(const Value &lhs, const Value &rh
         return CmpBool::CmpNull;
     }
 
-    SMALLINT_COMPARE_FUNC(>=);
+    INTEGER_COMPARE_FUNC(>=);
 
     UNREACHABLE("type error");
 }
 
-std::string SmallintType::ToString(const Value &val) const {
+std::string IntegerType::ToString(const Value &val) const {
     assert(val.CheckInteger());
     if (val.IsNull()) {
-        return "smallint_null";
+        return "integer_null";
     }
 
-    return std::to_string(val.value_.smallint_);
+    return std::to_string(val.value_.integer_);
 }
 
 // serialize/deserialize for storage
 // note that serialize/deserialize has nothing to do with string
 // we will serialize those into byte array, instead of some meaningful string
 
-void SmallintType::SerializeTo(const Value &val, char *storage) const {
-    *reinterpret_cast<int16_t *>(storage) = val.value_.smallint_;
+void IntegerType::SerializeTo(const Value &val, char *storage) const {
+    *reinterpret_cast<int32_t *>(storage) = val.value_.integer_;
 }
 
-Value SmallintType::DeserializeFrom(const char *storage) const {
-    int16_t val = *reinterpret_cast<const int16_t *>(storage);
+Value IntegerType::DeserializeFrom(const char *storage) const {
+    int16_t val = *reinterpret_cast<const int32_t *>(storage);
     return Value(type_id_, val);
 }
 
-Value SmallintType::Copy(const Value &val) const {
+Value IntegerType::Copy(const Value &val) const {
     assert(val.CheckInteger());
-    return Value(TypeId::SMALLINT, val.value_.smallint_);
+    return Value(TypeId::SMALLINT, val.value_.integer_);
 }
 
-Value SmallintType::CastAs(const Value &val, const TypeId type_id) const {
+Value IntegerType::CastAs(const Value &val, const TypeId type_id) const {
     if (val.IsNull()) {
         return Type::Null(type_id);
     }
@@ -292,25 +289,23 @@ Value SmallintType::CastAs(const Value &val, const TypeId type_id) const {
 
     switch (type_id) {
     case TypeId::TINYINT:
-        return Value(type_id, static_cast<int8_t>(val.value_.smallint_));
+        return Value(type_id, static_cast<int8_t>(val.value_.integer_));
     case TypeId::SMALLINT:
-        return Copy(val);
+        return Value(type_id, static_cast<int16_t>(val.value_.integer_));
     case TypeId::INTEGER:
-        return Value(type_id, static_cast<int32_t>(val.value_.smallint_));
+        return Copy(val);
     case TypeId::BIGINT:
-        return Value(type_id, static_cast<int64_t>(val.value_.smallint_));
+        return Value(type_id, static_cast<int64_t>(val.value_.integer_));
     case TypeId::DECIMAL:
-        return Value(type_id, static_cast<double>(val.value_.smallint_));
+        return Value(type_id, static_cast<double>(val.value_.integer_));
     case TypeId::VARCHAR:
         return Value(type_id, val.ToString());
     default:
         break;
     }
 
-    UNREACHABLE("cannot cast smallint to " + Type::TypeToString(type_id));
+    UNREACHABLE("cannot cast integer to " + Type::TypeToString(type_id));
 }
 
 
 }
-
-#endif

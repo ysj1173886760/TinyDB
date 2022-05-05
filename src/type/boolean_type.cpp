@@ -120,7 +120,7 @@ Value BooleanType::Copy(const Value &val) const {
 }
 
 Value BooleanType::CastAs(const Value &val, TypeId type_id) const {
-    assert(IsCoercableFrom(type_id));
+    assert(IsCoercableTo(type_id));
 
     if (val.IsNull()) {
         return Type::Null(type_id);
@@ -134,7 +134,7 @@ Value BooleanType::CastAs(const Value &val, TypeId type_id) const {
         break;
     }
 
-    // throw logic error, since we've checked whether we are coercable from type_id
+    // throw logic error, since we've checked whether we are coercable to type_id
     THROW_UNREACHABLE_EXCEPTION("logic error");
 }
 

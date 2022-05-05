@@ -288,13 +288,13 @@ Value TinyintType::Copy(const Value &val) const {
     return Value(TypeId::TINYINT, val.value_.tinyint_);
 }
 
-// TODO: i think we need a abstract function to generate the null value
-// corresponding to the type
-
 Value TinyintType::CastAs(const Value &val, const TypeId type_id) const {
     if (val.IsNull()) {
         return Type::Null(type_id);
     }
+
+    // check whether we can cast to type_id;
+    assert(IsCoercableTo(type_id));
 
     switch (type_id) {
     case TypeId::TINYINT:

@@ -61,6 +61,11 @@ public:
 
     // check whether we can coerce from type_id
     bool IsCoercableFrom(const TypeId type_id) const;
+    // check whether we can coerce to type_id
+    bool IsCoercableTo(const TypeId type_id) const {
+        // whether type_id is coercable from us
+        return GetInstance(type_id)->IsCoercableFrom(type_id_);
+    }
 
     // virtual functions
     // define the generic operations, we will apply those operations
@@ -128,6 +133,7 @@ public:
     virtual Value OperateNull(const Value &lhs, const Value &right) const;
     
     // check whether value is zero
+    // mostly we use it to check whether we are dividing zero
     // not sure whether empty string is zero element for string type
     virtual bool IsZero(const Value &val) const;
 
