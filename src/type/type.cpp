@@ -21,6 +21,7 @@
 #include "type/boolean_type.h"
 #include "type/integer_type.h"
 #include "type/bigint_type.h"
+#include "type/decimal_type.h"
 
 #include <string>
 
@@ -36,8 +37,7 @@ Type *Type::k_types_[] = {
     new SmallintType(),
     new IntegerType(),
     new BigintType(),
-    // decimal
-    new Type(TypeId::INVALID),
+    new DecimalType(),
     // varchar
     new Type(TypeId::INVALID),
     // timestamp

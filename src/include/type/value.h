@@ -37,6 +37,7 @@ class Value {
     friend class BooleanType;
     friend class IntegerType;
     friend class BigintType;
+    friend class DecimalType;
 
 public:
     explicit Value(const TypeId type_id)
@@ -212,6 +213,8 @@ public:
     // check whether value is integer
     bool CheckInteger() const;
     // check whether we can compare with rhs
+    // if two value are comparable, then most likely they can do arithmetical operation
+    // comparable is the subset of coerable
     bool CheckComparable(const Value &rhs) const;
 
 private:
