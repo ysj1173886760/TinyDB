@@ -65,7 +65,7 @@ static constexpr double eps = 1e-10;
     }
 
 bool DecimalType::IsZero(const Value &val) const {
-    return val.value_.decimal_ == 0;
+    return abs(val.value_.decimal_) < eps;
 }
 
 Value DecimalType::Add(const Value &lhs, const Value &rhs) const {
