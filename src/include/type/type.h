@@ -59,6 +59,9 @@ public:
 
     inline static Type *GetInstance(const TypeId type_id) { return k_types_[type_id]; }
 
+    // check whether we can coerce from type_id
+    bool IsCoercableFrom(const TypeId type_id) const;
+
     // virtual functions
     // define the generic operations, we will apply those operations
     // on values based on type id

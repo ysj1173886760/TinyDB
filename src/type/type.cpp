@@ -118,6 +118,44 @@ Value Type::Null(const TypeId type_id) {
     UNREACHABLE("invalid type");
 }
 
+bool Type::IsCoercableFrom(const TypeId type_id) const {
+    if (type_id == INVALID || type_id_ == INVALID) {
+        return false;
+    }
+    switch (type_id_) {
+    case VARCHAR:
+        // everyone can coerce to varchar
+        return true;
+
+    // avoid comparsion between boolean and numeric type
+    case BOOLEAN:
+        return (type_id == VARCHAR || type_id == BOOLEAN);
+
+    case TINYINT:
+    case SMALLINT:
+    case INTEGER:
+    case BIGINT:
+    case DECIMAL:
+        switch (type_id) {
+        case TINYINT:
+        case SMALLINT:
+        case INTEGER:
+        case BIGINT:
+        case DECIMAL:
+        case VARCHAR:
+            return true;
+        default:
+            return false;
+        }
+
+    case TIMESTAMP:
+        return (type_id == VARCHAR || type_id == TIMESTAMP);
+    
+    default:
+        return false;
+    }
+}
+
 // when sub-class didn't implement those functions, it will fallback to 
 // base class and throw an exception
 CmpBool Type::CompareEquals(const Value &left, const Value &right) const {
