@@ -28,6 +28,9 @@ public:
     BooleanType(): Type(TypeId::BOOLEAN) {}
     ~BooleanType() override = default;
 
+    bool IsTrue(const Value &val) const override;
+    bool IsFalse(const Value &val) const override;
+
     CmpBool CompareEquals(const Value &lhs, const Value &rhs) const override;
     CmpBool CompareNotEquals(const Value &lhs, const Value &rhs) const override;
     

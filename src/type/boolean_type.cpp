@@ -79,6 +79,17 @@ CmpBool BooleanType::CompareNotEquals(const Value &lhs, const Value &rhs) const 
     THROW_UNREACHABLE_EXCEPTION("logic error");
 }
 
+bool BooleanType::IsTrue(const Value &val) const {
+    assert(val.GetTypeId() == TypeId::BOOLEAN);
+
+    return val.value_.boolean_ == 1;
+}
+
+bool BooleanType::IsFalse(const Value &val) const {
+    assert(val.GetTypeId() == TypeId::BOOLEAN);
+
+    return val.value_.boolean_ == 0;
+}
 
 std::string BooleanType::ToString(const Value &val) const {
     assert(val.GetTypeId() == TypeId::BOOLEAN);

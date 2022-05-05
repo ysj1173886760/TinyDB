@@ -18,6 +18,7 @@
 #include "type/value.h"
 #include "type/tinyint_type.h"
 #include "type/smallint_type.h"
+#include "type/boolean_type.h"
 
 #include <string>
 
@@ -29,7 +30,7 @@ namespace TinyDB {
 Type *Type::k_types_[] = {
     new Type(TypeId::INVALID),
     // place holder for bool
-    new Type(TypeId::INVALID),
+    new BooleanType(),
     new TinyintType(),
     new SmallintType(),
     // integer
@@ -97,6 +98,8 @@ std::string Type::TypeToString(const TypeId type_id) {
 
 Value Type::Null(const TypeId type_id) {
     switch (type_id) {
+    case TypeId::BOOLEAN:
+        return Value(type_id, TINYDB_BOOLEAN_NULL);
     case TypeId::TINYINT:
         return Value(type_id, TINYDB_INT8_NULL);
     case TypeId::SMALLINT:
@@ -154,6 +157,14 @@ bool Type::IsCoercableFrom(const TypeId type_id) const {
     default:
         return false;
     }
+}
+
+bool Type::IsTrue(const Value &val) const {
+    THROW_NOT_IMPLEMENT_EXCEPTION(TypeToString(type_id_) + " doesn't implement IsTrue");
+}
+
+bool Type::IsFalse(const Value &val) const {
+    THROW_NOT_IMPLEMENT_EXCEPTION(TypeToString(type_id_) + " doesn't implement IsFalse");
 }
 
 // when sub-class didn't implement those functions, it will fallback to 

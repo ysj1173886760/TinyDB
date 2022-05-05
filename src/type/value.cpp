@@ -48,8 +48,13 @@ Value &Value::operator=(Value other) {
 Value::Value(TypeId type_id, int8_t i): Value(type_id) {
     switch (type_id) {
     case TypeId::BOOLEAN:
-        value_.boolean_ = i;
-        len_ = (value_.boolean_ == TINYDB_BOOLEAN_NULL ? TINYDB_VALUE_NULL : 0);
+        if (i == TINYDB_BOOLEAN_NULL) {
+            value_.boolean_ = i;
+            len_ = TINYDB_VALUE_NULL;
+        } else {
+            value_.boolean_ = i != 0 ? 1 : 0;
+            len_ = 0;
+        }
         break;
     case TypeId::TINYINT:
         value_.tinyint_ = i;

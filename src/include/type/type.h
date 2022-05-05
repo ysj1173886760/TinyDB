@@ -126,8 +126,14 @@ public:
     // since any value operate with null will get null, so we will return null value directly
     // and i think type is not matter here, so we will return null value corresponding to lhs type
     virtual Value OperateNull(const Value &lhs, const Value &right) const;
+    
+    // check whether value is zero
     // not sure whether empty string is zero element for string type
     virtual bool IsZero(const Value &val) const;
+
+    // operations used in boolean type
+    virtual bool IsTrue(const Value &val) const;
+    virtual bool IsFalse(const Value &val) const;
 
     // special operations
 
@@ -136,7 +142,7 @@ public:
     virtual bool IsInlined(const Value &val) const;
 
     // return a stringified version of this value
-    // i.e. serialize it to string
+    // for debug purpose
     virtual std::string ToString(const Value &val) const;
 
     // !!! deprecated !!!

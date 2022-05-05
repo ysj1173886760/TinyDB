@@ -84,6 +84,18 @@ public:
         return Type::GetInstance(type_id_)->CastAs(*this, type_id);
     }
 
+    inline std::string GetType() const {
+        return Type::TypeToString(type_id_);
+    }
+
+    // will this be too slow? 2-level indirection here
+    // first we need to get type corresponding type_id from instance table
+    // then find the functions from vtable
+    // another choice is to not seperate the value and type.
+    // i.e. IntValue, BooleanValue, etc
+    // we still need type_id to handle casting
+    // or we can embed type into value directly, and this will bypass one-level indirection
+
     // comparison functions
 
     inline CmpBool CompareEquals(const Value &rhs) const {
@@ -140,6 +152,14 @@ public:
     inline bool IsNull() const {
         // len_ = TINYDB_VALUE_NULL means this value is null
         return len_ == TINYDB_VALUE_NULL;
+    }
+
+    // boolean function
+    inline bool IsTrue() const {
+        return Type::GetInstance(type_id_)->IsTrue(*this);
+    }
+    inline bool IsFalse() const {
+        return Type::GetInstance(type_id_)->IsFalse(*this);
     }
 
     // other special functions
