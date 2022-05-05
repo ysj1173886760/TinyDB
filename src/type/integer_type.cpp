@@ -270,13 +270,13 @@ void IntegerType::SerializeTo(const Value &val, char *storage) const {
 }
 
 Value IntegerType::DeserializeFrom(const char *storage) const {
-    int16_t val = *reinterpret_cast<const int32_t *>(storage);
+    auto val = *reinterpret_cast<const int32_t *>(storage);
     return Value(type_id_, val);
 }
 
 Value IntegerType::Copy(const Value &val) const {
     assert(val.CheckInteger());
-    return Value(TypeId::SMALLINT, val.value_.integer_);
+    return Value(TypeId::INTEGER, val.value_.integer_);
 }
 
 Value IntegerType::CastAs(const Value &val, const TypeId type_id) const {

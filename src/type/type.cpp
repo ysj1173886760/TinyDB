@@ -19,6 +19,7 @@
 #include "type/tinyint_type.h"
 #include "type/smallint_type.h"
 #include "type/boolean_type.h"
+#include "type/integer_type.h"
 
 #include <string>
 
@@ -29,12 +30,10 @@ namespace TinyDB {
 // to avoid endless recurrent header reference
 Type *Type::k_types_[] = {
     new Type(TypeId::INVALID),
-    // place holder for bool
     new BooleanType(),
     new TinyintType(),
     new SmallintType(),
-    // integer
-    new Type(TypeId::INVALID),
+    new IntegerType(),
     // bigint
     new Type(TypeId::INVALID),
     // decimal

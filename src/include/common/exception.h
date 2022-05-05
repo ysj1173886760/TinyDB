@@ -60,9 +60,9 @@ public:
 
         std::string loc = std::string(file) + "; line " + std::to_string(line);
         std::string exception_message = 
-            "Exception Type :: " + ExceptionTypeToString(type) + "\n" +
-            "Message :: " + message + "\n" +
-            "@ Location: " + loc + "\n";
+            "******* Exception Type :: " + ExceptionTypeToString(type) + "\n" +
+            "******* Message :: " + message + "\n" +
+            "******* @ Location: " + loc + "\n";
         std::cerr << exception_message;
     }
 
