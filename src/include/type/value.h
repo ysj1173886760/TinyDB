@@ -38,6 +38,7 @@ class Value {
     friend class IntegerType;
     friend class BigintType;
     friend class DecimalType;
+    friend class VarlenType;
 
 public:
     explicit Value(const TypeId type_id)
