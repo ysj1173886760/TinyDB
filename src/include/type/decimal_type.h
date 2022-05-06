@@ -18,7 +18,7 @@
 
 namespace TinyDB {
 
-class DecimalType : public NumericType {
+class DecimalType: public NumericType {
 public:
     DecimalType(): NumericType(TypeId::DECIMAL) {}
     ~DecimalType() override = default;
