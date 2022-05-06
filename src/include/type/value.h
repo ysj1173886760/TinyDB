@@ -99,6 +99,9 @@ public:
     // i.e. IntValue, BooleanValue, etc
     // we still need type_id to handle casting
     // or we can embed type into value directly, and this will bypass one-level indirection
+    // or just use duck type. i.e. every type has it's own implementation, no inherient. 
+    // And we can dispatch these function based on value type. this will bypass the indirection from vtable
+    // and i think that is a good solution. Fulture system may use that approach
 
     // comparison functions
 

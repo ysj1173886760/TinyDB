@@ -22,6 +22,7 @@
 #include "type/integer_type.h"
 #include "type/bigint_type.h"
 #include "type/decimal_type.h"
+#include "type/varlen_type.h"
 
 #include <string>
 
@@ -38,8 +39,7 @@ Type *Type::k_types_[] = {
     new IntegerType(),
     new BigintType(),
     new DecimalType(),
-    // varchar
-    new Type(TypeId::INVALID),
+    new VarlenType(),
     // timestamp
     new Type(TypeId::INVALID),
 };

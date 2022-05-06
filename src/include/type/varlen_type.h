@@ -19,7 +19,7 @@ namespace TinyDB {
 
 class VarlenType: public Type {
 public:
-    explicit VarlenType(TypeId type_id): Type(type_id) {}
+    explicit VarlenType(): Type(TypeId::VARCHAR) {}
     // value has the responsibility of destructing the value, not type
     ~VarlenType() override = default;
 

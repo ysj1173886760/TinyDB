@@ -207,13 +207,13 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
     case TypeId::BIGINT: {
         str = value.ToString();
         int64_t bigint = 0;
-        bigint = static_cast<int64_t>(stoi(str));
+        bigint = static_cast<int64_t>(stol(str));
         return Value(type_id, bigint);
     }
     case TypeId::DECIMAL: {
         str = value.ToString();
         double decimal = 0;
-        decimal = static_cast<double>(stoi(str));
+        decimal = static_cast<double>(stod(str));
         return Value(type_id, decimal);
     }
     case TypeId::TIMESTAMP: {
