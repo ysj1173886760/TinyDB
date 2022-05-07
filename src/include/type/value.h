@@ -80,6 +80,10 @@ public:
 
     inline TypeId GetTypeId() const { return type_id_; }
 
+    // get length of varlen data. no other metadata
+    // for fixed-len data, it will throw exception. 
+    // for getting size of fixed-len data, please check Type::GetTypeSize
+    // TODO: should we return 0 for fixed-len data? I really want to get rid of exceptions
     inline uint32_t GetLength() const { return Type::GetInstance(type_id_)->GetLength(*this); }
 
     inline const char *GetData() const { return Type::GetInstance(type_id_)->GetData(*this); }
@@ -90,6 +94,21 @@ public:
 
     inline std::string GetType() const {
         return Type::TypeToString(type_id_);
+    }
+
+    /**
+     * @brief return the length when the value is serialized to storage
+     * for fixed-length type, it will return the corresponding type size.
+     * for varied-length type, it will return the data length + 4(indicate the length of data)
+     * @return uint32_t 
+     */
+    uint32_t GetSerializedLength() const {
+        switch(type_id_) {
+        case TypeId::VARCHAR:
+            return GetLength() + sizeof(uint32_t);
+        default:
+            return Type::GetTypeSize(type_id_);
+        }
     }
 
     // will this be too slow? 2-level indirection here

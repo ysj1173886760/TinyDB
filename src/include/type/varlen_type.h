@@ -52,6 +52,9 @@ public:
         return val.value_.varlen_;
     }
     uint32_t GetLength(const Value &val) const {
+        if (val.IsNull()) {
+            return 0;
+        }
         return val.len_;
     }
 };

@@ -81,6 +81,7 @@ public:
         return static_cast<uint32_t> (uninlined_columns_.size());
     }
 
+    // return the length of tuple. count by bytes
     inline uint32_t GetLength() const {
         return length_;
     }

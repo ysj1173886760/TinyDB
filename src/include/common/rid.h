@@ -51,7 +51,7 @@ public:
      * @return int64_t 
      */
     inline int64_t Get() const {
-        return static_cast<int64_t>(page_id_ << 32) | slot_id_;
+        return (static_cast<int64_t>(page_id_) << 32) | slot_id_;
     }
 
     inline page_id_t GetPageId() const {
