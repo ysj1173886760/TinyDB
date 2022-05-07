@@ -37,6 +37,7 @@ public:
      */
     Column(std::string column_name, TypeId type_id, const AbstractExpression *expr = nullptr)
         : column_name_(column_name), column_type_(type_id), fixed_length_(0), expr_(expr) {
+        fixed_length_ = Type::GetTypeSize(type_id);
         TINYDB_ASSERT(type_id != TypeId::VARCHAR, "Wrong constructor for VARCHAR type");
     }
 
@@ -50,6 +51,8 @@ public:
      */
     Column(std::string column_name, TypeId type_id, uint32_t length, const AbstractExpression *expr = nullptr)
         : column_name_(column_name), column_type_(type_id), fixed_length_(0), variable_length_(length), expr_(expr) {
+        // 4 byte length, plus 8 byte pointer(RID)
+        fixed_length_ = 12;
         TINYDB_ASSERT(type_id == TypeId::VARCHAR, "Wrong constructor for non-varlen type");
     }
 
