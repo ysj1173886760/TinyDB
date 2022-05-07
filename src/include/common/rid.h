@@ -85,6 +85,11 @@ public:
                slot_id_ == rhs.slot_id_;
     }
 
+    void Swap(RID &rhs) {
+        std::swap(page_id_, rhs.page_id_);
+        std::swap(slot_id_, rhs.slot_id_);
+    }
+
 private:
     page_id_t page_id_{INVALID_PAGE_ID};
     uint32_t slot_id_{0};

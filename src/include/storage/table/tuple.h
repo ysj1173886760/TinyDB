@@ -35,6 +35,17 @@ public:
     // create tuple from values and corresponding schema
     Tuple(std::vector<Value> values, const Schema *schema);
 
+    // copy constructor
+    Tuple(const Tuple &other);
+    Tuple &operator=(Tuple other);
+
+    void Swap(Tuple &rhs) {
+        std::swap(rhs.allocated_, allocated_);
+        std::swap(rhs.data_, data_);
+        std::swap(rhs.size_, size_);
+        rid_.Swap(rhs.rid_);
+    }
+
     ~Tuple();
 
     // helper functions
@@ -60,7 +71,37 @@ public:
         return allocated_;
     }
 
+    // get the value of a specified column
+    Value GetValue(const Schema *schema, uint32_t column_idx) const;
+
+    /**
+     * @brief 
+     *  generate a key tuple given schemas and attributes
+     * @param schema schema of current tuple
+     * @param key_schema schema of returned tuple
+     * @param key_attrs indices of the columns of old schema that will constitute new schema
+     * @return Tuple 
+     */
+    Tuple KeyFromTuple(const Schema *schema, const Schema *key_schema, const std::vector<uint32_t> &key_attrs);
+
+    // Is the column value null?
+    inline bool IsNull(const Schema *schema, uint32_t column_idx) const {
+        Value value = GetValue(schema, column_idx);
+        return value.IsNull();
+    }
+
+    std::string ToString(const Schema *schema) const;
+
+    // serialize tuple data
+    void SerializeTo(char *storage) const;
+
+    // deserialize tuple data
+    static Tuple DeserializeFrom(const char *storage);
+
 private:
+    // get the starting storage address of specific column
+    const char *GetDataPtr(const Schema *schema, uint32_t column_idx) const;
+
     // is tuple allocated?
     // maybe we can get this attribute by checking whether data pointer is null
     bool allocated_{false};
