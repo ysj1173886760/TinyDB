@@ -27,6 +27,7 @@ class AbstractExpression;
  * max length of varchar, column offsets, etc.
  */
 class Column {
+    friend class Schema;
 public:
     /**
      * @brief
