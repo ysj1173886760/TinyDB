@@ -70,7 +70,7 @@ TEST(SchemaTest, UninlinedTupleTest) {
 
     EXPECT_EQ(schema.GetColumnCount(), 2);
     EXPECT_EQ(schema.GetUninlinedColumnCount(), 1);
-    EXPECT_EQ(schema.GetLength(), 20);
+    EXPECT_EQ(schema.GetLength(), 12);
 
     auto idx = schema.GetColIdx("colA");
     EXPECT_EQ(idx, 0);

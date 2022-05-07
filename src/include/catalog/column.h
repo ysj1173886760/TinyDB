@@ -37,8 +37,7 @@ public:
      * @param expr expression used to create this column. thus we can use expression to create the output schema
      */
     Column(std::string column_name, TypeId type_id, const AbstractExpression *expr = nullptr)
-        : column_name_(column_name), column_type_(type_id), fixed_length_(0), expr_(expr) {
-        fixed_length_ = Type::GetTypeSize(type_id);
+        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)), expr_(expr) {
         TINYDB_ASSERT(type_id != TypeId::VARCHAR, "Wrong constructor for VARCHAR type");
     }
 
@@ -51,9 +50,7 @@ public:
      * @param expr expression used to create this column.
      */
     Column(std::string column_name, TypeId type_id, uint32_t length, const AbstractExpression *expr = nullptr)
-        : column_name_(column_name), column_type_(type_id), fixed_length_(0), variable_length_(length), expr_(expr) {
-        // 4 byte length, plus 8 byte pointer(RID)
-        fixed_length_ = 12;
+        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)), variable_length_(length), expr_(expr) {
         TINYDB_ASSERT(type_id == TypeId::VARCHAR, "Wrong constructor for non-varlen type");
     }
 
@@ -96,12 +93,23 @@ public:
     }
 
 private:
+    uint32_t GetFixedLength(TypeId type_id) {
+        switch (type_id) {
+        case TypeId::VARCHAR:
+            // store 4 byte offset pointing to real data
+            return sizeof(uint32_t);
+        default:
+            return Type::GetTypeSize(type_id);
+        }
+    }
+
     // column name
     std::string column_name_;
     // column value's type
     TypeId column_type_;
-    // For non-inlined column, this is the size of a pointer
-    // otherwise it's the size of fixed length column
+    // size of column stored in tuple
+    // for inlined value, it's type size
+    // otherwise, it stores the offset pointing to the real value
     uint32_t fixed_length_;
     // for a inlined column, 0
     // otherwise, the length of variable length column
