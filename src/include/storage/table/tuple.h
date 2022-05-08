@@ -40,7 +40,6 @@ public:
     Tuple &operator=(Tuple other);
 
     void Swap(Tuple &rhs) {
-        std::swap(rhs.allocated_, allocated_);
         std::swap(rhs.data_, data_);
         std::swap(rhs.size_, size_);
         rid_.Swap(rhs.rid_);
@@ -65,10 +64,6 @@ public:
      */
     inline uint32_t GetLength() const {
         return size_;
-    }
-
-    inline bool IsAllocated() const {
-        return allocated_;
     }
 
     // get the value of a specified column
@@ -101,20 +96,34 @@ public:
 
     std::string ToString(const Schema *schema) const;
 
-    // serialize tuple data
+    // serialize tuple data with size
+    void SerializeToWithSize(char *storage) const;
+
+    // deserialize tuple data with size
+    static Tuple DeserializeFromWithSize(const char *storage);
+
+    /**
+     * @brief 
+     * serialize tuple data without size. 
+     * this serialization method is not self-contained, 
+     * thus we need other metadata to store the size.
+     * @param storage buffer contains tuple data
+     */
     void SerializeTo(char *storage) const;
 
-    // deserialize tuple data
-    static Tuple DeserializeFrom(const char *storage);
+    /**
+     * @brief 
+     * deserialize tuple without size, same as above
+     * @param storage buffer contains tuple data
+     * @param size tuple size
+     * @return Tuple 
+     */
+    static Tuple DeserializeFrom(const char *storage, uint32_t size);
 
 private:
     // get the starting storage address of specific column
     const char *GetDataPtr(const Schema *schema, uint32_t column_idx) const;
 
-    // is tuple allocated?
-    // maybe we can get this attribute by checking whether data pointer is null
-    bool allocated_{false};
-    
     // default is invalid rid
     RID rid_{};
 

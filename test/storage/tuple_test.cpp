@@ -43,9 +43,9 @@ TEST(TupleTest, BasicTest) {
     EXPECT_EQ(tuple.GetValue(&schema, 2).CompareEquals(valueC), CmpBool::CmpTrue);
 
     char storage[40];
-    tuple.SerializeTo(storage);
+    tuple.SerializeToWithSize(storage);
 
-    auto new_tuple = Tuple::DeserializeFrom(storage);
+    auto new_tuple = Tuple::DeserializeFromWithSize(storage);
 
     EXPECT_EQ(new_tuple.GetValue(&schema, 0).CompareEquals(valueA), CmpBool::CmpTrue);
     EXPECT_EQ(new_tuple.GetValue(&schema, 1).CompareEquals(valueB), CmpBool::CmpTrue);

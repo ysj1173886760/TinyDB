@@ -16,7 +16,7 @@
 
 namespace TinyDB {
 
-Tuple::Tuple(std::vector<Value> values, const Schema *schema) : allocated_(true) {
+Tuple::Tuple(std::vector<Value> values, const Schema *schema) {
     assert(values.size() == schema->GetColumnCount());
 
     // calculate the size of tuple
@@ -61,10 +61,9 @@ Tuple::Tuple(std::vector<Value> values, const Schema *schema) : allocated_(true)
     }
 }
 
-Tuple::Tuple(const Tuple &other) : allocated_(other.allocated_),
-                                   rid_(other.rid_),
+Tuple::Tuple(const Tuple &other) : rid_(other.rid_),
                                    size_(other.size_) {
-    if (allocated_) {
+    if (other.data_ != nullptr) {
         data_ = new char[size_];
         memcpy(data_, other.data_, size_);
     }
@@ -121,7 +120,7 @@ Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema) {
     return KeyFromTuple(schema, key_schema, key_attrs);
 }
 
-void Tuple::SerializeTo(char *storage) const {
+void Tuple::SerializeToWithSize(char *storage) const {
     // do we need to serialize size_ here?
     // i think we can retrieve all of the metadata from tuple indirectly though fixed-length data field
     // because we can get the last varlen offset though schema and read the length of that varlen type
@@ -131,14 +130,27 @@ void Tuple::SerializeTo(char *storage) const {
     memcpy(storage + sizeof(uint32_t), data_, size_);
 }
 
-Tuple Tuple::DeserializeFrom(const char *storage) {
+Tuple Tuple::DeserializeFromWithSize(const char *storage) {
     auto tuple = Tuple();
     uint32_t size = *reinterpret_cast<const uint32_t *>(storage);
     tuple.size_ = size;
 
     tuple.data_ = new char[tuple.size_];
     memcpy(tuple.data_, storage + sizeof(uint32_t), tuple.size_);
-    tuple.allocated_ = true;
+
+    return tuple;
+}
+
+void Tuple::SerializeTo(char *storage) const {
+    memcpy(storage, data_, size_);
+}
+
+Tuple Tuple::DeserializeFrom(const char *storage, uint32_t size) {
+    auto tuple = Tuple();
+    tuple.size_ = size;
+
+    tuple.data_ = new char[tuple.size_];
+    memcpy(tuple.data_, storage, tuple.size_);
 
     return tuple;
 }

@@ -21,6 +21,13 @@
 
 namespace TinyDB {
 
+/**
+ * @brief 
+ * in memory representation of a single page,
+ * we stored 8 byte metadata in the header,
+ * first 4 byte is page id,
+ * second 4 byte is lsn. i.e. last sequence number, used for crash recovery
+ */
 class Page {
     friend class BufferPoolManager;
 public:
@@ -81,10 +88,12 @@ public:
 
 protected:
     static_assert(sizeof(page_id_t) == 4);
+    static_assert(sizeof(lsn_t) == 4);
 
     // 4 byte for page id
     // 4 byte for lsn
     static constexpr size_t PAGE_HEADER_SIZE = 8;
+    static constexpr size_t OFFSET_LSN = 4;
 
 private:
     // zero out the data
