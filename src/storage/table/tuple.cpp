@@ -116,6 +116,11 @@ Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema, const 
     return Tuple(values, key_schema);
 }
 
+Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema) {
+    auto key_attrs = key_schema->GenerateKeyAttrs(schema);
+    return KeyFromTuple(schema, key_schema, key_attrs);
+}
+
 void Tuple::SerializeTo(char *storage) const {
     // do we need to serialize size_ here?
     // i think we can retrieve all of the metadata from tuple indirectly though fixed-length data field
@@ -136,6 +141,20 @@ Tuple Tuple::DeserializeFrom(const char *storage) {
     tuple.allocated_ = true;
 
     return tuple;
+}
+
+std::string Tuple::ToString(const Schema *schema) const {
+    std::stringstream os;
+    int len = static_cast<int>(schema->GetColumnCount());
+    
+    os << "(";
+    for (int i = 0; i < len - 1; i++) {
+        auto value = GetValue(schema, i);
+        os << value.ToString() << ", ";
+    }
+    os << GetValue(schema, len).ToString() << ") Tuple size is " << size_;
+
+    return os.str();
 }
 
 }

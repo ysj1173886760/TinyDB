@@ -10,6 +10,7 @@
  */
 
 #include "catalog/schema.h"
+#include "common/exception.h"
 
 #include <sstream>
 #include <string>
@@ -59,6 +60,18 @@ std::string Schema::ToString() const {
     os << columns_.back().ToString() << ")";
 
     return os.str();
+}
+
+std::vector<uint32_t> Schema::GenerateKeyAttrs(const Schema *schema) const {
+    std::vector<uint32_t> key_attrs;
+    for (const auto &column : columns_) {
+        uint32_t idx = schema->GetColIdx(column.column_name_);
+        if (idx == UINT32_MAX) {
+            THROW_LOGIC_ERROR_EXCEPTION("you code is wrong, fixme!!!!");
+        }
+        key_attrs.push_back(idx);
+    }
+    return key_attrs;
 }
 
 }

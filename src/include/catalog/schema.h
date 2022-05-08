@@ -55,7 +55,7 @@ public:
     }
 
     // get the col idx corresponding to col_name
-    // return -1 when we didn't find this column
+    // return UINT32_MAX when we didn't find this column
     uint32_t GetColIdx(const std::string &col_name) const {
         for (size_t i = 0; i < columns_.size(); i++) {
             if (columns_[i].GetName() == col_name) {
@@ -64,7 +64,7 @@ public:
         }
         // don't throw exception.
         // We rather handle the error than throw exception everywhere
-        return -1;
+        return UINT32_MAX;
     }
 
     std::string ToString() const;
@@ -93,6 +93,16 @@ public:
     inline bool IsInlined() const {
         return is_tuple_inlined_;
     }
+
+    /**
+     * @brief 
+     * generate key attributes from it's father schema.
+     * i.e. fetch the column indices that will generate current schema based on it's father schema
+     * used in KeyFromTuple in tuple.h
+     * @param schema 
+     * @return std::vector<uint32_t> 
+     */
+    std::vector<uint32_t> GenerateKeyAttrs(const Schema *schema) const;
 
 private:
     // length of one tuple, count by bytes

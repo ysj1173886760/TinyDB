@@ -44,6 +44,8 @@ enum class ExceptionType {
     IO = 10,
     // unreachable, this should belong to logic error
     UNREACHABLE = 11,
+    // logic error, this means our code is wrong
+    LOGIC_ERROR = 12,
 };
 
 // we don't use try catch, so any exception will cause a crash
@@ -92,6 +94,8 @@ public:
                 return "IO";
             case ExceptionType::UNREACHABLE:
                 return "Unreachable";
+            case ExceptionType::LOGIC_ERROR:
+                return "Logic Error";
             default:
                 return "Unknown Exception Type";
         }
@@ -132,6 +136,9 @@ private:
 
 #define THROW_UNREACHABLE_EXCEPTION(msg)  \
     throw Exception(ExceptionType::UNREACHABLE, msg, __FILE__, __LINE__);
+
+#define THROW_LOGIC_ERROR_EXCEPTION(msg)   \
+    throw Exception(ExceptionType::LOGIC_ERROR, msg, __FILE__, __LINE__);
 
 }
 
