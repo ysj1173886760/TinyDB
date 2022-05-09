@@ -88,6 +88,8 @@ public:
 
     bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid);
 
+    // TODO: figure out should we add a batch cleaning method
+
     void ApplyDelete(const RID &rid);
 
     void RollbackDelete(const RID &rid);
@@ -129,11 +131,11 @@ private:
         return GetFreeSpacePointer() - SIZE_TABLE_PAGE_HEADER - SIZE_SLOT * GetTupleCount();
     }
 
-    uint32_t GetTupleOffsetAtSlot(uint32_t slot_id) {
+    uint32_t GetTupleOffset(uint32_t slot_id) {
         return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id);
     }
 
-    void SetTupleOffsetAtSlot(uint32_t slot_id, uint32_t offset) {
+    void SetTupleOffset(uint32_t slot_id, uint32_t offset) {
         *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id) = offset;
     }
 
