@@ -55,6 +55,14 @@ static constexpr uint32_t DELETE_MASK = (1U << (8 * sizeof(uint32_t) - 1));
  */
 class TablePage: public Page {
 public:
+    // TODO: figure out whether page_id and page_size is necessary
+    /**
+     * @brief 
+     * initialize the TablePage header
+     * @param page_id table page id
+     * @param page_size size of this page
+     * @param prev_page_id previous page id
+     */
     void Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id);
 
     // interface is really strange
@@ -82,22 +90,73 @@ public:
 
     // tuple related
 
+    /**
+     * @brief 
+     * insert a tuple into current page
+     * @param tuple tuple to inserted
+     * @param rid RID indicating tuple RID
+     * @return true when insertion is succeed. i.e. there is enough space
+     */
     bool InsertTuple(const Tuple &tuple, RID *rid);
 
+    /**
+     * @brief 
+     * mark the tuple as deleted. the real deletion will performed by ApplyDelete at commit time
+     * @param rid rid to the tuple to mark as deleted
+     * @return true when deletion is succeed. i.e. tuple exists
+     */
     bool MarkDelete(const RID &rid);
 
+    /**
+     * @brief 
+     * update the tuple
+     * @param new_tuple new tuple value
+     * @param old_tuple old tuple value
+     * @param rid tuple rid
+     * @return true when updation is succeed. i.e. tuple exists and we have enough space
+     * to perform updation
+     */
     bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid);
 
     // TODO: figure out should we add a batch cleaning method
 
+    /**
+     * @brief 
+     * delete tuple corresponding to rid. this will perform real deletion
+     * @param rid 
+     */
     void ApplyDelete(const RID &rid);
 
+    /**
+     * @brief 
+     * to be called on abort. Rollback a delete. this will reverses a MarkDelete
+     * @param rid 
+     */
     void RollbackDelete(const RID &rid);
 
+    /**
+     * @brief get the tuple
+     * @param rid rid of tuple
+     * @param tuple tuple slot
+     * @return true whether read is succeed
+     */
     bool GetTuple(const RID &rid, Tuple *tuple);
 
+    /**
+     * @brief 
+     * Get the first rid from current page
+     * @param first_rid 
+     * @return true when we have tuple
+     */
     bool GetFirstTupleRid(RID *first_rid);
 
+    /**
+     * @brief
+     * Get the rid next to cur_rid
+     * @param cur_rid 
+     * @param next_rid 
+     * @return true when we have next tuple
+     */
     bool GetNextTupleRid(const RID &cur_rid, RID *next_rid);
 
 private:
@@ -178,6 +237,16 @@ private:
         return static_cast<uint32_t> (tuple_size & (~DELETE_MASK));
     }
     
+    /**
+     * @brief 
+     * return whether tuple is valid
+     * @param tuple_size 
+     * @return true 
+     * @return false 
+     */
+    bool IsValid(uint32_t tuple_size) {
+        return tuple_size != 0;
+    }
 
 };
 

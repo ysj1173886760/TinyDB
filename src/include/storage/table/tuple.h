@@ -13,8 +13,11 @@
 #define TUPLE_H
 
 #include "common/rid.h"
+#include "common/logger.h"
 #include "catalog/schema.h"
 #include "type/value.h"
+
+#include <cstring>
 
 namespace TinyDB {
 
@@ -152,6 +155,15 @@ public:
      * @param size tuple size
      */
     void DeserializeFromInplace(const char *storage, uint32_t size);
+
+    // compare two tuple at byte level
+    bool operator==(const Tuple &rhs) const {
+        if (rhs.GetSize() != GetSize()) {
+            return false;
+        }
+
+        return memcmp(rhs.GetData(), GetData(), GetSize()) == 0;
+    }
 
 private:
     // get the starting storage address of specific column

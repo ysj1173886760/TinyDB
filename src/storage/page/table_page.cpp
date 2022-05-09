@@ -10,6 +10,7 @@
  */
 
 #include "storage/page/table_page.h"
+#include "common/logger.h"
 
 // TODO: logic really need to be re-examined here
 
@@ -165,6 +166,7 @@ void TablePage::ApplyDelete(const RID &rid) {
 
     uint32_t tuple_offset = GetTupleOffset(slot_id);
     uint32_t tuple_size = GetTupleSize(slot_id);
+    TINYDB_ASSERT(IsValid(tuple_size), "can not delete an empty tuple");
 
     if (IsDeleted(tuple_size)) {
         // mask out the delete bit
@@ -230,8 +232,8 @@ bool TablePage::GetTuple(const RID &rid, Tuple *tuple) {
 bool TablePage::GetFirstTupleRid(RID *first_rid) {
     auto tuple_cnt = GetTupleCount();
     for (uint32_t i = 0; i < tuple_cnt; i++) {
-        // find the first un-deleted tuple
-        if (!IsDeleted(GetTupleSize(i))) {
+        // find the first valid tuple
+        if (IsValid(GetTupleSize(i))) {
             first_rid->Set(GetTablePageId(), i);
             return true;
         }
@@ -246,7 +248,7 @@ bool TablePage::GetNextTupleRid(const RID &cur_rid, RID *next_rid) {
     // find the first valid tuple after cur_rid
     auto tuple_cnt = GetTupleCount();
     for (uint32_t i = cur_rid.GetSlotId() + 1; i < tuple_cnt; i++) {
-        if (!IsDeleted(GetTupleSize(i))) {
+        if (IsValid(GetTupleSize(i))) {
             next_rid->Set(GetTablePageId(), i);
             return true;
         }
