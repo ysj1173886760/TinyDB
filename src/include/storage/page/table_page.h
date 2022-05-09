@@ -119,6 +119,12 @@ public:
     bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid);
 
     // TODO: figure out should we add a batch cleaning method
+    // for lock-based CC protocol, we might need to perform operation directly on one copy. So mark-apply deletion
+    // will reduce the memory manipulation.
+    // for MVCC, we only need insertion and deletion. which will convert to
+    // insert new tuple, and modifying the metadata(timestamp). 
+    // And background thread will need ApplyDelete to perform vacumming
+    // TODO: figure out where should we store CC-related metadata
 
     /**
      * @brief 
