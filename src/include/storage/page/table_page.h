@@ -1,7 +1,10 @@
 /**
  * @file table_page.h
  * @author sheep
- * @brief page that contains the real data
+ * @brief page that contains the real data. 
+ * STATEMENT BELOW IS WRONG. INTERMEDIATE LAYER IS SOMEWHERE ELSE.
+ * this is the intermediate layer between transaction layer and storage layer.
+ * i.e. it's responsible to interpret data to tuple based on schema
  * @version 0.1
  * @date 2022-05-08
  * 
@@ -17,6 +20,9 @@
 #include "storage/table/tuple.h"
 
 namespace TinyDB {
+
+// highest bit in 32bit integer
+static constexpr uint32_t DELETE_MASK = (1U << (8 * sizeof(uint32_t) - 1));
 
 /**
  * @brief 
@@ -55,12 +61,30 @@ public:
     }
 
     void SetPrevPageId(page_id_t prev_page_id) {
-        memcpy(GetData() + OFFSET_PREV_PAGE_ID, &prev_page_id, sizeof(page_id_t));
+        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_PREV_PAGE_ID) = prev_page_id;
     }
 
     void SetNextPageId(page_id_t next_page_id) {
-        memcpy(GetData() + OFFSET_NEXT_PAGE_ID, &next_page_id, sizeof(page_id_t));
+        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_NEXT_PAGE_ID) = next_page_id;
     }
+
+    // tuple related
+
+    bool InsertTuple(const Tuple &tuple, RID *rid);
+
+    bool MarkDelete(const Tuple &tuple, RID *rid);
+
+    bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid);
+
+    void ApplyDelete(const RID &rid);
+
+    void RollbackDelete(const RID &rid);
+
+    bool GetTuple(const RID &rid, Tuple *tuple);
+
+    bool GetFirstTupleRid(RID *first_rid);
+
+    bool GetNextTupleRid(const RID &cur_rid, RID *next_rid);
 
 private:
     // constant defintions and helper functions
@@ -71,6 +95,75 @@ private:
     static constexpr size_t OFFSET_NEXT_PAGE_ID = OFFSET_PREV_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_FREE_SPACE_PTR = OFFSET_NEXT_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_TUPLE_COUNT = OFFSET_FREE_SPACE_PTR + sizeof(uint32_t);
+    static constexpr size_t SIZE_TUPLE = sizeof(uint32_t) * 2;  // 4 byte size, 4 byte offset
+
+    uint32_t GetFreeSpacePointer() {
+        return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR);
+    }
+
+    void SetFreeSpacePointer(uint32_t free_space_pointer) {
+        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR) = free_space_pointer;
+    }
+
+    uint32_t GetTupleCount() {
+        return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_TUPLE_COUNT);
+    }
+
+    void SetTupleCount(uint32_t tuple_count) {
+        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_TUPLE_COUNT) = tuple_count;
+    }
+
+    uint32_t GetFreeSpaceRemaining() {
+        return GetFreeSpacePointer() - SIZE_TABLE_PAGE_HEADER - SIZE_TUPLE * GetTupleCount();
+    }
+
+    uint32_t GetTupleOffsetAtSlot(uint32_t slot_id) {
+        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id);
+    }
+
+    void SetTupleOffsetAtSlot(uint32_t slot_id, uint32_t offset) {
+        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id);
+    }
+
+    uint32_t GetTupleSize(uint32_t slot_id) {
+        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id + sizeof(uint32_t));
+    }
+
+    void SetTupleSize(uint32_t slot_id, uint32_t size) {
+        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id + sizeof(uint32_t));
+    }
+
+    /**
+     * @brief 
+     * return whether tuple is deleted or empty
+     * @param tuple_size 
+     * @return true 
+     * @return false 
+     */
+    static bool IsDeleted(uint32_t tuple_size) {
+        return static_cast<bool> (tuple_size & DELETE_MASK) || tuple_size == 0;
+    }
+
+    /**
+     * @brief
+     * set the deleted flag in tuple_size
+     * @param tuple_size 
+     * @return uint32_t 
+     */
+    static uint32_t SetDeletedFlag(uint32_t tuple_size) {
+        return static_cast<uint32_t> (tuple_size | DELETE_MASK);
+    }
+
+    /**
+     * @brief 
+     * unset the deleted flag in tuple_size
+     * @param tuple_size 
+     * @return uint32_t 
+     */
+    static uint32_t UnsetDeletedFlag(uint32_t tuple_size) {
+        return static_cast<uint32_t> (tuple_size & (~DELETE_MASK));
+    }
+    
 
 };
 

@@ -120,6 +120,27 @@ public:
      */
     static Tuple DeserializeFrom(const char *storage, uint32_t size);
 
+    /**
+     * @brief 
+     * deserialize the tuple and store the new data inplace.
+     * i.e. replace current data in tuple with the one in storage.
+     * we will clear the previous data buffer.
+     * storage contains the size.
+     * @param storage data buffer
+     */
+
+    void DeserializeFromInplaceWithSize(const char *storage);
+    /**
+     * @brief 
+     * deserialize the tuple and store the new data inplace.
+     * i.e. replace current data in tuple with the one in storage.
+     * we will clear the previous data buffer.
+     * storage didn't contain size, so we need to pass in manually
+     * @param storage data buffer
+     * @param size tuple size
+     */
+    void DeserializeFromInplace(const char *storage, uint32_t size);
+
 private:
     // get the starting storage address of specific column
     const char *GetDataPtr(const Schema *schema, uint32_t column_idx) const;

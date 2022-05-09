@@ -155,6 +155,18 @@ Tuple Tuple::DeserializeFrom(const char *storage, uint32_t size) {
     return tuple;
 }
 
+void Tuple::DeserializeFromInplace(const char *storage, uint32_t size) {
+    // this implementation should be exception safe
+    // also with good code reuse
+    auto new_tuple = Tuple::DeserializeFrom(storage, size);
+    this->Swap(new_tuple);
+}
+
+void Tuple::DeserializeFromInplaceWithSize(const char *storage) {
+    auto new_tuple = Tuple::DeserializeFromWithSize(storage);
+    this->Swap(new_tuple);
+}
+
 std::string Tuple::ToString(const Schema *schema) const {
     std::stringstream os;
     int len = static_cast<int>(schema->GetColumnCount());
