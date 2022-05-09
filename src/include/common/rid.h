@@ -45,6 +45,9 @@ public:
         page_id_(static_cast<page_id_t>(rid >> 32)), 
         slot_id_(static_cast<uint32_t>(rid)) {}
     
+    RID &operator=(const RID &rid) = default;
+    RID(const RID &rid) = default;
+    
     /**
      * @brief 
      * return the pointer form RID

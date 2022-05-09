@@ -1,7 +1,8 @@
 /**
  * @file table_page.h
  * @author sheep
- * @brief page that contains the real data. 
+ * @brief page that contains the real data. table_page is responsible to
+ * store tuple into the disk. so it belongs to the storage layer.
  * STATEMENT BELOW IS WRONG. INTERMEDIATE LAYER IS SOMEWHERE ELSE.
  * this is the intermediate layer between transaction layer and storage layer.
  * i.e. it's responsible to interpret data to tuple based on schema
@@ -44,9 +45,20 @@ static constexpr uint32_t DELETE_MASK = (1U << (8 * sizeof(uint32_t) - 1));
  * I wonder do we awaring the serialization method in tuple, since we are storing the tuple size as tuple data
  */
 
+/**
+ * @brief 
+ * TablePage is the page that stores the real data. And since it's inherited from
+ * page, we can use TablePage directly by using reinterpret_cast.
+ * TablePage provided the interface that will store tuple in page. So you can regard this
+ * class as a set of manipulating functions that is related to tuple storage.
+ * Again, the key idea here is to provide a set of functions that can help us to store tuple in page.
+ */
 class TablePage: public Page {
 public:
     void Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id);
+
+    // interface is really strange
+    // FIXME: more elegant interface
 
     page_id_t GetTablePageId() {
         return *reinterpret_cast<page_id_t *> (GetData());
@@ -72,7 +84,7 @@ public:
 
     bool InsertTuple(const Tuple &tuple, RID *rid);
 
-    bool MarkDelete(const Tuple &tuple, RID *rid);
+    bool MarkDelete(const RID &rid);
 
     bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid);
 
@@ -91,11 +103,11 @@ private:
     static_assert(sizeof(page_id_t) == 4);
 
     static constexpr size_t SIZE_TABLE_PAGE_HEADER = sizeof(lsn_t) + 3 * sizeof(page_id_t) + 2 * sizeof(uint32_t);
-    static constexpr size_t OFFSET_PREV_PAGE_ID = PAGE_HEADER_SIZE;
+    static constexpr size_t OFFSET_PREV_PAGE_ID = SIZE_PAGE_HEADER;
     static constexpr size_t OFFSET_NEXT_PAGE_ID = OFFSET_PREV_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_FREE_SPACE_PTR = OFFSET_NEXT_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_TUPLE_COUNT = OFFSET_FREE_SPACE_PTR + sizeof(uint32_t);
-    static constexpr size_t SIZE_TUPLE = sizeof(uint32_t) * 2;  // 4 byte size, 4 byte offset
+    static constexpr size_t SIZE_SLOT = sizeof(uint32_t) * 2;  // 4 byte size, 4 byte offset
 
     uint32_t GetFreeSpacePointer() {
         return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR);
@@ -114,23 +126,23 @@ private:
     }
 
     uint32_t GetFreeSpaceRemaining() {
-        return GetFreeSpacePointer() - SIZE_TABLE_PAGE_HEADER - SIZE_TUPLE * GetTupleCount();
+        return GetFreeSpacePointer() - SIZE_TABLE_PAGE_HEADER - SIZE_SLOT * GetTupleCount();
     }
 
     uint32_t GetTupleOffsetAtSlot(uint32_t slot_id) {
-        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id);
+        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id);
     }
 
     void SetTupleOffsetAtSlot(uint32_t slot_id, uint32_t offset) {
-        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id);
+        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id) = offset;
     }
 
     uint32_t GetTupleSize(uint32_t slot_id) {
-        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id + sizeof(uint32_t));
+        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id + sizeof(uint32_t));
     }
 
     void SetTupleSize(uint32_t slot_id, uint32_t size) {
-        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_TUPLE * slot_id + sizeof(uint32_t));
+        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id + sizeof(uint32_t)) = size;
     }
 
     /**
@@ -140,7 +152,7 @@ private:
      * @return true 
      * @return false 
      */
-    static bool IsDeleted(uint32_t tuple_size) {
+    bool IsDeleted(uint32_t tuple_size) {
         return static_cast<bool> (tuple_size & DELETE_MASK) || tuple_size == 0;
     }
 
@@ -150,7 +162,7 @@ private:
      * @param tuple_size 
      * @return uint32_t 
      */
-    static uint32_t SetDeletedFlag(uint32_t tuple_size) {
+    uint32_t SetDeletedFlag(uint32_t tuple_size) {
         return static_cast<uint32_t> (tuple_size | DELETE_MASK);
     }
 
@@ -160,7 +172,7 @@ private:
      * @param tuple_size 
      * @return uint32_t 
      */
-    static uint32_t UnsetDeletedFlag(uint32_t tuple_size) {
+    uint32_t UnsetDeletedFlag(uint32_t tuple_size) {
         return static_cast<uint32_t> (tuple_size & (~DELETE_MASK));
     }
     

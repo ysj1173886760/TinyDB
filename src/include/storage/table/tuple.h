@@ -66,6 +66,18 @@ public:
         return size_;
     }
 
+    /**
+     * @brief Get the tuple length, including varlen object
+     * @return uint32_t 
+     */
+    inline uint32_t GetSize() const {
+        return size_;
+    }
+
+    inline void SetRID(const RID &rid) {
+        rid_ = rid;
+    }
+
     // get the value of a specified column
     Value GetValue(const Schema *schema, uint32_t column_idx) const;
 

@@ -92,8 +92,9 @@ protected:
 
     // 4 byte for page id
     // 4 byte for lsn
-    static constexpr size_t PAGE_HEADER_SIZE = 8;
+    static constexpr size_t SIZE_PAGE_HEADER = 8;
     static constexpr size_t OFFSET_LSN = 4;
+    static constexpr size_t OFFSET_PAGE = 0;
 
 private:
     // zero out the data
