@@ -74,7 +74,9 @@ public:
 
     /**
      * @brief 
-     * update tuple
+     * update tuple inplace. return false if current page can't store new tuple.
+     * i think it's upper-level's responsibility to perform a deletion followed by an insertion
+     * to handle this situation
      * @param tuple new tuple value
      * @param rid target tuple rid
      * @return true when updation succeed

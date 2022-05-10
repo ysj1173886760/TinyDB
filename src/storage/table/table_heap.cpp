@@ -93,6 +93,8 @@ bool TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid) {
         return false;
     }
 
+    // save the old value for rollback
+    // only used in single-version CC protocol
     Tuple old_tuple;
     page->WLatch();
     bool res = page->UpdateTuple(tuple, &old_tuple, rid);
@@ -131,7 +133,7 @@ void TableHeap::RollbackDelete(const RID &rid) {
 bool TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
     auto page = reinterpret_cast<TablePage *> (buffer_pool_manager_->FetchPage(rid.GetPageId()));
     if (page == nullptr) {
-        return;
+        return false;
     }
     page->RLatch();
     bool res = page->GetTuple(rid, tuple);
