@@ -37,16 +37,71 @@ public:
         TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "Existing table heap should have at least one page");
     }
 
+    /**
+     * @brief 
+     * create a new table heap.
+     * @param buffer_pool_manager 
+     * @return TableHeap* pointer to the new table heap. return nullptr when failure
+     */
+    static TableHeap *CreateNewTableHeap(BufferPoolManager *buffer_pool_manager) {
+        page_id_t first_page_id = INVALID_PAGE_ID;
+        auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
+        if (new_page == nullptr) {
+            return nullptr;
+        }
+        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
+        buffer_pool_manager->UnpinPage(first_page_id, true);
+
+        return new TableHeap(first_page_id, buffer_pool_manager);
+    }
+
+    /**
+     * @brief 
+     * insert new tuple into table heap
+     * @param tuple tuple to be inserted
+     * @param rid rid of new tuple
+     * @return true when insertion succeed
+     */
     bool InsertTuple(const Tuple &tuple, RID *rid);
 
+    /**
+     * @brief 
+     * mark tuple as deleted
+     * @param rid rid of target tuple
+     * @return true when mark succeed
+     */
     bool MarkDelete(const RID &rid);
 
+    /**
+     * @brief 
+     * update tuple
+     * @param tuple new tuple value
+     * @param rid target tuple rid
+     * @return true when updation succeed
+     */
     bool UpdateTuple(const Tuple &tuple, const RID &rid);
 
+    /**
+     * @brief 
+     * delete the tuple. this will perform real deletion
+     * @param rid target tuple rid
+     */
     void ApplyDelete(const RID &rid);
 
+    /**
+     * @brief 
+     * clear the deletion flag of tuple
+     * @param rid target tuple rid
+     */
     void RollbackDelete(const RID &rid);
 
+    /**
+     * @brief
+     * read the tuple
+     * @param rid target tuple rid
+     * @param tuple tuple value
+     * @return true when reading succeed
+     */
     bool GetTuple(const RID &rid, Tuple *tuple);
 
     inline page_id_t GetFirstPageId() const {

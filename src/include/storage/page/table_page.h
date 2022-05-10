@@ -109,7 +109,7 @@ public:
 
     /**
      * @brief 
-     * update the tuple
+     * update the tuple. Updation will fail when performing operation on deleted tuple(real deleted or mark deleted)
      * @param new_tuple new tuple value
      * @param old_tuple old tuple value
      * @param rid tuple rid
@@ -141,7 +141,7 @@ public:
     void RollbackDelete(const RID &rid);
 
     /**
-     * @brief get the tuple
+     * @brief get the tuple. GetTuple won't return a deleted tuple(real deleted or mark deleted)
      * @param rid rid of tuple
      * @param tuple tuple slot
      * @return true whether read is succeed
@@ -150,7 +150,7 @@ public:
 
     /**
      * @brief 
-     * Get the first rid from current page
+     * Get the first rid from current page. regard less whether tuple is mark deleted
      * @param first_rid 
      * @return true when we have tuple
      */
@@ -158,7 +158,7 @@ public:
 
     /**
      * @brief
-     * Get the rid next to cur_rid
+     * Get the rid next to cur_rid. 
      * @param cur_rid 
      * @param next_rid 
      * @return true when we have next tuple
