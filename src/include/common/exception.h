@@ -104,7 +104,7 @@ private:
     ExceptionType type_;
 };
 
-#define THROW_NOT_IMPLEMENT_EXCEPTION(msg)  \
+#define THROW_NOT_IMPLEMENTED_EXCEPTION(msg)  \
     throw Exception(ExceptionType::NOT_IMPLEMENTED, msg, __FILE__, __LINE__);
 
 #define THROW_OUT_OF_RANGE_EXCEPTION(msg)  \

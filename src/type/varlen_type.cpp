@@ -217,7 +217,7 @@ Value VarlenType::CastAs(const Value &value, const TypeId type_id) const {
         return Value(type_id, decimal);
     }
     case TypeId::TIMESTAMP: {
-        THROW_NOT_IMPLEMENT_EXCEPTION("casting from str to timestamp is not implemented");
+        THROW_NOT_IMPLEMENTED_EXCEPTION("casting from str to timestamp is not implemented");
         
     }
     case TypeId::VARCHAR: {

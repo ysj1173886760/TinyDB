@@ -165,7 +165,6 @@ public:
      */
     bool GetNextTupleRid(const RID &cur_rid, RID *next_rid);
 
-private:
     // constant defintions and helper functions
     static_assert(sizeof(page_id_t) == 4);
 
@@ -176,6 +175,7 @@ private:
     static constexpr size_t OFFSET_TUPLE_COUNT = OFFSET_FREE_SPACE_PTR + sizeof(uint32_t);
     static constexpr size_t SIZE_SLOT = sizeof(uint32_t) * 2;  // 4 byte size, 4 byte offset
 
+private:
     uint32_t GetFreeSpacePointer() {
         return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR);
     }
