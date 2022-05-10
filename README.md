@@ -18,6 +18,9 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [ ] index
 - [ ] expression
 - [ ] execution
+- [ ] transaction
+- [ ] logger
+- [ ] finish database kernel
 - [ ] parser
 - [ ] planner
-- [ ] transaction
+- [ ] support TPCC
