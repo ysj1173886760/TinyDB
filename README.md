@@ -10,6 +10,14 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [x] disk manager
 - [x] buffer pool manager
 - [x] type subsystem
-- [ ] schema
-- [ ] tuple
-- [ ] table
+- [x] schema
+- [x] tuple
+- [x] table page
+- [ ] table heap
+- [ ] catalog
+- [ ] index
+- [ ] expression
+- [ ] execution
+- [ ] parser
+- [ ] planner
+- [ ] transaction
