@@ -111,7 +111,7 @@ public:
      * @brief 
      * update the tuple. Updation will fail when performing operation on deleted tuple(real deleted or mark deleted)
      * @param new_tuple new tuple value
-     * @param old_tuple old tuple value
+     * @param old_tuple old tuple value, we will handle previous data in old_tuple
      * @param rid tuple rid
      * @return true when updation is succeed. i.e. tuple exists and we have enough space
      * to perform updation
@@ -143,7 +143,7 @@ public:
     /**
      * @brief get the tuple. GetTuple won't return a deleted tuple(real deleted or mark deleted)
      * @param rid rid of tuple
-     * @param tuple tuple slot
+     * @param tuple tuple slot, we will handle previous data in tuple
      * @return true whether read is succeed
      */
     bool GetTuple(const RID &rid, Tuple *tuple);

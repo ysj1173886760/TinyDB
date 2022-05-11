@@ -12,9 +12,12 @@
 #ifndef TABLE_ITERATOR_H
 #define TABLE_ITERATOR_H
 
-#include "storage/table/table_heap.h"
+#include "storage/page/table_page.h"
+#include "buffer/buffer_pool_manager.h"
 
 namespace TinyDB {
+
+class TableHeap;
 
 /**
  * @brief 

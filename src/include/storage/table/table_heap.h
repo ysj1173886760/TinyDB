@@ -14,6 +14,7 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include "storage/page/table_page.h"
+#include "storage/table/table_iterator.h"
 
 namespace TinyDB {
 
@@ -110,6 +111,20 @@ public:
     inline page_id_t GetFirstPageId() const {
         return first_page_id_;
     }
+
+    /**
+     * @brief 
+     * get the begin iterator of this table
+     * @return TableIterator 
+     */
+    TableIterator Begin();
+    
+    /**
+     * @brief 
+     * get the end iterator of this table
+     * @return TableIterator 
+     */
+    TableIterator End();
 
 private:
     BufferPoolManager *buffer_pool_manager_;

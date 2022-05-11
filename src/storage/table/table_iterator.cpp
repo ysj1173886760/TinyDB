@@ -10,6 +10,8 @@
  */
 
 #include "storage/table/table_iterator.h"
+#include "storage/table/table_heap.h"
+#include "common/exception.h"
 
 namespace TinyDB {
 
@@ -47,11 +49,17 @@ TableIterator &TableIterator::operator++() {
     TINYDB_ASSERT(cur_page != nullptr, "Running out of memory");
     cur_page->RLatch();
 
+    // we will not hold two latches at the same time
+    // so there won't be a deadlock issue
+
     RID next_tuple_rid;
     if (!cur_page->GetNextTupleRid(rid_, &next_tuple_rid)) {
         // if we at the end of this page, try to fetch next page
         while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
             auto next_page = reinterpret_cast<TablePage *>(bpm->FetchPage(cur_page->GetNextPageId()));
+            if (next_page == nullptr) {
+                THROW_OUT_OF_MEMORY_EXCEPTION("TableIterator::operator++ out of memory");
+            }
             cur_page->RUnlatch();
             bpm->UnpinPage(cur_page->GetPageId(), false);
             cur_page = next_page;

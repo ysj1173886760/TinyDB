@@ -12,6 +12,7 @@
 #include "storage/table/table_heap.h"
 #include "storage/page/table_page.h"
 #include "common/exception.h"
+#include "storage/table/table_iterator.h"
 
 namespace TinyDB {
 
@@ -140,6 +141,41 @@ bool TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
     page->RUnlatch();
     buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
     return res;
+}
+
+TableIterator TableHeap::Begin() {
+    TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "invalid table heap");
+    RID rid;
+    auto cur_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(first_page_id_));
+    // shall we throw exception?
+    TINYDB_ASSERT(cur_page != nullptr, "Running out of memory");
+    // same logic as operator++ for table iterator
+    cur_page->RLatch();
+
+    if (!cur_page->GetFirstTupleRid(&rid)) {
+        while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
+            auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(cur_page->GetNextPageId()));
+            if (next_page == nullptr) {
+                THROW_OUT_OF_MEMORY_EXCEPTION("TableHeap::Begin out of memory");
+            }
+            cur_page->RUnlatch();
+            buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
+            cur_page = next_page;
+            cur_page->RLatch();
+            if (cur_page->GetFirstTupleRid(&rid)) {
+                break;
+            }
+            // otherwise, try the next page
+        }
+    }
+
+    cur_page->RUnlatch();
+    buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
+    return TableIterator(this, rid);
+}
+
+TableIterator TableHeap::End() {
+    return TableIterator(this, RID(INVALID_PAGE_ID, 0));
 }
 
 }
