@@ -42,10 +42,20 @@ public:
     Tuple(const Tuple &other);
     Tuple &operator=(Tuple other);
 
+    // do we need to provide this manually?
+    Tuple(Tuple &&other)
+        : rid_(other.rid_),
+          size_(other.size_),
+          data_(other.data_) {
+        // move the ownership
+        other.data_ = nullptr;
+        other.size_ = 0;
+    }
+        
     void Swap(Tuple &rhs) {
         std::swap(rhs.data_, data_);
         std::swap(rhs.size_, size_);
-        rid_.Swap(rhs.rid_);
+        std::swap(rid_, rhs.rid_);
     }
 
     ~Tuple();
@@ -67,6 +77,17 @@ public:
      */
     inline uint32_t GetLength() const {
         return size_;
+    }
+
+    /**
+     * @brief 
+     * check whether the tuple contains data.
+     * default tuple will be an invalid tuple.
+     * @return true tuple is valid
+     * @return false tuple doesn't contains any data
+     */
+    inline bool IsValid() const {
+        return data_ != nullptr;
     }
 
     /**

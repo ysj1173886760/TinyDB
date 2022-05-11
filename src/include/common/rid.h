@@ -83,9 +83,13 @@ public:
         return os;
     }
 
-    bool operator==(const RID &rhs) {
+    bool operator==(const RID &rhs) const {
         return page_id_ == rhs.page_id_ &&
                slot_id_ == rhs.slot_id_;
+    }
+
+    bool operator!=(const RID &rhs) const {
+        return !(*this == rhs);
     }
 
     void Swap(RID &rhs) {

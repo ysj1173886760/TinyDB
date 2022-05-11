@@ -23,6 +23,7 @@ namespace TinyDB {
  * that provide high-level operations with tuple data. e.g. insert tuple without knowing real page
  */
 class TableHeap {
+    friend class TableIterator;
 public:
     ~TableHeap() = default;
 
