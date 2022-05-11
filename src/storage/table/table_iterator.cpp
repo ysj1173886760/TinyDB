@@ -46,7 +46,7 @@ TableIterator &TableIterator::operator++() {
     BufferPoolManager *bpm = table_heap_->buffer_pool_manager_;
     auto cur_page = reinterpret_cast<TablePage *>(bpm->FetchPage(rid_.GetPageId()));
     // we should find a good way to handle out of memory issue here
-    TINYDB_ASSERT(cur_page != nullptr, "Running out of memory");
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
     cur_page->RLatch();
 
     // we will not hold two latches at the same time
@@ -57,9 +57,7 @@ TableIterator &TableIterator::operator++() {
         // if we at the end of this page, try to fetch next page
         while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
             auto next_page = reinterpret_cast<TablePage *>(bpm->FetchPage(cur_page->GetNextPageId()));
-            if (next_page == nullptr) {
-                THROW_OUT_OF_MEMORY_EXCEPTION("TableIterator::operator++ out of memory");
-            }
+            TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
             cur_page->RUnlatch();
             bpm->UnpinPage(cur_page->GetPageId(), false);
             cur_page = next_page;

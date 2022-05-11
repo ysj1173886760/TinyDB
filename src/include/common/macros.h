@@ -21,6 +21,9 @@ namespace TinyDB {
 
 #define TINYDB_ASSERT(expr, message) assert((expr) && (message))
 
+#define TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(expr, message) \
+    if (!(expr)) THROW_OUT_OF_MEMORY_EXCEPTION(message)
+
 #define UNREACHABLE(message) \
     THROW_UNREACHABLE_EXCEPTION(message)
 

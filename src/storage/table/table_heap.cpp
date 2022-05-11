@@ -148,16 +148,14 @@ TableIterator TableHeap::Begin() {
     RID rid;
     auto cur_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(first_page_id_));
     // shall we throw exception?
-    TINYDB_ASSERT(cur_page != nullptr, "Running out of memory");
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
     // same logic as operator++ for table iterator
     cur_page->RLatch();
 
     if (!cur_page->GetFirstTupleRid(&rid)) {
         while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
             auto next_page = reinterpret_cast<TablePage *>(buffer_pool_manager_->FetchPage(cur_page->GetNextPageId()));
-            if (next_page == nullptr) {
-                THROW_OUT_OF_MEMORY_EXCEPTION("TableHeap::Begin out of memory");
-            }
+            TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(next_page != nullptr, "");
             cur_page->RUnlatch();
             buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
             cur_page = next_page;
