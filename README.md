@@ -14,8 +14,8 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [x] tuple
 - [x] table page
 - [ ] table heap
-- [ ] catalog
 - [ ] index
+- [ ] catalog
 - [ ] expression
 - [ ] execution
 - [ ] transaction
@@ -24,3 +24,9 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [ ] parser
 - [ ] planner
 - [ ] support TPCC
+
+# Important TODOs
+
+- [ ] Deallocate page in disk (use bitmap to manage page allocation)
+- [ ] Delete empty pages in table heap (essentially it's a concurrent doubly-linked list)
+- [ ] Implement variable-length data pool. (currently, i stored it right after the tuple, which leads to the varied-length tuple. And when we want to perform updation of a tuple, we might fail since table might not have enough space for new tuple, thus we need to perform an deletion followed by an insertion, which may introduce more engineering overhead)
