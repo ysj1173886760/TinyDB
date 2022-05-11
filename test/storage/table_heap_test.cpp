@@ -128,11 +128,15 @@ TEST(TableHeapTest, IteratorTest) {
         EXPECT_EQ(table->InsertTuple(tuple, &tuple_list[i]), true);
     }
     // scan them
-    for (int i = 0; i < tuple_num; i++) {
-        auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), true);
-        EXPECT_EQ(tmp == tuple, true);
+    // since we are not doing concurrent test, we won't get any invalid tuple
+    int cnt;
+    TableIterator it;
+    for (it = table->Begin(), cnt = 0; it != table->End(); ++it, ++cnt) {
+        EXPECT_EQ(*it == tuple, true);
+        EXPECT_EQ(it->GetRID() == tuple_list[cnt], true);
     }
+    EXPECT_EQ(cnt, tuple_num);
+
     // update many tuple
     for (int i = 0; i < tuple_num; i++) {
         if (table->UpdateTuple(tuple_update, tuple_list[i]) == false) {
@@ -142,20 +146,21 @@ TEST(TableHeapTest, IteratorTest) {
         }
     }
     // scan them
-    for (int i = 0; i < tuple_num; i++) {
-        auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), true);
-        EXPECT_EQ(tmp == tuple_update, true);
+    for (it = table->Begin(), cnt = 0; it != table->End(); ++it, ++cnt) {
+        EXPECT_EQ(*it == tuple_update, true);
+        // don't test the rid, since they may out of order after insertion/deletion
+        // EXPECT_EQ(it->GetRID(), tuple_list[cnt]);
     }
+    EXPECT_EQ(cnt, tuple_num);
+
     // delete many tuple
     for (int i = 0; i < tuple_num; i++) {
         table->ApplyDelete(tuple_list[i]);
     }
+
     // scan should fail
-    for (int i = 0; i < tuple_num; i++) {
-        auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), false);
-    }
+    it = table->Begin();
+    EXPECT_EQ(it, table->End());
 
     remove(filename.c_str());
     delete table;

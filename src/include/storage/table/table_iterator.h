@@ -29,6 +29,11 @@ class TableHeap;
  */
 class TableIterator {
 public:
+    TableIterator()
+        : table_heap_(nullptr),
+          rid_(RID()),
+          tuple_(Tuple()) {}
+
     TableIterator(TableHeap *table_heap, RID rid)
         : table_heap_(table_heap),
           rid_(rid),

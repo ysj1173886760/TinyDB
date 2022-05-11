@@ -73,7 +73,7 @@ public:
     inline std::string ToString() const {
         std::ostringstream os;
         os << "page_id: " << page_id_;
-        os << "slot_id: " << slot_id_ << "\n";
+        os << " slot_id: " << slot_id_ << "\n";
 
         return os.str();
     }
