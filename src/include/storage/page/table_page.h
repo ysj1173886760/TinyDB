@@ -68,9 +68,9 @@ public:
     // interface is really strange
     // FIXME: more elegant interface
 
-    page_id_t GetTablePageId() {
-        return *reinterpret_cast<page_id_t *> (GetData());
-    }
+    // page_id_t GetTablePageId() {
+    //     return *reinterpret_cast<page_id_t *> (GetData());
+    // }
 
     page_id_t GetPrevPageId() {
         return *reinterpret_cast<page_id_t *> (GetData() + OFFSET_PREV_PAGE_ID);

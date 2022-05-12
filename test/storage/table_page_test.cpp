@@ -52,7 +52,6 @@ TEST(TablePageTest, BasicTest) {
     auto page0 = reinterpret_cast<TablePage *> (bpm->NewPage(&page0_id));
     page0->Init(page0_id, PAGE_SIZE, INVALID_PAGE_ID);
     EXPECT_EQ(page0->GetPageId(), page0_id);
-    EXPECT_EQ(page0->GetTablePageId(), page0_id);
     auto rid0 = RID();
     auto rid1 = RID();
     EXPECT_EQ(page0->InsertTuple(tuple, &rid0), true);

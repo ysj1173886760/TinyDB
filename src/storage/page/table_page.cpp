@@ -70,7 +70,7 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid) {
     SetTupleSize(slot_id, tuple.GetSize());
 
     // set rid
-    rid->Set(GetTablePageId(), slot_id);
+    rid->Set(GetPageId(), slot_id);
 
     // if we are creating new slot, then we need to update tuple cnt
     if (slot_id == tuple_cnt) {
@@ -234,7 +234,7 @@ bool TablePage::GetFirstTupleRid(RID *first_rid) {
     for (uint32_t i = 0; i < tuple_cnt; i++) {
         // find the first valid tuple
         if (IsValid(GetTupleSize(i))) {
-            first_rid->Set(GetTablePageId(), i);
+            first_rid->Set(GetPageId(), i);
             return true;
         }
     }
@@ -249,7 +249,7 @@ bool TablePage::GetNextTupleRid(const RID &cur_rid, RID *next_rid) {
     auto tuple_cnt = GetTupleCount();
     for (uint32_t i = cur_rid.GetSlotId() + 1; i < tuple_cnt; i++) {
         if (IsValid(GetTupleSize(i))) {
-            next_rid->Set(GetTablePageId(), i);
+            next_rid->Set(GetPageId(), i);
             return true;
         }
     }
