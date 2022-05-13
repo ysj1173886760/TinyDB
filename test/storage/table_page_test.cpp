@@ -49,7 +49,8 @@ TEST(TablePageTest, BasicTest) {
     auto tuple_update = Tuple(values2, &schema);
 
     page_id_t page0_id;
-    auto page0 = reinterpret_cast<TablePage *> (bpm->NewPage(&page0_id));
+    auto raw_page0 = bpm->NewPage(&page0_id);
+    auto page0 = reinterpret_cast<TablePage *> (raw_page0->GetData());
     page0->Init(page0_id, PAGE_SIZE, INVALID_PAGE_ID);
     EXPECT_EQ(page0->GetPageId(), page0_id);
     auto rid0 = RID();
@@ -65,7 +66,8 @@ TEST(TablePageTest, BasicTest) {
     // evict the page 0 implicitly
     // insert tuple into page1
     page_id_t page1_id;
-    auto page1 = reinterpret_cast<TablePage *> (bpm->NewPage(&page1_id));
+    auto raw_page1 = bpm->NewPage(&page1_id);
+    auto page1 = reinterpret_cast<TablePage *> (raw_page1->GetData());
     page0->Init(page1_id, PAGE_SIZE, INVALID_PAGE_ID);
     auto rid2 = RID();
     auto rid3 = RID();
@@ -78,7 +80,8 @@ TEST(TablePageTest, BasicTest) {
     bpm->UnpinPage(page1_id, true);
 
     // refetch the page 0
-    page0 = reinterpret_cast<TablePage *> (bpm->FetchPage(page0_id));
+    raw_page0 = bpm->FetchPage(page0_id);
+    page0 = reinterpret_cast<TablePage *> (raw_page0->GetData());
 
     auto tuple0 = Tuple();
     auto tuple1 = Tuple();
@@ -117,7 +120,9 @@ TEST(TablePageTest, BasicTest) {
     EXPECT_EQ(page0->GetFirstTupleRid(&tmp_rid), false);
     bpm->UnpinPage(page0_id, true);
 
-    page1 = reinterpret_cast<TablePage *> (bpm->FetchPage(page1_id));
+    raw_page1 = bpm->FetchPage(page1_id);
+    page1 = reinterpret_cast<TablePage *> (raw_page1->GetData());
+
     auto tuple2 = Tuple();
     auto tuple3 = Tuple();
     EXPECT_EQ(page1->GetTuple(rid2, &tuple2), true);

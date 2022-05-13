@@ -42,27 +42,32 @@ Tuple *TableIterator::operator->() {
     return &tuple_;
 }
 
+// logic here is very similar to TableHeap::Begin()
 TableIterator &TableIterator::operator++() {
     BufferPoolManager *bpm = table_heap_->buffer_pool_manager_;
-    auto cur_page = reinterpret_cast<TablePage *>(bpm->FetchPage(rid_.GetPageId()));
+    auto cur_page = bpm->FetchPage(rid_.GetPageId());
     // we should find a good way to handle out of memory issue here
     TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
     cur_page->RLatch();
 
     // we will not hold two latches at the same time
     // so there won't be a deadlock issue
+    auto table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
 
     RID next_tuple_rid;
-    if (!cur_page->GetNextTupleRid(rid_, &next_tuple_rid)) {
+    if (!table_page->GetNextTupleRid(rid_, &next_tuple_rid)) {
         // if we at the end of this page, try to fetch next page
-        while (cur_page->GetNextPageId() != INVALID_PAGE_ID) {
-            auto next_page = reinterpret_cast<TablePage *>(bpm->FetchPage(cur_page->GetNextPageId()));
+        while (table_page->GetNextPageId() != INVALID_PAGE_ID) {
+            auto next_page = bpm->FetchPage(table_page->GetNextPageId());
             TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
+
             cur_page->RUnlatch();
             bpm->UnpinPage(cur_page->GetPageId(), false);
             cur_page = next_page;
             cur_page->RLatch();
-            if (cur_page->GetFirstTupleRid(&next_tuple_rid)) {
+
+            table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
+            if (table_page->GetFirstTupleRid(&next_tuple_rid)) {
                 break;
             }
             // otherwise, try to fetch next page again

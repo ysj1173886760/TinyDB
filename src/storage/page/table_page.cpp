@@ -17,16 +17,13 @@
 namespace TinyDB {
 
 void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id) {
-    // TODO: figure out that do we really need "page_id"
-    // since we are inheriting from page, which has already contains it's page_id
-    *reinterpret_cast<page_id_t *> (GetData() + OFFSET_PAGE) = page_id;
+    page_id_ = page_id;
 
     // we are double-linked list
     // and we are at the tail of the list
     SetPrevPageId(prev_page_id);
     SetNextPageId(INVALID_PAGE_ID);
     // pointing to the end of the page
-    // TODO: does this varying?
     SetFreeSpacePointer(page_size);
     SetTupleCount(0);
 }
@@ -38,9 +35,6 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid) {
     if (GetFreeSpaceRemaining() < tuple.GetSize()) {
         return false;
     }
-
-    // TODO: i wonder do we need to compact the slot
-    // it looks like we won't delete the metadata(offset and size)
 
     // try to find a free slot to reuse
     // in case gcc will re-fetch over and over again
@@ -63,7 +57,7 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid) {
     // update free space pointer
     SetFreeSpacePointer(GetFreeSpacePointer() - tuple.GetSize());
     // serialize it into the page
-    tuple.SerializeTo(GetData() + GetFreeSpacePointer());
+    tuple.SerializeTo(GetRawPointer() + GetFreeSpacePointer());
 
     // then update the slot pointer and size
     SetTupleOffset(slot_id, GetFreeSpacePointer());
@@ -125,17 +119,17 @@ bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID 
     // copyout the old value
     // should we copyout the value only when pointer is not null?
     uint32_t tuple_offset = GetTupleOffset(slot_id);
-    old_tuple->DeserializeFromInplace(GetData() + tuple_offset, tuple_size);
+    old_tuple->DeserializeFromInplace(GetRawPointer() + tuple_offset, tuple_size);
     old_tuple->SetRID(rid);
 
     uint32_t free_space_ptr = GetFreeSpacePointer();
     // move the data behind us(physically before us)
     // overlap awaring
-    memmove(GetData() + free_space_ptr + tuple_size - new_tuple.GetSize(),
-            GetData() + free_space_ptr,
+    memmove(GetRawPointer() + free_space_ptr + tuple_size - new_tuple.GetSize(),
+            GetRawPointer() + free_space_ptr,
             tuple_offset - free_space_ptr);
     // serialize new tuple
-    new_tuple.SerializeTo(GetData() + tuple_offset + tuple_size - new_tuple.GetSize());
+    new_tuple.SerializeTo(GetRawPointer() + tuple_offset + tuple_size - new_tuple.GetSize());
     SetTupleSize(slot_id, new_tuple.GetSize());
     SetFreeSpacePointer(free_space_ptr + tuple_size - new_tuple.GetSize());
 
@@ -175,8 +169,8 @@ void TablePage::ApplyDelete(const RID &rid) {
 
     // move the data
     uint32_t free_space_ptr = GetFreeSpacePointer();
-    memmove(GetData() + free_space_ptr + tuple_size,
-            GetData() + free_space_ptr,
+    memmove(GetRawPointer() + free_space_ptr + tuple_size,
+            GetRawPointer() + free_space_ptr,
             tuple_offset - free_space_ptr);
     SetTupleSize(slot_id, 0);
     SetTupleOffset(slot_id, 0);
@@ -221,7 +215,7 @@ bool TablePage::GetTuple(const RID &rid, Tuple *tuple) {
     }
 
     auto tuple_offset = GetTupleOffset(slot_id);
-    tuple->DeserializeFromInplace(GetData() + tuple_offset, tuple_size);
+    tuple->DeserializeFromInplace(GetRawPointer() + tuple_offset, tuple_size);
     tuple->SetRID(rid);
 
     return true;

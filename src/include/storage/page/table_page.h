@@ -19,6 +19,7 @@
 #include "common/rid.h"
 #include "storage/page/page.h"
 #include "storage/table/tuple.h"
+#include "storage/page/page_header.h"
 
 namespace TinyDB {
 
@@ -53,7 +54,7 @@ static constexpr uint32_t DELETE_MASK = (1U << (8 * sizeof(uint32_t) - 1));
  * class as a set of manipulating functions that is related to tuple storage.
  * Again, the key idea here is to provide a set of functions that can help us to store tuple in page.
  */
-class TablePage: public Page {
+class TablePage: public PageHeader {
 public:
     // TODO: figure out whether page_id and page_size is necessary
     /**
@@ -68,24 +69,20 @@ public:
     // interface is really strange
     // FIXME: more elegant interface
 
-    // page_id_t GetTablePageId() {
-    //     return *reinterpret_cast<page_id_t *> (GetData());
-    // }
-
-    page_id_t GetPrevPageId() {
-        return *reinterpret_cast<page_id_t *> (GetData() + OFFSET_PREV_PAGE_ID);
+    inline page_id_t GetPrevPageId() {
+        return prev_page_id_;
     }
 
-    page_id_t GetNextPageId() {
-        return *reinterpret_cast<page_id_t *> (GetData() + OFFSET_NEXT_PAGE_ID);
+    inline page_id_t GetNextPageId() {
+        return next_page_id_;
     }
 
-    void SetPrevPageId(page_id_t prev_page_id) {
-        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_PREV_PAGE_ID) = prev_page_id;
+    inline void SetPrevPageId(page_id_t prev_page_id) {
+        prev_page_id_ = prev_page_id;
     }
 
-    void SetNextPageId(page_id_t next_page_id) {
-        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_NEXT_PAGE_ID) = next_page_id;
+    inline void SetNextPageId(page_id_t next_page_id) {
+        next_page_id_ = next_page_id;
     }
 
     // tuple related
@@ -173,23 +170,42 @@ public:
     static constexpr size_t OFFSET_NEXT_PAGE_ID = OFFSET_PREV_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_FREE_SPACE_PTR = OFFSET_NEXT_PAGE_ID + sizeof(page_id_t);
     static constexpr size_t OFFSET_TUPLE_COUNT = OFFSET_FREE_SPACE_PTR + sizeof(uint32_t);
+
+    // tuple slot format:
+    // -------------------------------------------------------
+    // | Tuple1_OFF | Tuple1_Size | Tuple2_OFF | Tuple2_Size |
+    // -------------------------------------------------------
+    static constexpr size_t OFFSET_SIZE = sizeof(uint32_t); // slot-level offset
+    static constexpr size_t OFFSET_OFF = 0; // slot-level offset
     static constexpr size_t SIZE_SLOT = sizeof(uint32_t) * 2;  // 4 byte size, 4 byte offset
 
 private:
-    uint32_t GetFreeSpacePointer() {
-        return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR);
+    /**
+     * @brief
+     * get the raw pointer pointing to this page.
+     * @return char* 
+     */
+
+    inline char *GetRawPointer() {
+        // some evil experiments
+        assert(reinterpret_cast<TablePage *>(data_ - SIZE_TABLE_PAGE_HEADER) == this);
+        return data_ - SIZE_TABLE_PAGE_HEADER;
     }
 
-    void SetFreeSpacePointer(uint32_t free_space_pointer) {
-        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_FREE_SPACE_PTR) = free_space_pointer;
+    inline uint32_t GetFreeSpacePointer() {
+        return free_space_pointer_;
     }
 
-    uint32_t GetTupleCount() {
-        return *reinterpret_cast<uint32_t *> (GetData() + OFFSET_TUPLE_COUNT);
+    inline void SetFreeSpacePointer(uint32_t free_space_pointer) {
+        free_space_pointer_ = free_space_pointer;
     }
 
-    void SetTupleCount(uint32_t tuple_count) {
-        *reinterpret_cast<uint32_t *> (GetData() + OFFSET_TUPLE_COUNT) = tuple_count;
+    inline uint32_t GetTupleCount() {
+        return tuple_count_;
+    }
+
+    inline void SetTupleCount(uint32_t tuple_count) {
+        tuple_count_ = tuple_count;
     }
 
     uint32_t GetFreeSpaceRemaining() {
@@ -197,19 +213,19 @@ private:
     }
 
     uint32_t GetTupleOffset(uint32_t slot_id) {
-        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id);
+        return *reinterpret_cast<uint32_t *> (data_ + SIZE_SLOT * slot_id + OFFSET_OFF);
     }
 
     void SetTupleOffset(uint32_t slot_id, uint32_t offset) {
-        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id) = offset;
+        *reinterpret_cast<uint32_t *> (data_ + SIZE_SLOT * slot_id + OFFSET_OFF) = offset;
     }
 
     uint32_t GetTupleSize(uint32_t slot_id) {
-        return *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id + sizeof(uint32_t));
+        return *reinterpret_cast<uint32_t *> (data_ + SIZE_SLOT * slot_id + OFFSET_SIZE);
     }
 
     void SetTupleSize(uint32_t slot_id, uint32_t size) {
-        *reinterpret_cast<uint32_t *> (GetData() + SIZE_TABLE_PAGE_HEADER + SIZE_SLOT * slot_id + sizeof(uint32_t)) = size;
+        *reinterpret_cast<uint32_t *> (data_ + SIZE_SLOT * slot_id + OFFSET_SIZE) = size;
     }
 
     /**
@@ -254,6 +270,12 @@ private:
         return tuple_size != 0;
     }
 
+    // member variables
+    page_id_t prev_page_id_;
+    page_id_t next_page_id_;
+    uint32_t free_space_pointer_;
+    uint32_t tuple_count_;
+    char data_[0];
 };
 
 }

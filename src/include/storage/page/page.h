@@ -84,18 +84,6 @@ public:
         rwlatch_.RUnlock();
     }
 
-    // TODO: maintain recovery related information. i.e. lsn
-
-protected:
-    static_assert(sizeof(page_id_t) == 4);
-    static_assert(sizeof(lsn_t) == 4);
-
-    // 4 byte for page id
-    // 4 byte for lsn
-    static constexpr size_t SIZE_PAGE_HEADER = 8;
-    static constexpr size_t OFFSET_LSN = 4;
-    static constexpr size_t OFFSET_PAGE = 0;
-
 private:
     // zero out the data
     inline void ZeroData() {
