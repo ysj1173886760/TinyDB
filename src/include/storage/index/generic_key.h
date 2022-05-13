@@ -34,7 +34,7 @@ public:
         // initialize to all zero
         memset(data_, 0, KeySize);
         assert(tuple.GetLength() < KeySize);
-        memcpy(data_, tuple.GetData(), tuple.GetLength()));
+        memcpy(data_, tuple.GetData(), tuple.GetLength());
     }
 
     inline Value ToValue(Schema *schema, uint32_t column_idx) const {
@@ -43,7 +43,7 @@ public:
             return Value::DeserializeFrom(data_ + col.GetOffset());
         } else {
             uint32_t offset = *reinterpret_cast<uint32_t *> (data_ + col.GetOffset());
-            return Value::DeserializeFrom(data + offset);
+            return Value::DeserializeFrom(data_ + offset);
         }
     }
 
