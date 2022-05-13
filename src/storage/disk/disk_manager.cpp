@@ -91,7 +91,7 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
         return;
     }
 
-    int readCount = db_file_.gcount();
+    uint32_t readCount = db_file_.gcount();
     if (readCount < PAGE_SIZE) {
         LOG_ERROR("read less than a page, page_id: %d", pageId);
         db_file_.clear();

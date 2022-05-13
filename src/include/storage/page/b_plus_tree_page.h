@@ -21,6 +21,9 @@ namespace TinyDB {
 #define INDEX_TEMPLATE_ARGUMENTS \
     template <typename KeyType, typename ValueType, typename KeyComparator>
 
+// key-value pair in b+tree
+#define MappingType std::pair<KeyType, ValueType>
+
 enum class IndexPageType {
     INVALID_INDEX_PAGE = 0,
     LEAF_PAGE,
@@ -89,7 +92,7 @@ public:
 
     /**
      * @brief 
-     * increase the size of current page by amount bytes
+     * increase the size of current page by amount
      * @param amount 
      */
     void IncreaseSize(int amount) {
@@ -132,13 +135,19 @@ public:
         parent_page_id_ = parent_page_id;
     }
 
-private:
+protected:
     static_assert(sizeof(IndexPageType) == 4);
+    static constexpr uint32_t BPLUSTREE_HEADER_SIZE = 24;
     // member varibles that both internal page and leaf page
     // will share
+
+    // count of pairs that stored in current page
     uint32_t size_;
+    // max count of pairs that could be stored in current page
     uint32_t max_size_;
+    // pointer to parent page
     page_id_t parent_page_id_;
+    // page type
     IndexPageType page_type_;
 };
 

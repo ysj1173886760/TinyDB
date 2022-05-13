@@ -18,10 +18,10 @@
 namespace TinyDB {
 
 // size of a page, which is the basic unit of our database
-static constexpr int PAGE_SIZE = 4096;
+static constexpr uint32_t PAGE_SIZE = 4096;
 
 // size of buffer pool, should be configured based on your memory
-static constexpr int BUFFER_POOL_SIZE = 10;
+static constexpr uint32_t BUFFER_POOL_SIZE = 10;
 
 // special values
 static constexpr int INVALID_PAGE_ID = -1;
