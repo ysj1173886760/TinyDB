@@ -17,7 +17,7 @@
 namespace TinyDB {
 
 void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id) {
-    page_id_ = page_id;
+    SetPageId(page_id);
 
     // we are double-linked list
     // and we are at the tail of the list

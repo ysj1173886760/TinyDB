@@ -14,6 +14,7 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include "storage/index/generic_key.h"
+#include "storage/page/page_header.h"
 
 namespace TinyDB {
 
@@ -38,7 +39,7 @@ enum class IndexPageType {
  * | ParentPageId(4) | PageType(4) |
  * ---------------------------------
  */
-class BPlusTreePage {
+class BPlusTreePage: public PageHeader {
 public:
     bool IsLeafPage() const;
     bool IsRootPage() const;
@@ -54,15 +55,10 @@ public:
     page_id_t GetParentPageId() const;
     void SetParentPageId() const;
 
-    page_id_t GetPageId() const;
-    void SetPageId(page_id_t page_id);
-
 private:
     static_assert(sizeof(IndexPageType) == 4);
     // member varibles that both internal page and leaf page
     // will share
-    page_id_t page_id_;
-    lsn_t lsn_;
     uint32_t size_;
     uint32_t max_size_;
     page_id_t parent_page_id_;

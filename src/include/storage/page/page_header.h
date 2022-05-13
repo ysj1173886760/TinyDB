@@ -22,6 +22,10 @@ public:
         return page_id_;
     }
 
+    inline void SetPageId(page_id_t page_id) {
+        page_id_ = page_id;
+    }
+
     inline lsn_t GetLSN() {
         return lsn_;
     }

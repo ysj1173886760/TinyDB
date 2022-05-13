@@ -185,7 +185,6 @@ private:
      * get the raw pointer pointing to this page.
      * @return char* 
      */
-
     inline char *GetRawPointer() {
         // some evil experiments
         assert(reinterpret_cast<TablePage *>(data_ - SIZE_TABLE_PAGE_HEADER) == this);
