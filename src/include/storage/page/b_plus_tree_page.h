@@ -41,19 +41,96 @@ enum class IndexPageType {
  */
 class BPlusTreePage: public PageHeader {
 public:
-    bool IsLeafPage() const;
-    bool IsRootPage() const;
-    void SetPageType(IndexPageType page_type);
+    /**
+     * @brief 
+     * return whether current page is leaf page
+     * @return
+     */
+    inline bool IsLeafPage() const {
+        return page_type_ == IndexPageType::LEAF_PAGE;
+    }
 
-    int GetSize() const;
-    void SetSize(int size);
+    /**
+     * @brief 
+     * return whether current page is root page
+     * @return true 
+     * @return false 
+     */
+    bool IsRootPage() const {
+        return parent_page_id_ == INVALID_PAGE_ID;
+    }
 
-    int GetMaxSize() const;
-    void SetMaxSize() const;
-    int GetMinSize() const;
+    /**
+     * @brief
+     * set the type of current page
+     * @param page_type 
+     */
+    void SetPageType(IndexPageType page_type) {
+        page_type_ = page_type;
+    }
 
-    page_id_t GetParentPageId() const;
-    void SetParentPageId() const;
+    /**
+     * @brief
+     * get size of current page
+     * @return int 
+     */
+    uint32_t GetSize() const {
+        return size_;
+    }
+
+    /**
+     * @brief
+     * set size of current page
+     * @param size 
+     */
+    void SetSize(uint32_t size) {
+        size_ = size;
+    }
+
+    /**
+     * @brief 
+     * increase the size of current page by amount bytes
+     * @param amount 
+     */
+    void IncreaseSize(int amount) {
+        size_ += amount;
+    }
+
+    /**
+     * @brief
+     * get max page size.
+     * when page size is greater than max size, we will trigger
+     * a split on that page
+     * @return int 
+     */
+    int GetMaxSize() const {
+        return max_size_;
+    }
+
+    void SetMaxSize(uint32_t size) {
+        max_size_ = size;
+    }
+
+    /**
+     * @brief
+     * get min page size. 
+     * Generally, min page size == max page size / 2
+     * @return uint32_t 
+     */
+    uint32_t GetMinSize() const {
+        if (IsLeafPage()) {
+            return max_size_ / 2;
+        }
+        return (max_size_ + 1) / 2;
+    }
+
+    page_id_t GetParentPageId() const {
+        return parent_page_id_;
+    }
+
+    void SetParentPageId(page_id_t parent_page_id) {
+        parent_page_id_ = parent_page_id;
+    }
 
 private:
     static_assert(sizeof(IndexPageType) == 4);
