@@ -129,6 +129,9 @@ public:
      */
     void MoveLastToFrontOf(BPlusTreeLeafPage *recipient);
 
+    static constexpr uint32_t LEAF_PAGE_HEADER_SIZE = BPLUSTREE_HEADER_SIZE + sizeof(page_id_t);
+    static constexpr uint32_t LEAF_PAGE_SIZE = (PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType);
+
 private:
     /**
      * @brief 
@@ -151,9 +154,6 @@ private:
      * @param item 
      */
     void CopyFirstFrom(const MappingType &item);
-
-    static constexpr uint32_t LEAF_PAGE_HEADER_SIZE = BPLUSTREE_HEADER_SIZE + sizeof(page_id_t);
-    static constexpr uint32_t LEAF_PAGE_SIZE = (PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType);
 
     // pointer pointing to next sibling page
     page_id_t next_page_id_;

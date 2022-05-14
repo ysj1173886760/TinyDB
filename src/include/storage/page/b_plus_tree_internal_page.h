@@ -155,6 +155,8 @@ public:
      */
     void MovelastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *bpm);
 
+    static constexpr uint32_t INTERNAL_PAGE_SIZE = (PAGE_SIZE - BPLUSTREE_HEADER_SIZE) / sizeof(MappingType);
+
 private:
     // helper functions
 
@@ -183,8 +185,6 @@ private:
      * @param bpm 
      */
     void CopyFirstFrom(const MappingType &pair, BufferPoolManager *bpm);
-
-    static constexpr uint32_t INTERNAL_PAGE_SIZE = (PAGE_SIZE - BPLUSTREE_HEADER_SIZE) / sizeof(MappingType);
 
     // elastic array
     MappingType array_[0];

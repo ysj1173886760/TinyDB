@@ -105,20 +105,6 @@ private:
 
 /**
  * @brief 
- * concurrent index execution context.
- * bustub was using transaction to recording these informations.
- * but i really want to make these modules isloated, so i decoupled ConcurrentIndexExecutionContext
- * from transaction
- */
-struct IndexExecutionContext {
-    // the pages that we latched during index operation
-    std::unique_ptr<std::deque<Page *>> page_set_;
-    // the page IDs that were deleted during index operation
-    std::unique_ptr<std::unordered_set<page_id_t>> deleted_page_set_;
-};
-
-/**
- * @brief 
  * base class for different indices. provide the basic interfaces that every index should implement,
  * which are InsertKey, DeleteKey and ScanKey.
  */
