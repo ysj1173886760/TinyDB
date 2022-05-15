@@ -444,7 +444,7 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::UpdateRootPageId(int insert_record) {
+void BPLUSTREE_TYPE::UpdateRootPageId(bool insert_record) {
     // TODO: implement header page then uncomment this
     // HeaderPage *header_page = static_cast<HeaderPage *>(buffer_pool_manager_->FetchPage(HEADER_PAGE_ID));
     // if (insert_record != 0) {
