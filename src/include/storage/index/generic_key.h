@@ -33,7 +33,7 @@ public:
     inline void SetFromKey(const Tuple &tuple) {
         // initialize to all zero
         memset(data_, 0, KeySize);
-        assert(tuple.GetLength() < KeySize);
+        assert(tuple.GetLength() <= KeySize);
         memcpy(data_, tuple.GetData(), tuple.GetLength());
     }
 
@@ -45,6 +45,10 @@ public:
             uint32_t offset = *reinterpret_cast<const uint32_t *> (data_ + col.GetOffset());
             return Value::DeserializeFrom(data_ + offset, col.GetType());
         }
+    }
+
+    inline const char *ToBytes() const {
+        return data_;
     }
 
     char data_[KeySize];

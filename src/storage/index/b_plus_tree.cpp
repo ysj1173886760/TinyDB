@@ -32,13 +32,13 @@ bool BPLUSTREE_TYPE::IsEmpty() const {
 
 INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, BPlusTreeExecutionContext *context) {
-  root_latch_.lock();
-  if (IsEmpty()) {
-    StartNewTree(key, value);
-    root_latch_.unlock();
-    return true;
-  }
-  return InsertIntoLeaf(key, value, context);
+    root_latch_.lock();
+    if (IsEmpty()) {
+        StartNewTree(key, value);
+        root_latch_.unlock();
+        return true;
+    }
+    return InsertIntoLeaf(key, value, context);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -66,20 +66,20 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *conte
         BPlusTreePage *next_node = reinterpret_cast<BPlusTreePage *>(next_page);
         // both internal node and leaf node will coalesce when size < minSize
         if (next_node->GetSize() > next_node->GetMinSize()) {
-        // safe, release all of the previous pages
-        // release pages as top-down order
-        auto pageSet = context->GetPageSet();
-        while (!pageSet->empty()) {
-            Page *page = pageSet->front();
-            pageSet->pop_front();
+            // safe, release all of the previous pages
+            // release pages at top-down order
+            auto pageSet = context->GetPageSet();
+            while (!pageSet->empty()) {
+                Page *page = pageSet->front();
+                pageSet->pop_front();
 
-            if (rootLocked && page->GetPageId() == root_page_id_) {
-                root_latch_.unlock();
-                rootLocked = false;
+                if (rootLocked && page->GetPageId() == root_page_id_) {
+                    root_latch_.unlock();
+                    rootLocked = false;
+                }
+                page->WUnlatch();
+                buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
             }
-            page->WUnlatch();
-            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-        }
         }
         context->AddIntoPageSet(next_page);
 
@@ -105,7 +105,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *conte
         page->WUnlatch();
         buffer_pool_manager_->UnpinPage(pageId, false);
         if (deletedPageSet->count(pageId) != 0) {
-        buffer_pool_manager_->DeletePage(pageId);
+            buffer_pool_manager_->DeletePage(pageId);
         }
     }
 
@@ -396,7 +396,7 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
 
     if (index == 0) {
         if (node->IsLeafPage()) {
-        reinterpret_cast<LeafPage *>(neighbor_node)->MoveFirstToEndOf(reinterpret_cast<LeafPage *>(node));
+            reinterpret_cast<LeafPage *>(neighbor_node)->MoveFirstToEndOf(reinterpret_cast<LeafPage *>(node));
         } else {
             reinterpret_cast<InternalPage *>(neighbor_node)
                 ->MoveFirstToEndOf(reinterpret_cast<InternalPage *>(node), parentPage->KeyAt(1), buffer_pool_manager_);

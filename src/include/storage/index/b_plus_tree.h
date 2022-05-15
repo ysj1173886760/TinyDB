@@ -36,6 +36,10 @@ struct BPlusTreeExecutionContext {
     // the page IDs that were deleted during index operation
     std::unique_ptr<std::unordered_set<page_id_t>> deleted_page_set_;
 
+    BPlusTreeExecutionContext()
+        : page_set_(new std::deque<Page *>()),
+          deleted_page_set_(new std::unordered_set<page_id_t>()) {}
+
     inline void AddIntoPageSet(Page *page) {
         page_set_->push_back(page);
     }
@@ -50,6 +54,11 @@ struct BPlusTreeExecutionContext {
 
     inline std::deque<Page *> *GetPageSet() {
         return page_set_.get();
+    }
+
+    inline void Reset() {
+        page_set_->clear();
+        deleted_page_set_->clear();
     }
 };
 

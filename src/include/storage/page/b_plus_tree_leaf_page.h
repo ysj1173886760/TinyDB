@@ -139,7 +139,7 @@ private:
      * @param items 
      * @param size 
      */
-    void CopyNFrom(MappingType *items, uint32_t size);
+    void CopyNFrom(MappingType *items, int size);
 
     /**
      * @brief 

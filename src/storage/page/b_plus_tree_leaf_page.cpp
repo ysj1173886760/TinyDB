@@ -53,7 +53,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
             lb = mid;
         }
     }
-    return static_cast<uint32_t>(ub);
+    return ub;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -66,7 +66,16 @@ uint32_t B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType 
     if (GetSize() == 0) {
         array_[0] = std::make_pair(key, value);
     } else {
-        auto ub = KeyIndex(key, comparator);
+        int lb = -1;
+        int ub = GetSize();
+        while (ub - lb > 1) {
+            int mid = (ub + lb) / 2;
+            if (comparator(KeyAt(mid), key) >= 0) {
+                ub = mid;
+            } else {
+                lb = mid;
+            }
+        }
 
         // don't update for duplicated key
         if (ub == GetSize() || comparator(KeyAt(ub), key) != 0) {
@@ -125,7 +134,7 @@ INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeLeafPage *recipient) {
     recipient->CopyLastFrom(array_[0]);
     IncreaseSize(-1);
-    for (int i = 0; i < GetSize() - 1; i++) {
+    for (int i = 0; i < GetSize(); i++) {
         array_[i] = array_[i + 1];
     }
 }
@@ -137,8 +146,8 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeLeafPage *recipient)
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, uint32_t size) {
-    for (int i = 0; i < size; i++) {
+void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyNFrom(MappingType *items, int size) {
+    for (auto i = 0; i < size; i++) {
         array_[i + GetSize()] = items[i];
     }
     IncreaseSize(size);
@@ -152,7 +161,7 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyLastFrom(const MappingType &item) {
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(const MappingType &item) {
-    for (int i = GetSize(); i >= 1; i--) {
+    for (auto i = GetSize(); i >= 1; i--) {
         array_[i] = array_[i - 1];
     }
     array_[0] = item;

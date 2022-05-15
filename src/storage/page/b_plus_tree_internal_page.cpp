@@ -23,12 +23,12 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Init(page_id_t page_id, page_id_t parent_id
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(uint32_t index) const {
+KeyType B_PLUS_TREE_INTERNAL_PAGE_TYPE::KeyAt(int index) const {
     return array_[index].first;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(uint32_t index, const KeyType &key) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::SetKeyAt(int index, const KeyType &key) {
     array_[index].first = key;
 }
 
@@ -43,16 +43,16 @@ int B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueIndex(const ValueType &value) const {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(uint32_t index) const {
+ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::ValueAt(int index) const {
     return array_[index].second;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
 ValueType B_PLUS_TREE_INTERNAL_PAGE_TYPE::Lookup(const KeyType &key, const KeyComparator &comparator) const {
-    uint lb = 0;
-    uint ub = GetSize();
+    int lb = 0;
+    int ub = GetSize();
     while (ub - lb > 1) {
-        uint mid = (ub + lb) / 2;
+        int mid = (ub + lb) / 2;
         if (comparator(key, KeyAt(mid)) >= 0) {
             // key is bigger that mid
             // raise the lower bound
@@ -86,7 +86,7 @@ uint32_t B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_va
 
 INDEX_TEMPLATE_ARGUMENTS
 void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
-    for (auto i = index; i < GetSize() - 1; i++) {
+    for (int i = index; i < GetSize() - 1; i++) {
         array_[i] = array_[i + 1];
     }
     IncreaseSize(-1);

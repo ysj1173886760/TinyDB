@@ -37,7 +37,7 @@ public:
      * @param index 
      * @return KeyType 
      */
-    KeyType KeyAt(uint32_t index) const;
+    KeyType KeyAt(int index) const;
 
     /**
      * @brief 
@@ -45,7 +45,7 @@ public:
      * @param index 
      * @param key 
      */
-    void SetKeyAt(uint32_t index, const KeyType &key);
+    void SetKeyAt(int index, const KeyType &key);
 
     /**
      * @brief 
@@ -61,7 +61,7 @@ public:
      * @param index 
      * @return ValueType 
      */
-    ValueType ValueAt(uint32_t index) const;
+    ValueType ValueAt(int index) const;
 
     /**
      * @brief 

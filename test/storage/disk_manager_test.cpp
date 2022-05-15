@@ -55,7 +55,7 @@ TEST(DiskManagerTest, StrongTest) {
 
         // generate a page trash
         char *data = new char[PAGE_SIZE];
-        for (int j = 0; j < PAGE_SIZE; j++) {
+        for (uint32_t j = 0; j < PAGE_SIZE; j++) {
             data[j] = dis(mt);
         }
 
