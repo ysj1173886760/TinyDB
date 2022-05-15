@@ -53,7 +53,7 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
             lb = mid;
         }
     }
-    return ub;
+    return static_cast<uint32_t>(ub);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -66,11 +66,11 @@ uint32_t B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType 
     if (GetSize() == 0) {
         array_[0] = std::make_pair(key, value);
     } else {
-        int ub = KeyIndex(key, comparator);
+        auto ub = KeyIndex(key, comparator);
 
         // don't update for duplicated key
         if (ub == GetSize() || comparator(KeyAt(ub), key) != 0) {
-            for (int i = GetSize(); i >= ub; i--) {
+            for (auto i = GetSize(); i >= ub; i--) {
                 array_[i] = array_[i - 1];
             }
             array_[ub] = std::make_pair(key, value);
@@ -85,7 +85,7 @@ uint32_t B_PLUS_TREE_LEAF_PAGE_TYPE::Insert(const KeyType &key, const ValueType 
 
 INDEX_TEMPLATE_ARGUMENTS
 bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, const KeyComparator &comparator) const {
-    int ub = KeyIndex(key, comparator);
+    auto ub = KeyIndex(key, comparator);
     if (comparator(array_[ub].first, key) == 0) {
         if (value != nullptr) {
             *value = array_[ub].second;
@@ -97,9 +97,9 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
 
 INDEX_TEMPLATE_ARGUMENTS
 uint32_t B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator) {
-    int ub = KeyIndex(key, comparator);
+    auto ub = KeyIndex(key, comparator);
     if (comparator(array_[ub].first, key) == 0) {
-        for (int i = ub; i < GetSize() - 1; i++) {
+        for (auto i = ub; i < GetSize() - 1; i++) {
             array_[i] = array_[i + 1];
         }
         IncreaseSize(-1);
@@ -158,5 +158,11 @@ void B_PLUS_TREE_LEAF_PAGE_TYPE::CopyFirstFrom(const MappingType &item) {
     array_[0] = item;
     IncreaseSize(1);
 }
+
+template class BPlusTreeLeafPage<GenericKey<4>, RID, GenericComparator<4>>;
+template class BPlusTreeLeafPage<GenericKey<8>, RID, GenericComparator<8>>;
+template class BPlusTreeLeafPage<GenericKey<16>, RID, GenericComparator<16>>;
+template class BPlusTreeLeafPage<GenericKey<32>, RID, GenericComparator<32>>;
+template class BPlusTreeLeafPage<GenericKey<64>, RID, GenericComparator<64>>;
 
 }

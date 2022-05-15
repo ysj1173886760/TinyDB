@@ -188,7 +188,7 @@ void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-bool BPLUSTREE_TYPE::InserIntoLeaf(const KeyType &key, const ValueType &value, BPlusTreeExecutionContext *context) {
+bool BPLUSTREE_TYPE::InsertIntoLeaf(const KeyType &key, const ValueType &value, BPlusTreeExecutionContext *context) {
     bool rootLocked = true;
     Page *cur_page = buffer_pool_manager_->FetchPage(root_page_id_);
     TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
@@ -456,5 +456,11 @@ void BPLUSTREE_TYPE::UpdateRootPageId(bool insert_record) {
     // }
     // buffer_pool_manager_->UnpinPage(HEADER_PAGE_ID, true);
 }
+
+template class BPlusTree<GenericKey<4>, RID, GenericComparator<4>>;
+template class BPlusTree<GenericKey<8>, RID, GenericComparator<8>>;
+template class BPlusTree<GenericKey<16>, RID, GenericComparator<16>>;
+template class BPlusTree<GenericKey<32>, RID, GenericComparator<32>>;
+template class BPlusTree<GenericKey<64>, RID, GenericComparator<64>>;
 
 }

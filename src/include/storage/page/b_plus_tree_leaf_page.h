@@ -59,7 +59,7 @@ public:
      * You can regard it as lower_bound in c++ std library.
      * @param key 
      * @param comparator 
-     * @return int
+     * @return index i
      */
     int KeyIndex(const KeyType &key, const KeyComparator &comparator) const;
 

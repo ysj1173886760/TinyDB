@@ -85,8 +85,8 @@ uint32_t B_PLUS_TREE_INTERNAL_PAGE_TYPE::InsertNodeAfter(const ValueType &old_va
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(uint32_t index) {
-    for (uint i = index; i < GetSize() - 1; i++) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::Remove(int index) {
+    for (auto i = index; i < GetSize() - 1; i++) {
         array_[i] = array_[i + 1];
     }
     IncreaseSize(-1);
@@ -119,7 +119,7 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveFirstToEndOf(BPlusTreeInternalPage *rec
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MovelastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *bpm) {
+void B_PLUS_TREE_INTERNAL_PAGE_TYPE::MoveLastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *bpm) {
     recipient->SetKeyAt(0, middle_key);
     recipient->CopyFirstFrom(array_[GetSize() - 1], bpm);
     Remove(GetSize() - 1);
@@ -161,5 +161,11 @@ void B_PLUS_TREE_INTERNAL_PAGE_TYPE::CopyFirstFrom(const MappingType &pair, Buff
     array_[0] = pair;
     IncreaseSize(1);
 }
+
+template class BPlusTreeInternalPage<GenericKey<4>, page_id_t, GenericComparator<4>>;
+template class BPlusTreeInternalPage<GenericKey<8>, page_id_t, GenericComparator<8>>;
+template class BPlusTreeInternalPage<GenericKey<16>, page_id_t, GenericComparator<16>>;
+template class BPlusTreeInternalPage<GenericKey<32>, page_id_t, GenericComparator<32>>;
+template class BPlusTreeInternalPage<GenericKey<64>, page_id_t, GenericComparator<64>>;
 
 }

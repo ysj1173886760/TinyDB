@@ -40,10 +40,10 @@ public:
     inline Value ToValue(Schema *schema, uint32_t column_idx) const {
         const auto &col = schema->GetColumn(column_idx);
         if (col.IsInlined()) {
-            return Value::DeserializeFrom(data_ + col.GetOffset());
+            return Value::DeserializeFrom(data_ + col.GetOffset(), col.GetType());
         } else {
-            uint32_t offset = *reinterpret_cast<uint32_t *> (data_ + col.GetOffset());
-            return Value::DeserializeFrom(data_ + offset);
+            uint32_t offset = *reinterpret_cast<const uint32_t *> (data_ + col.GetOffset());
+            return Value::DeserializeFrom(data_ + offset, col.GetType());
         }
     }
 
@@ -70,9 +70,9 @@ public:
                 return 1;
             }
 
-            // TODO: should we check null?
-            return 0;
         }
+        // TODO: should we check null?
+        return 0;
     }
 
 private:

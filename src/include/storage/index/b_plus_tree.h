@@ -118,7 +118,7 @@ private:
      * @param context 
      * @return true when insertion succeed, false when we are trying to insert duplicated key
      */
-    bool InserIntoLeaf(const KeyType &key, const ValueType &value, BPlusTreeExecutionContext *context = nullptr);
+    bool InsertIntoLeaf(const KeyType &key, const ValueType &value, BPlusTreeExecutionContext *context = nullptr);
 
     /**
      * @brief 

@@ -112,7 +112,7 @@ public:
      * remove the key & value pair in internal page corresponding to input index
      * @param index 
      */
-    void Remove(uint32_t index);
+    void Remove(int index);
 
     /**
      * @brief 
@@ -153,7 +153,7 @@ public:
      * @param middle_key 
      * @param bpm 
      */
-    void MovelastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *bpm);
+    void MoveLastToFrontOf(BPlusTreeInternalPage *recipient, const KeyType &middle_key, BufferPoolManager *bpm);
 
     static constexpr uint32_t INTERNAL_PAGE_SIZE = (PAGE_SIZE - BPLUSTREE_HEADER_SIZE) / sizeof(MappingType);
 

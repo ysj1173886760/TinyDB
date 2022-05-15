@@ -77,7 +77,7 @@ public:
      * get size of current page
      * @return int 
      */
-    uint32_t GetSize() const {
+    int GetSize() const {
         return size_;
     }
 
@@ -86,7 +86,7 @@ public:
      * set size of current page
      * @param size 
      */
-    void SetSize(uint32_t size) {
+    void SetSize(int size) {
         size_ = size;
     }
 
@@ -110,7 +110,7 @@ public:
         return max_size_;
     }
 
-    void SetMaxSize(uint32_t size) {
+    void SetMaxSize(int size) {
         max_size_ = size;
     }
 
@@ -120,7 +120,7 @@ public:
      * Generally, min page size == max page size / 2
      * @return uint32_t 
      */
-    uint32_t GetMinSize() const {
+    int GetMinSize() const {
         if (IsLeafPage()) {
             return max_size_ / 2;
         }
@@ -142,9 +142,9 @@ protected:
     // will share
 
     // count of pairs that stored in current page
-    uint32_t size_;
+    int size_;
     // max count of pairs that could be stored in current page
-    uint32_t max_size_;
+    int max_size_;
     // pointer to parent page
     page_id_t parent_page_id_;
     // page type
