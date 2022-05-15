@@ -13,8 +13,8 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [x] schema
 - [x] tuple
 - [x] table page
-- [ ] table heap
-- [ ] index
+- [x] table heap
+- [x] index
 - [ ] catalog
 - [ ] expression
 - [ ] execution
@@ -30,3 +30,4 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [ ] Deallocate page in disk (use bitmap to manage page allocation)
 - [ ] Delete empty pages in table heap (essentially it's a concurrent doubly-linked list)
 - [ ] Implement variable-length data pool. (currently, i stored it right after the tuple, which leads to the varied-length tuple. And when we want to perform updation of a tuple, we might fail since table might not have enough space for new tuple, thus we need to perform an deletion followed by an insertion, which may introduce more engineering overhead)
+- [ ] B+Tree may still contains bugs, especially when handling deleted pages, pinned pages and dirty pages. After we've implemented page management, we shall use it to check whether B+Tree will give the deleted page back safely.
