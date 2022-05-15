@@ -95,8 +95,9 @@ public:
      * Delete kv pair associated with input key.
      * @param key 
      * @param context 
+     * @return true when deletion succeed, false when we failed to find the key.
      */
-    void Remove(const KeyType &key, BPlusTreeExecutionContext *context = nullptr);
+    bool Remove(const KeyType &key, BPlusTreeExecutionContext *context = nullptr);
 
     /**
      * @brief

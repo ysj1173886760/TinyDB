@@ -105,15 +105,16 @@ bool B_PLUS_TREE_LEAF_PAGE_TYPE::Lookup(const KeyType &key, ValueType *value, co
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-uint32_t B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator) {
+bool B_PLUS_TREE_LEAF_PAGE_TYPE::RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator) {
     auto ub = KeyIndex(key, comparator);
     if (comparator(array_[ub].first, key) == 0) {
         for (auto i = ub; i < GetSize() - 1; i++) {
             array_[i] = array_[i + 1];
         }
         IncreaseSize(-1);
+        return true;
     }
-    return GetSize();
+    return false;
 }
 
 INDEX_TEMPLATE_ARGUMENTS

@@ -157,7 +157,14 @@ public:
 
     static constexpr uint32_t INTERNAL_PAGE_SIZE = (PAGE_SIZE - BPLUSTREE_HEADER_SIZE) / sizeof(MappingType);
 
-private:
+    void PrintAsBigint() {
+        LOG_DEBUG("pageid: %d parent: %d size: %d", GetPageId(), GetParentPageId(), GetSize());
+        for (int i = 0; i < GetSize(); i++) {
+            LOG_DEBUG("%d %d", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()), array_[i].second);
+        }
+    }
+
+public:
     // helper functions
 
     /**

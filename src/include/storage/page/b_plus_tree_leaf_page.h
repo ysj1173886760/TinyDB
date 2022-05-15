@@ -97,9 +97,9 @@ public:
      * find the key & value pair corresponding "key" and delete it.
      * @param key 
      * @param comparator 
-     * @return page size after deletion
+     * @return whether deletion is performed
      */
-    uint32_t RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
+    bool RemoveAndDeleteRecord(const KeyType &key, const KeyComparator &comparator);
 
     /**
      * @brief 
@@ -132,7 +132,15 @@ public:
     static constexpr uint32_t LEAF_PAGE_HEADER_SIZE = BPLUSTREE_HEADER_SIZE + sizeof(page_id_t);
     static constexpr uint32_t LEAF_PAGE_SIZE = (PAGE_SIZE - LEAF_PAGE_HEADER_SIZE) / sizeof(MappingType);
 
-private:
+    // for debug purpose
+    void PrintAsBigint() {
+        LOG_DEBUG("pageid: %d parent: %d size: %d", GetPageId(), GetParentPageId(), GetSize());
+        for (int i = 0; i < GetSize(); i++) {
+            LOG_DEBUG("%d", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()));
+        }
+    }
+
+public:
     /**
      * @brief 
      * Copy "size" items starting from "items" to current page

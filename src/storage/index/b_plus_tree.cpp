@@ -42,12 +42,13 @@ bool BPLUSTREE_TYPE::Insert(const KeyType &key, const ValueType &value, BPlusTre
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-void BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *context) {
+bool BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *context) {
+
     root_latch_.lock();
     bool rootLocked = true;
     if (IsEmpty()) {
         root_latch_.unlock();
-        return;
+        return false;
     }
 
     Page *cur_page = buffer_pool_manager_->FetchPage(root_page_id_);
@@ -89,7 +90,7 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *conte
     }
 
     LeafPage *leafPage = reinterpret_cast<LeafPage *>(bPlusTreePage);
-    leafPage->RemoveAndDeleteRecord(key, comparator_);
+    bool res = leafPage->RemoveAndDeleteRecord(key, comparator_);
 
     if (leafPage->GetSize() < leafPage->GetMinSize()) {
         CoalesceOrRedistribute<LeafPage>(leafPage, context);
@@ -103,15 +104,19 @@ void BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *conte
 
         page_id_t pageId = page->GetPageId();
         page->WUnlatch();
-        buffer_pool_manager_->UnpinPage(pageId, false);
+        buffer_pool_manager_->UnpinPage(pageId, res);
         if (deletedPageSet->count(pageId) != 0) {
             buffer_pool_manager_->DeletePage(pageId);
+            // guarantee that we will only delete page once
+            deletedPageSet->erase(pageId);
         }
     }
 
     if (rootLocked) {
         root_latch_.unlock();
     }
+
+    return res;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -334,6 +339,10 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, BPlusTreeExecutionContext *
     Page *p = buffer_pool_manager_->FetchPage(node->GetParentPageId());
     TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(p != nullptr, "");
     InternalPage *internalPage = reinterpret_cast<InternalPage *>(p->GetData());
+    // p should already been added in page set
+    // but remember, we still need to call Unpin
+    // for the simplicity, let's add it again so it will be Unpin twice
+    context->AddIntoPageSet(p);
 
     int index = internalPage->ValueIndex(node->GetPageId());
     int sibling;
@@ -412,6 +421,11 @@ void BPLUSTREE_TYPE::Redistribute(N *neighbor_node, N *node, int index) {
         }
         parentPage->SetKeyAt(index, node->KeyAt(0));
     }
+
+    // even we've already added page into the page set in context
+    // we still need to Unpin this page, because every FetchPage call should 
+    // have its own Unpin call
+    buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -430,6 +444,7 @@ bool BPLUSTREE_TYPE::AdjustRoot(BPlusTreePage *old_root_node) {
         root_page_id_ = new_root;
         UpdateRootPageId();
 
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
         return true;
     }
 
