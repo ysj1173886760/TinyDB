@@ -136,7 +136,7 @@ public:
     void PrintAsBigint() {
         LOG_DEBUG("pageid: %d parent: %d size: %d", GetPageId(), GetParentPageId(), GetSize());
         for (int i = 0; i < GetSize(); i++) {
-            LOG_DEBUG("%d", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()));
+            LOG_DEBUG("%ld", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()));
         }
     }
 

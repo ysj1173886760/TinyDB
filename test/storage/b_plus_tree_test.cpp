@@ -108,6 +108,8 @@ TEST(BPlusTreeTest, RandomInsertTest) {
     }
     std::random_shuffle(keys.begin(), keys.end());
 
+    EXPECT_EQ(bpm->CheckPinCount(), true);
+
     // insert  keys
     for (auto key : keys) {
         context.Reset();
@@ -117,6 +119,8 @@ TEST(BPlusTreeTest, RandomInsertTest) {
         index_key.SetFromKey(tmp);
         EXPECT_EQ(tree.Insert(index_key, rid, &context), true);
     }
+
+    EXPECT_EQ(bpm->CheckPinCount(), true);
     
     // read them
     for (auto key : keys) {
@@ -127,6 +131,8 @@ TEST(BPlusTreeTest, RandomInsertTest) {
         EXPECT_EQ(result[0], RID(key));
     }
 
+    EXPECT_EQ(bpm->CheckPinCount(), true);
+
     // delete them
     for (uint i = 0; i < keys.size(); i++) {
         context.Reset();
@@ -136,12 +142,16 @@ TEST(BPlusTreeTest, RandomInsertTest) {
         EXPECT_EQ(tree.Remove(index_key, &context), true);
     }
 
+    EXPECT_EQ(bpm->CheckPinCount(), true);
+
     for (auto key : keys) {
         std::vector<RID> result;
         auto k = Tuple({Value(TypeId::BIGINT, key)}, &schema);
         index_key.SetFromKey(k);
         EXPECT_EQ(tree.GetValue(index_key, &result, &context), false);
     }
+
+    EXPECT_EQ(bpm->CheckPinCount(), true);
 
     delete disk_manager;
     delete bpm;

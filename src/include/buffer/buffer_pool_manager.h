@@ -99,6 +99,13 @@ public:
         return pool_size_;
     }
 
+    /**
+     * @brief 
+     * for debug purposes, it will check the refcnt of in-memory pages.
+     * @return true when refcnt of all pages are zero
+     */
+    bool CheckPinCount();
+
 private:
     // number of pages in the buffer pool
     size_t pool_size_;

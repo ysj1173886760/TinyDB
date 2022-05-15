@@ -160,7 +160,7 @@ public:
     void PrintAsBigint() {
         LOG_DEBUG("pageid: %d parent: %d size: %d", GetPageId(), GetParentPageId(), GetSize());
         for (int i = 0; i < GetSize(); i++) {
-            LOG_DEBUG("%d %d", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()), array_[i].second);
+            LOG_DEBUG("%ld %d", *reinterpret_cast<const int64_t *> (array_[i].first.ToBytes()), array_[i].second);
         }
     }
 
