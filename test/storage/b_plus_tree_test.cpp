@@ -470,7 +470,7 @@ TEST(BPlusTreeTest, BasicIteratorTest) {
 
 TEST(BPlusTreeTest, ConcurrentIteratorTest) {
     const std::string filename = "test.db";
-    const size_t buffer_pool_size = 100;
+    const size_t buffer_pool_size = 50;
     remove(filename.c_str());
 
     auto disk_manager = new DiskManager(filename);

@@ -21,7 +21,7 @@ namespace TinyDB {
 
 class IndexBuilder {
 public:
-    static std::unique_ptr<Index> Build(IndexMetadata metadata, BufferPoolManager *bpm);
+    static std::unique_ptr<Index> Build(std::unique_ptr<IndexMetadata> metadata, BufferPoolManager *bpm);
 };
 
 }

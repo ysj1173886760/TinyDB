@@ -56,6 +56,16 @@ public:
         key_schema_ = Schema::CopySchema(tuple_schema, key_attrs);
     }
 
+    IndexMetadata(IndexMetadata &&other)
+        : index_name_(other.index_name_), 
+          table_name_(other.table_name_), 
+          key_schema_(other.key_schema_),
+          key_attrs_(other.key_attrs_), 
+          type_(other.type_),
+          key_size_(other.key_size_) {
+        other.key_schema_ = nullptr;
+    }
+
     ~IndexMetadata() {
         delete key_schema_;
     }
@@ -114,7 +124,7 @@ private:
     std::string table_name_;
     Schema *key_schema_;
     // this is not necessary since we can generate key_attrs from key_schema and base schema
-    const std::vector<uint32_t> key_attrs_;
+    std::vector<uint32_t> key_attrs_;
     IndexType type_;
     uint32_t key_size_;
 };
@@ -157,10 +167,14 @@ public:
 
     // real operations
 
+    // I wonder do we need to provide some function to insert tuple with table_schema
+    // directly? since we can use schema and key_attrs in index_metadata to convert 
+    // tuple to key.
+
     /**
      * @brief 
-     * insert an entry into index
-     * @param key key to inserted
+     * insert an entry into index. 
+     * @param key key to inserted. The schema for "key" should be key_schema
      * @param rid value to inserted
      */
     virtual void InsertEntry(const Tuple &key, RID rid) = 0;
@@ -168,7 +182,7 @@ public:
     /**
      * @brief 
      * delete an entry
-     * @param key target key
+     * @param key target key. The schema for "key" should be key_schema
      * @param rid target rid, for supporting duplicated keys
      */
     virtual void DeleteEntry(const Tuple &key, RID rid) = 0;
@@ -176,7 +190,7 @@ public:
     /**
      * @brief 
      * get the rid corresponding to given key
-     * @param key target key
+     * @param key target key. The schema for "key" should be key_schema
      * @param result result array, for supporting duplicated keys
      */
     virtual void ScanKey(const Tuple &key, std::vector<RID> *result) = 0;
