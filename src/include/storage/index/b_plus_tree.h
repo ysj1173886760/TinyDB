@@ -15,6 +15,7 @@
 #include "storage/page/b_plus_tree_internal_page.h"
 #include "storage/page/b_plus_tree_leaf_page.h"
 #include "buffer/buffer_pool_manager.h"
+#include "storage/index/b_plus_tree_iterator.h"
 
 #include <string>
 #include <unordered_set>
@@ -129,6 +130,9 @@ public:
      * @return true when key exists
      */
     bool GetValue(const KeyType &key, std::vector<ValueType> *result, BPlusTreeExecutionContext *context = nullptr);
+
+    BPLUSTREE_ITERATOR_TYPE Begin();
+    BPLUSTREE_ITERATOR_TYPE Begin(const KeyType &key);
 
 private:
     // helper functions

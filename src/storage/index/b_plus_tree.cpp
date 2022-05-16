@@ -12,6 +12,7 @@
 #include "storage/index/b_plus_tree.h"
 #include "common/macros.h"
 #include "common/exception.h"
+#include "storage/index/b_plus_tree_iterator.h"
 
 namespace TinyDB {
 
@@ -473,6 +474,59 @@ void BPLUSTREE_TYPE::UpdateRootPageId(bool insert_record) {
     //     header_page->UpdateRecord(index_name_, root_page_id_);
     // }
     // buffer_pool_manager_->UnpinPage(HEADER_PAGE_ID, true);
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
+    root_latch_.lock();
+    bool rootLocked = true;
+    if (IsEmpty()) {
+        root_latch_.unlock();
+        // return invalid iterator
+        return BPLUSTREE_ITERATOR_TYPE();
+    }
+
+    Page *cur_page = buffer_pool_manager_->FetchPage(root_page_id_);
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
+    cur_page->RLatch();
+    BPlusTreePage *bPlusTreePage = reinterpret_cast<BPlusTreePage *>(cur_page->GetData());
+
+    while (!bPlusTreePage->IsLeafPage()) {
+        InternalPage *internalPage = reinterpret_cast<InternalPage *>(bPlusTreePage);
+        page_id_t next_page_id;
+        next_page_id = internalPage->ValueAt(0);
+
+        Page *next_page = buffer_pool_manager_->FetchPage(next_page_id);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(next_page != nullptr, "");
+        next_page->RLatch();
+
+        // release previous page
+        if (rootLocked && bPlusTreePage->IsRootPage()) {
+            root_latch_.unlock();
+            rootLocked = false;
+        }
+        cur_page->RUnlatch();
+        buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
+
+        // step to next page
+        cur_page = next_page;
+        bPlusTreePage = reinterpret_cast<BPlusTreePage *>(next_page->GetData());
+    }
+
+    page_id_t page_id = cur_page->GetPageId();
+    if (rootLocked) {
+        root_latch_.unlock();
+    }
+
+    // hold the latch
+    // cur_page->RUnlatch();
+    // buffer_pool_manager_->UnpinPage(page_id, false);
+    return BPLUSTREE_ITERATOR_TYPE(buffer_pool_manager_, cur_page, 0, this);
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
+
 }
 
 template class BPlusTree<GenericKey<4>, RID, GenericComparator<4>>;
