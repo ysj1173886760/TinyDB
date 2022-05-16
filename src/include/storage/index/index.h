@@ -15,6 +15,8 @@
 #include "catalog/schema.h"
 #include "type/value.h"
 #include "storage/table/tuple.h"
+#include "storage/index/index_iterator.h"
+#include "common/exception.h"
 
 #include <string>
 #include <sstream>
@@ -39,8 +41,17 @@ enum IndexType {
 class IndexMetadata {
 public:
     IndexMetadata() = delete;
-    IndexMetadata(std::string index_name, std::string table_name, const Schema *tuple_schema, std::vector<uint32_t> key_attrs, IndexType type)
-        : index_name_(index_name), table_name_(table_name), key_attrs_(key_attrs), type_(type) {
+    IndexMetadata(std::string index_name, 
+                  std::string table_name, 
+                  const Schema *tuple_schema, 
+                  std::vector<uint32_t> key_attrs, 
+                  IndexType type, 
+                  uint32_t key_size)
+        : index_name_(index_name), 
+          table_name_(table_name), 
+          key_attrs_(key_attrs), 
+          type_(type),
+          key_size_(key_size) {
         // generate key schema based on tuple schema and key attrs
         key_schema_ = Schema::CopySchema(tuple_schema, key_attrs);
     }
@@ -101,6 +112,7 @@ private:
     // this is not necessary since we can generate key_attrs from key_schema and base schema
     const std::vector<uint32_t> key_attrs_;
     IndexType type_;
+    uint32_t key_size_;
 };
 
 /**
@@ -164,6 +176,25 @@ public:
      * @param result result array, for supporting duplicated keys
      */
     virtual void ScanKey(const Tuple &key, std::vector<RID> *result) = 0;
+
+    /**
+     * @brief 
+     * Get the general index iterator start from the smallest element
+     * @return IndexIterator 
+     */
+    virtual IndexIterator Begin() {
+        THROW_NOT_IMPLEMENTED_EXCEPTION("IndexIterator is not implemented");
+    }
+
+    /**
+     * @brief 
+     * Get the general index iterator start from key
+     * @param key 
+     * @return IndexIterator 
+     */
+    virtual IndexIterator Begin(const Tuple &key) {
+        THROW_NOT_IMPLEMENTED_EXCEPTION("IndexIterator is not implemented");
+    }
 
 private:
     std::unique_ptr<IndexMetadata> metadata_;

@@ -143,7 +143,7 @@ public:
 
     /**
      * @brief 
-     * Return the iterator of B+tree, with the lower bound of key
+     * Return the iterator of B+tree, start from key
      * @param key 
      * @return BPLUSTREE_ITERATOR_TYPE 
      */

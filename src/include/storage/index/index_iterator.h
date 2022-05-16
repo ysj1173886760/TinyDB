@@ -14,11 +14,9 @@
 
 #include "common/rid.h"
 
+#include <memory>
+
 namespace TinyDB {
-
-class IndexIterator {
-
-};
 
 /**
  * @brief 
@@ -51,6 +49,45 @@ public:
      */
     virtual bool IsEnd() = 0;
 };
+
+/**
+ * @brief 
+ * Wrapper class for internal iterator
+ */
+class IndexIterator {
+public:
+    explicit IndexIterator(std::unique_ptr<InternalIterator> it)
+        : internal_iterator_(std::move(it)) {}
+    
+    /**
+     * @brief 
+     * Advance the iterator by one step
+     */
+    inline void Advance() {
+        internal_iterator_->Advance();
+    }
+
+    /**
+     * @brief 
+     * Get the RID
+     * @return RID 
+     */
+    inline RID Get() {
+        return internal_iterator_->Get();
+    }
+
+    /**
+     * @brief 
+     * return whether iterator reaches the end
+     */
+    inline bool IsEnd() {
+        return internal_iterator_->IsEnd();
+    }
+
+private:
+    std::unique_ptr<InternalIterator> internal_iterator_;
+};
+
 
 }
 
