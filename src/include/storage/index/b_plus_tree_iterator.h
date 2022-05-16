@@ -35,6 +35,10 @@ public:
     bool IsEnd() override;
 
 private:
+    bool AdvanceHelper();
+
+    static_assert(std::is_same<ValueType, RID>(), "we only support RID as ValueType");
+
     using LeafPage = BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>;
 
     BufferPoolManager *buffer_pool_manager_{nullptr};
@@ -46,6 +50,8 @@ private:
     KeyType key_;
     // current page
     LeafPage *leaf_page_{nullptr};
+    // current page
+    Page *page_;
     // store the b+tree to do the re-scan
     BPlusTree<KeyType, ValueType, KeyComparator> *tree_{nullptr};
 };

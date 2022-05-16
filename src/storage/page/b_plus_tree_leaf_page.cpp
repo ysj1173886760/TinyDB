@@ -57,6 +57,29 @@ int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndex(const KeyType &key, const KeyComparator
 }
 
 INDEX_TEMPLATE_ARGUMENTS
+ValueType B_PLUS_TREE_LEAF_PAGE_TYPE::ValueAt(uint32_t index) const {
+    return array_[index].second;
+}
+
+
+INDEX_TEMPLATE_ARGUMENTS
+int B_PLUS_TREE_LEAF_PAGE_TYPE::KeyIndexOpen(const KeyType &key, const KeyComparator &comparator) const {
+    int lb = -1;
+    int ub = GetSize() - 1;
+    while (ub - lb > 1) {
+        int mid = (ub + lb) / 2;
+        if (comparator(KeyAt(mid), key) > 0) {
+            // if mid is greater than the key
+            // then we lower the upper bound
+            ub = mid;
+        } else {
+            lb = mid;
+        }
+    }
+    return ub;
+}
+
+INDEX_TEMPLATE_ARGUMENTS
 const MappingType &B_PLUS_TREE_LEAF_PAGE_TYPE::GetItem(uint32_t index) {
     return array_[index];
 }

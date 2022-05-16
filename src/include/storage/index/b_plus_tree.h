@@ -91,6 +91,8 @@ class BPlusTree {
     using InternalPage = BPlusTreeInternalPage<KeyType, page_id_t, KeyComparator>;
     using LeafPage = BPlusTreeLeafPage<KeyType, ValueType, KeyComparator>;
 
+    friend class BPlusTreeIterator<KeyType, ValueType, KeyComparator>;
+
 public:
     explicit BPlusTree(std::string index_name, BufferPoolManager *buffer_pool_manager, const KeyComparator &comparator,
                         uint32_t leaf_max_size = LeafPage::LEAF_PAGE_SIZE, uint32_t internal_max_size = InternalPage::INTERNAL_PAGE_SIZE);
@@ -131,11 +133,33 @@ public:
      */
     bool GetValue(const KeyType &key, std::vector<ValueType> *result, BPlusTreeExecutionContext *context = nullptr);
 
+
+    /**
+     * @brief 
+     * Return the iterator of B+tree
+     * @return BPLUSTREE_ITERATOR_TYPE 
+     */
     BPLUSTREE_ITERATOR_TYPE Begin();
+
+    /**
+     * @brief 
+     * Return the iterator of B+tree, with the lower bound of key
+     * @param key 
+     * @return BPLUSTREE_ITERATOR_TYPE 
+     */
     BPLUSTREE_ITERATOR_TYPE Begin(const KeyType &key);
 
 private:
     // helper functions
+
+    /**
+     * @brief 
+     * Helper function for finding the position corresponding to the key.
+     * It will return the Page with RLock holding and key index.
+     * @param key 
+     * @return std::tuple<Page *, int> 
+     */
+    std::tuple<Page *, int> FindHelper(const KeyType &key);
 
     /**
      * @brief 

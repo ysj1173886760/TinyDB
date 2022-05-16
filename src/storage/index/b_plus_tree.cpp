@@ -513,7 +513,6 @@ BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
         bPlusTreePage = reinterpret_cast<BPlusTreePage *>(next_page->GetData());
     }
 
-    page_id_t page_id = cur_page->GetPageId();
     if (rootLocked) {
         root_latch_.unlock();
     }
@@ -521,12 +520,69 @@ BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
     // hold the latch
     // cur_page->RUnlatch();
     // buffer_pool_manager_->UnpinPage(page_id, false);
+
     return BPLUSTREE_ITERATOR_TYPE(buffer_pool_manager_, cur_page, 0, this);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
+std::tuple<Page *, int> BPLUSTREE_TYPE::FindHelper(const KeyType &key) {
+    root_latch_.lock();
+    bool rootLocked = true;
+    if (IsEmpty()) {
+        root_latch_.unlock();
+        return std::make_tuple(nullptr, 0);
+    }
 
+    Page *cur_page = buffer_pool_manager_->FetchPage(root_page_id_);
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
+    cur_page->RLatch();
+    BPlusTreePage *bPlusTreePage = reinterpret_cast<BPlusTreePage *>(cur_page->GetData());
+
+    while (!bPlusTreePage->IsLeafPage()) {
+        InternalPage *internalPage = reinterpret_cast<InternalPage *>(bPlusTreePage);
+        page_id_t next_page_id;
+        next_page_id = internalPage->Lookup(key, comparator_);
+
+        Page *next_page = buffer_pool_manager_->FetchPage(next_page_id);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(next_page != nullptr, "");
+        next_page->RLatch();
+
+        // release previous page
+        if (rootLocked && bPlusTreePage->IsRootPage()) {
+            root_latch_.unlock();
+            rootLocked = false;
+        }
+        cur_page->RUnlatch();
+        buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
+
+        // step to next page
+        cur_page = next_page;
+        bPlusTreePage = reinterpret_cast<BPlusTreePage *>(next_page->GetData());
+    }
+
+    LeafPage *leafPage = reinterpret_cast<LeafPage *>(cur_page->GetData());
+    int index = leafPage->KeyIndex(key, comparator_);
+
+    if (rootLocked) {
+        root_latch_.unlock();
+    }
+
+    // hold the latch
+    // cur_page->RUnlatch();
+    // buffer_pool_manager_->UnpinPage(page_id, false);
+
+    return std::make_tuple(cur_page, index);
+}
+
+INDEX_TEMPLATE_ARGUMENTS
+BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
+    // structure binding, should enable c++17
+    auto [page, index] = FindHelper(key);
+    if (page == nullptr) {
+        return BPLUSTREE_ITERATOR_TYPE();
+    }
+
+    return BPLUSTREE_ITERATOR_TYPE(buffer_pool_manager_, page, index, this);
 }
 
 template class BPlusTree<GenericKey<4>, RID, GenericComparator<4>>;

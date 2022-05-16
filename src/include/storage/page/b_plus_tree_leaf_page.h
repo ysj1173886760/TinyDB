@@ -55,6 +55,14 @@ public:
 
     /**
      * @brief 
+     * get value though index
+     * @param index 
+     * @return ValueType
+     */
+    ValueType ValueAt(uint32_t index) const;
+
+    /**
+     * @brief 
      * find the first index i so that array[i].first >= key.
      * You can regard it as lower_bound in c++ std library.
      * @param key 
@@ -62,6 +70,16 @@ public:
      * @return index i
      */
     int KeyIndex(const KeyType &key, const KeyComparator &comparator) const;
+
+    /**
+     * @brief 
+     * find the first index i so that array[i].first > key.
+     * You can regard it as upper_bound in c++ std library.
+     * @param key 
+     * @param comparator 
+     * @return int 
+     */
+    int KeyIndexOpen(const KeyType &key, const KeyComparator &comparator) const;
 
     /**
      * @brief
