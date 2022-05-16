@@ -63,6 +63,14 @@ public:
      * @param page_id 
      */
     void DeallocatePage(page_id_t page_id);
+
+    inline int GetAllocateCount() {
+        return allocate_count_;
+    }
+
+    inline int GetDeallocateCount() {
+        return deallocate_count_;
+    }
     
 private:
     /**
@@ -77,7 +85,10 @@ private:
     std::string filename_;
     std::fstream db_file_;
     page_id_t next_page_id_;
-
+    
+    // for debug purpose
+    int allocate_count_;
+    int deallocate_count_;
 };
 
 }

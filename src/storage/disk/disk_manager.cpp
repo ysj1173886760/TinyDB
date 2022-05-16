@@ -43,6 +43,10 @@ DiskManager::DiskManager(const std::string &filename)
                 std::string("failed to open db file, filename: %s", filename.c_str()));
         }
     }
+
+    // debug
+    allocate_count_ = 0;
+    deallocate_count_ = 0;
 }
 
 DiskManager::~DiskManager() {
@@ -62,11 +66,18 @@ page_id_t DiskManager::AllocatePage() {
     int offset = new_page_id * PAGE_SIZE;
     db_file_.seekp(offset);
     db_file_.write(data, PAGE_SIZE);
+
+    // debug purpose
+    allocate_count_++;
+
     return new_page_id;
 }
 
 void DiskManager::DeallocatePage(page_id_t page_id) {
     // same as above
+
+    // debug purpose
+    deallocate_count_++;
 }
 
 void DiskManager::ReadPage(page_id_t pageId, char *data) {

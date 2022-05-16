@@ -121,7 +121,7 @@ TEST(BPlusTreeTest, RandomInsertTest) {
     }
 
     EXPECT_EQ(bpm->CheckPinCount(), true);
-    
+
     // read them
     for (auto key : keys) {
         std::vector<RID> result;
@@ -152,6 +152,9 @@ TEST(BPlusTreeTest, RandomInsertTest) {
     }
 
     EXPECT_EQ(bpm->CheckPinCount(), true);
+
+    // check whether we've returned the page back to disk
+    EXPECT_EQ(disk_manager->GetAllocateCount(), disk_manager->GetDeallocateCount());
 
     delete disk_manager;
     delete bpm;
@@ -253,6 +256,9 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
     }
 
     EXPECT_EQ(bpm->CheckPinCount(), true);
+
+    // check whether we've returned the page back to disk
+    EXPECT_EQ(disk_manager->GetAllocateCount(), disk_manager->GetDeallocateCount());
 
     delete disk_manager;
     delete bpm;
@@ -372,6 +378,9 @@ TEST(BPlusTreeTest, ConcurrentStrictTest) {
     for (uint i = 0; i < daemon_list.size(); i++) {
         daemon_list[i].join();
     }
+
+    // check whether we've returned the page back to disk
+    EXPECT_EQ(disk_manager->GetAllocateCount(), disk_manager->GetDeallocateCount());
 
     delete disk_manager;
     delete bpm;
