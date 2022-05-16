@@ -25,6 +25,8 @@ BPLUSTREE_ITERATOR_TYPE::BPlusTreeIterator(BufferPoolManager *bpm,
     // we are holding the latch
     page_id_ = page->GetPageId();
     leaf_page_ = reinterpret_cast<LeafPage *> (page->GetData());
+    // store the key
+    key_ = leaf_page_->KeyAt(index);
 }
 
 INDEX_TEMPLATE_ARGUMENTS

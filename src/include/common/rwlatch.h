@@ -61,6 +61,20 @@ public:
 
     /**
      * @brief 
+     * Try to acquire the WLatch
+     * @return true when we successfully acquired the lock, we will return while lock is holding
+     */
+    bool TryWLock() {
+        std::unique_lock<std::mutex> latch(mutex_);
+        if (writer_entered_ || reader_count_ > 0) {
+            return false;
+        }
+
+        writer_entered_ = true;
+    }
+
+    /**
+     * @brief 
      * acquire reader latch
      */
     void RLock() {
@@ -92,6 +106,21 @@ public:
                 reader_.notify_one();
             }
         }
+    }
+
+    /**
+     * @brief 
+     * try to acquire the RLock
+     * @return true when we successfully acquired the lock
+     */
+    bool TryRLock() {
+        std::unique_lock<std::mutex> latch(mutex_);
+        if (writer_entered_ || reader_count_ == MAX_READERS) {
+            return false;
+        }
+
+        reader_count_ += 1;
+        return true;
     }
 
 private:

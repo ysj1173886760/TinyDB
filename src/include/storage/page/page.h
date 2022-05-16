@@ -84,6 +84,14 @@ public:
         rwlatch_.RUnlock();
     }
 
+    inline bool TryWLatch() {
+        return rwlatch_.TryWLock();
+    }
+
+    inline bool TryRLatch() {
+        return rwlatch_.TryRLock();
+    }
+
 private:
     // zero out the data
     inline void ZeroData() {
