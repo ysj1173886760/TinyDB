@@ -31,11 +31,14 @@ BPLUSTREE_ITERATOR_TYPE::BPlusTreeIterator(BufferPoolManager *bpm,
     leaf_page_ = reinterpret_cast<LeafPage *> (page->GetData());
     // store the key
     key_ = leaf_page_->KeyAt(index);
+    retry_cnt_ = 0;
 }
 
 INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_ITERATOR_TYPE::Advance() {
-    while (!AdvanceHelper()) {}
+    while (!AdvanceHelper()) {
+        retry_cnt_++;
+    }
 }
 
 INDEX_TEMPLATE_ARGUMENTS

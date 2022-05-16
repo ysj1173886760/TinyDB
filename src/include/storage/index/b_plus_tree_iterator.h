@@ -35,6 +35,10 @@ public:
 
     bool IsEnd() override;
 
+    inline int GetRetryCnt() {
+        return retry_cnt_;
+    }
+
 private:
     bool AdvanceHelper();
 
@@ -55,6 +59,8 @@ private:
     Page *page_;
     // store the b+tree to do the re-scan
     BPlusTree<KeyType, ValueType, KeyComparator> *tree_{nullptr};
+    // debug
+    int retry_cnt_;
 };
 
 }

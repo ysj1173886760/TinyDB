@@ -503,11 +503,15 @@ TEST(BPlusTreeTest, ConcurrentIteratorTest) {
         while (shutdown.load() == false) {
             // INVARIANT: the result should always be an ascending sequence
             int last = -1;
-            for (auto it = tree.Begin(); !it.IsEnd(); it.Advance()) {
+            int read_cnt = 0;
+            auto it = tree.Begin();
+            for (; !it.IsEnd(); it.Advance()) {
                 int cur = it.Get().Get();
                 EXPECT_GT(cur, last);
                 last = cur;
+                read_cnt++;
             }
+            // LOG_INFO("retry times %d read_cnt %d", it.GetRetryCnt(), read_cnt);
         }
     }));
 
