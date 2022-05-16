@@ -27,6 +27,7 @@ class BPlusTreeIterator : public InternalIterator {
 public:
     BPlusTreeIterator(BufferPoolManager *bpm, Page *page, int index, BPlusTree<KeyType, ValueType, KeyComparator> *tree);
     BPlusTreeIterator() = default;
+    virtual ~BPlusTreeIterator();
 
     void Advance() override;
 

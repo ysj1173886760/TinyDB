@@ -39,7 +39,18 @@ void BPLUSTREE_ITERATOR_TYPE::Advance() {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
+BPLUSTREE_ITERATOR_TYPE::~BPlusTreeIterator() {
+    if (page_id_ != INVALID_PAGE_ID) {
+        page_->RUnlatch();
+        buffer_pool_manager_->UnpinPage(page_id_, false);
+    }
+}
+
+INDEX_TEMPLATE_ARGUMENTS
 bool BPLUSTREE_ITERATOR_TYPE::AdvanceHelper() {
+    assert(IsEnd() == false);
+    assert(page_->GetPageId() == page_id_);
+
     index_++;
     if (index_ == leaf_page_->GetSize()) {
         if (leaf_page_->GetNextPageId() == INVALID_PAGE_ID) {
@@ -48,7 +59,6 @@ bool BPLUSTREE_ITERATOR_TYPE::AdvanceHelper() {
             buffer_pool_manager_->UnpinPage(page_id_, false);
             // then set iterator to end
             page_id_ = INVALID_PAGE_ID;
-            index_ = -1;
             return true;
         }
 
@@ -67,15 +77,20 @@ bool BPLUSTREE_ITERATOR_TYPE::AdvanceHelper() {
             key_ = leaf_page_->KeyAt(index_);
             return true;
         }
+        // !!! if we failed to acquire the latch, then we need to unpin next_page
+        // don't forget!!!
+        buffer_pool_manager_->UnpinPage(next_page->GetPageId(), false);
 
         // if we failed to acquire the RLatch, then we may encounter the dead lock situation
-        // more smart way to do this would be check whether there is lock on parent,
+        // more smart way to do this would be to check whether there is lock on parent, so we will know
+        // whether there is a Structured Modify Operation.
         // but that would make the logic really complex. For the simplicity i will just check the 
         // lock on sibling here
 
         // first release the current page
         page_->RUnlatch();
         buffer_pool_manager_->UnpinPage(page_id_, false);
+        page_id_ = INVALID_PAGE_ID;
         // re-scan based on the highest key that we've read
         // transfer the ownership from FindHelper to me, which means i'm responsible to
         // release the lock on that page and unpin that page
