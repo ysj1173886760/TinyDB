@@ -28,7 +28,6 @@ TEST(IndexTest, InterfaceTest) {
     auto colA = Column("colA", TypeId::BIGINT);
     std::vector<Column> cols;
     cols.push_back(colA);
-    auto index_schema = Schema(cols);
     auto table_schema = Schema(cols);
     std::vector<uint32_t> key_attrs = {0};
 
@@ -75,7 +74,7 @@ TEST(IndexTest, InterfaceTest) {
         worker_list.emplace_back(std::thread([&](int begin, int end) {
             for (int j = begin; j < end; j++) {
                 auto rid = RID(keys[j]);
-                auto tmp = Tuple({Value(TypeId::BIGINT, keys[j])}, &index_schema);
+                auto tmp = Tuple({Value(TypeId::BIGINT, keys[j])}, index->GetKeySchema());
                 index->InsertEntry(tmp, rid);
 
                 // could we read what we just write?
@@ -103,7 +102,7 @@ TEST(IndexTest, InterfaceTest) {
     for (int i = 0; i < worker_num; i++) {
         worker_list.emplace_back(std::thread([&](int begin, int end) {
             for (int j = begin; j < end; j++) {
-                auto k = Tuple({Value(TypeId::BIGINT, keys[j])}, &index_schema);
+                auto k = Tuple({Value(TypeId::BIGINT, keys[j])}, index->GetKeySchema());
                 index->DeleteEntry(k, RID());
 
                 // we shouldn't see what we just deleted
