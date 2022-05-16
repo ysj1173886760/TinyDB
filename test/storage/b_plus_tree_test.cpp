@@ -184,6 +184,8 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
 
     std::vector<std::thread> worker_list;
 
+    EXPECT_EQ(bpm->CheckPinCount(), true);
+
     for (int i = 0; i < worker_num; i++) {
         worker_list.emplace_back(std::thread([&](int begin, int end) {
             BPlusTreeExecutionContext context;
@@ -205,6 +207,8 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
     for (uint i = 0; i < worker_list.size(); i++) {
         worker_list[i].join();
     }
+
+    EXPECT_EQ(bpm->CheckPinCount(), true);
     
     // read them
     for (auto key : keys) {
@@ -216,6 +220,8 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
         EXPECT_EQ(tree.GetValue(index_key, &result, &context), true);
         EXPECT_EQ(result[0], RID(key));
     }
+
+    EXPECT_EQ(bpm->CheckPinCount(), true);
 
     // delete them
     worker_list.clear();
@@ -235,6 +241,8 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
         worker_list[i].join();
     }
 
+    EXPECT_EQ(bpm->CheckPinCount(), true);
+
     for (auto key : keys) {
         BPlusTreeExecutionContext context;
         GenericKey<8> index_key;
@@ -243,6 +251,8 @@ TEST(BPlusTreeTest, ConcurrentBasicTest) {
         index_key.SetFromKey(k);
         EXPECT_EQ(tree.GetValue(index_key, &result, &context), false);
     }
+
+    EXPECT_EQ(bpm->CheckPinCount(), true);
 
     delete disk_manager;
     delete bpm;

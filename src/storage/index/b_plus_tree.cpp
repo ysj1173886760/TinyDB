@@ -107,8 +107,6 @@ bool BPLUSTREE_TYPE::Remove(const KeyType &key, BPlusTreeExecutionContext *conte
         buffer_pool_manager_->UnpinPage(pageId, res);
         if (deletedPageSet->count(pageId) != 0) {
             buffer_pool_manager_->DeletePage(pageId);
-            // guarantee that we will only delete page once
-            deletedPageSet->erase(pageId);
         }
     }
 
@@ -179,7 +177,6 @@ INDEX_TEMPLATE_ARGUMENTS
 void BPLUSTREE_TYPE::StartNewTree(const KeyType &key, const ValueType &value) {
     page_id_t new_page_id;
     Page *new_page = buffer_pool_manager_->NewPage(&new_page_id);
-
     TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
 
     LeafPage *leafPage = reinterpret_cast<LeafPage *>(new_page->GetData());
@@ -302,6 +299,7 @@ void BPLUSTREE_TYPE::InsertIntoParent(BPlusTreePage *old_node, const KeyType &ke
             InsertIntoParent(internalPage, new_node->KeyAt(0), new_node, context);
             buffer_pool_manager_->UnpinPage(new_node->GetPageId(), true);
         }
+        buffer_pool_manager_->UnpinPage(parent_page->GetPageId(), true);
     }
 }
 
@@ -341,8 +339,9 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, BPlusTreeExecutionContext *
     InternalPage *internalPage = reinterpret_cast<InternalPage *>(p->GetData());
     // p should already been added in page set
     // but remember, we still need to call Unpin
-    // for the simplicity, let's add it again so it will be Unpin twice
-    context->AddIntoPageSet(p);
+    // instead of adding it into page set, i choose to unpin it in this function
+    // because we don't want to have duplicated pages in out context
+    // we are save to unpin parent in this function because they won't be swapped out anyway
 
     int index = internalPage->ValueIndex(node->GetPageId());
     int sibling;
@@ -369,12 +368,16 @@ bool BPLUSTREE_TYPE::CoalesceOrRedistribute(N *node, BPlusTreeExecutionContext *
             std::swap(siblingPage, node);
             std::swap(index, sibling);
         }
+        // unpin the parent, since we've fetched it previously
+        buffer_pool_manager_->UnpinPage(p->GetPageId(), true);
         Coalesce(&siblingPage, &node, &internalPage, index, context);
         return true;
     }
 
     // Redistribute
     Redistribute(siblingPage, node, index);
+    // unpin the parent
+    buffer_pool_manager_->UnpinPage(p->GetPageId(), true);
     return false;
 }
 

@@ -14,6 +14,7 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include "buffer/lru_replacer.h"
+#include "common/logger.h"
 
 namespace TinyDB {
 
@@ -207,15 +208,17 @@ void BufferPoolManager::FlushAllPages() {
 
 bool BufferPoolManager::CheckPinCount() {
     std::lock_guard<std::mutex> guard(latch_);
+    bool flag = true;
     for (size_t i = 0; i < pool_size_; i++) {
         if (page_table_.count(pages_[i].GetPageId()) == 0) {
             continue;
         }
         if (pages_[i].GetPinCount() != 0) {
-            return false;
+            LOG_ERROR("page %d has pin count %d", pages_[i].GetPageId(), pages_[i].GetPinCount());
+            flag = false;
         }
     }
-    return true;
+    return flag;
 }
 
 }

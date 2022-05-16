@@ -36,12 +36,29 @@ struct BPlusTreeExecutionContext {
     // the page IDs that were deleted during index operation
     std::unique_ptr<std::unordered_set<page_id_t>> deleted_page_set_;
 
+    #ifdef CONTEXT_DEBUG
+    // for debug purpose
+    std::unique_ptr<std::unordered_set<page_id_t>> duplicated_table_;
+    #endif
+
     BPlusTreeExecutionContext()
         : page_set_(new std::deque<Page *>()),
-          deleted_page_set_(new std::unordered_set<page_id_t>()) {}
+          deleted_page_set_(new std::unordered_set<page_id_t>()) {
+            #ifdef CONTEXT_DEBUG
+            duplicated_table_ = std::unique_ptr<std::unordered_set<page_id_t>>(new std::unordered_set<page_id_t>());
+            #endif
+        }
 
     inline void AddIntoPageSet(Page *page) {
         page_set_->push_back(page);
+
+        #ifdef CONTEXT_DEBUG
+        if (duplicated_table_->count(page->GetPageId())) {
+            LOG_ERROR("duplicated page %d", page->GetPageId());
+            assert(false);
+        }
+        duplicated_table_->insert(page->GetPageId());
+        #endif
     }
 
     inline void AddIntoDeletedPageSet(page_id_t page_id) {
@@ -59,6 +76,10 @@ struct BPlusTreeExecutionContext {
     inline void Reset() {
         page_set_->clear();
         deleted_page_set_->clear();
+
+        #ifdef CONTEXT_DEBUG
+        duplicated_table_->clear();
+        #endif
     }
 };
 
