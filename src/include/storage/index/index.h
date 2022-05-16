@@ -29,8 +29,8 @@ namespace TinyDB {
 class Page;
 
 enum IndexType {
-    BPlusTree = 0,
-    HashTable = 1,
+    BPlusTreeType = 0,
+    HashTableType = 1,
 };
 
 /**
@@ -65,7 +65,7 @@ public:
     }
     
     inline const std::string &GetTableName() const {
-        table_name_;
+        return table_name_;
     }
 
     // TODO: shall we add const here?
@@ -94,7 +94,7 @@ public:
     std::string ToString() const {
         std::stringstream os;
 
-        std::string type = type_ == BPlusTree ? "BPlusTree" : "HashTable";
+        std::string type = type_ == IndexType::BPlusTreeType ? "BPlusTree" : "HashTable";
 
         os << "IndexMetadata["
            << "Name = " << index_name_ << ", "
@@ -103,6 +103,10 @@ public:
            << key_schema_->ToString();
 
         return os.str();
+    }
+
+    uint32_t GetKeySize() const {
+        return key_size_;
     }
 
 private:
@@ -196,7 +200,7 @@ public:
         THROW_NOT_IMPLEMENTED_EXCEPTION("IndexIterator is not implemented");
     }
 
-private:
+protected:
     std::unique_ptr<IndexMetadata> metadata_;
 };
 

@@ -431,8 +431,8 @@ TEST(BPlusTreeTest, BasicIteratorTest) {
 
     // read them by iterator
     int ptr = 0;
-    for (auto it = tree.Begin(); !it.IsEnd(); it.Advance()) {
-        EXPECT_EQ(it.Get(), RID(keys_sorted[ptr]));
+    for (auto it = tree.Begin(); !it->IsEnd(); it->Advance()) {
+        EXPECT_EQ(it->Get(), RID(keys_sorted[ptr]));
         ptr++;
     }
     EXPECT_EQ(ptr, key_num);
@@ -452,8 +452,8 @@ TEST(BPlusTreeTest, BasicIteratorTest) {
 
     // read them by iterator
     ptr = 0;
-    for (auto it = tree.Begin(); !it.IsEnd(); it.Advance()) {
-        EXPECT_EQ(it.Get(), RID(keys_sorted[ptr]));
+    for (auto it = tree.Begin(); !it->IsEnd(); it->Advance()) {
+        EXPECT_EQ(it->Get(), RID(keys_sorted[ptr]));
         ptr++;
     }
     EXPECT_EQ(ptr, 0);
@@ -505,8 +505,8 @@ TEST(BPlusTreeTest, ConcurrentIteratorTest) {
             int last = -1;
             int read_cnt = 0;
             auto it = tree.Begin();
-            for (; !it.IsEnd(); it.Advance()) {
-                int cur = it.Get().Get();
+            for (; !it->IsEnd(); it->Advance()) {
+                int cur = it->Get().Get();
                 EXPECT_GT(cur, last);
                 last = cur;
                 read_cnt++;
@@ -539,8 +539,8 @@ TEST(BPlusTreeTest, ConcurrentIteratorTest) {
     
     // read them by iterator
     int ptr = 0;
-    for (auto it = tree.Begin(); !it.IsEnd(); it.Advance()) {
-        EXPECT_EQ(it.Get(), RID(keys_sorted[ptr]));
+    for (auto it = tree.Begin(); !it->IsEnd(); it->Advance()) {
+        EXPECT_EQ(it->Get(), RID(keys_sorted[ptr]));
         ptr++;
     }
     EXPECT_EQ(ptr, key_num * worker_num);
@@ -568,8 +568,8 @@ TEST(BPlusTreeTest, ConcurrentIteratorTest) {
     }
 
     ptr = 0;
-    for (auto it = tree.Begin(); !it.IsEnd(); it.Advance()) {
-        EXPECT_EQ(it.Get(), RID(keys_sorted[ptr]));
+    for (auto it = tree.Begin(); !it->IsEnd(); it->Advance()) {
+        EXPECT_EQ(it->Get(), RID(keys_sorted[ptr]));
         ptr++;
     }
     EXPECT_EQ(ptr, 0);

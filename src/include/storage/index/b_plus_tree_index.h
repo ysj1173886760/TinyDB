@@ -14,6 +14,7 @@
 
 #include "storage/index/b_plus_tree.h"
 #include "storage/index/index.h"
+#include "buffer/buffer_pool_manager.h"
 
 namespace TinyDB {
 
@@ -21,9 +22,9 @@ namespace TinyDB {
     BPlusTreeIndex<KeyType, ValueType, KeyComparator>
 
 INDEX_TEMPLATE_ARGUMENTS
-class BPlusTreeIndex : Index {
+class BPlusTreeIndex : public Index {
 public:
-    explicit BPlusTreeIndex(std::unique_ptr<IndexMetadata> metadata);
+    explicit BPlusTreeIndex(std::unique_ptr<IndexMetadata> metadata, BufferPoolManager *bpm);
 
     void InsertEntry(const Tuple &key, RID rid) override;
 

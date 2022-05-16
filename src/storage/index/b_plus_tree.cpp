@@ -17,7 +17,7 @@
 namespace TinyDB {
 
 INDEX_TEMPLATE_ARGUMENTS
-BPLUSTREE_TYPE::BPlusTree(std::string index_name, BufferPoolManager *buffer_pool_manager, const KeyComparator &comparator,
+BPLUSTREE_TYPE::BPlusTree(std::string index_name, BufferPoolManager *buffer_pool_manager, KeyComparator comparator,
                           uint32_t leaf_max_size, uint32_t internal_max_size)
     : index_name_(index_name),
       root_page_id_(INVALID_PAGE_ID),
@@ -477,13 +477,13 @@ void BPLUSTREE_TYPE::UpdateRootPageId(bool insert_record) {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
+std::unique_ptr<BPLUSTREE_ITERATOR_TYPE> BPLUSTREE_TYPE::Begin() {
     root_latch_.lock();
     bool rootLocked = true;
     if (IsEmpty()) {
         root_latch_.unlock();
         // return invalid iterator
-        return BPLUSTREE_ITERATOR_TYPE();
+        return std::make_unique<BPLUSTREE_ITERATOR_TYPE>();
     }
 
     Page *cur_page = buffer_pool_manager_->FetchPage(root_page_id_);
@@ -521,7 +521,7 @@ BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin() {
     // cur_page->RUnlatch();
     // buffer_pool_manager_->UnpinPage(page_id, false);
 
-    return BPLUSTREE_ITERATOR_TYPE(buffer_pool_manager_, cur_page, 0, this);
+    return std::make_unique<BPLUSTREE_ITERATOR_TYPE>(buffer_pool_manager_, cur_page, 0, this);
 }
 
 INDEX_TEMPLATE_ARGUMENTS
@@ -575,14 +575,14 @@ std::tuple<Page *, int> BPLUSTREE_TYPE::FindHelper(const KeyType &key) {
 }
 
 INDEX_TEMPLATE_ARGUMENTS
-BPLUSTREE_ITERATOR_TYPE BPLUSTREE_TYPE::Begin(const KeyType &key) {
+std::unique_ptr<BPLUSTREE_ITERATOR_TYPE> BPLUSTREE_TYPE::Begin(const KeyType &key) {
     // structure binding, should enable c++17
     auto [page, index] = FindHelper(key);
     if (page == nullptr) {
-        return BPLUSTREE_ITERATOR_TYPE();
+        return std::make_unique<BPLUSTREE_ITERATOR_TYPE>();
     }
 
-    return BPLUSTREE_ITERATOR_TYPE(buffer_pool_manager_, page, index, this);
+    return std::make_unique<BPLUSTREE_ITERATOR_TYPE>(buffer_pool_manager_, page, index, this);
 }
 
 template class BPlusTree<GenericKey<4>, RID, GenericComparator<4>>;

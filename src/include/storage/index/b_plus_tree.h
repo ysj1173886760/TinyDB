@@ -94,7 +94,7 @@ class BPlusTree {
     friend class BPlusTreeIterator<KeyType, ValueType, KeyComparator>;
 
 public:
-    explicit BPlusTree(std::string index_name, BufferPoolManager *buffer_pool_manager, const KeyComparator &comparator,
+    explicit BPlusTree(std::string index_name, BufferPoolManager *buffer_pool_manager, KeyComparator comparator,
                         uint32_t leaf_max_size = LeafPage::LEAF_PAGE_SIZE, uint32_t internal_max_size = InternalPage::INTERNAL_PAGE_SIZE);
     
     /**
@@ -139,7 +139,7 @@ public:
      * Return the iterator of B+tree
      * @return BPLUSTREE_ITERATOR_TYPE 
      */
-    BPLUSTREE_ITERATOR_TYPE Begin();
+    std::unique_ptr<BPLUSTREE_ITERATOR_TYPE> Begin();
 
     /**
      * @brief 
@@ -147,7 +147,7 @@ public:
      * @param key 
      * @return BPLUSTREE_ITERATOR_TYPE 
      */
-    BPLUSTREE_ITERATOR_TYPE Begin(const KeyType &key);
+    std::unique_ptr<BPLUSTREE_ITERATOR_TYPE> Begin(const KeyType &key);
 
 private:
     // helper functions
