@@ -15,6 +15,7 @@
 #include "buffer/buffer_pool_manager.h"
 #include "storage/page/table_page.h"
 #include "storage/table/table_iterator.h"
+#include "common/exception.h"
 
 namespace TinyDB {
 
@@ -37,6 +38,22 @@ public:
     TableHeap(page_id_t first_page_id, BufferPoolManager *buffer_pool_manager):
         buffer_pool_manager_(buffer_pool_manager), first_page_id_(first_page_id) {
         TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "Existing table heap should have at least one page");
+    }
+
+    /**
+     * @brief 
+     * create a new table heap
+     * @param buffer_pool_manager 
+     */
+    TableHeap(BufferPoolManager *buffer_pool_manager) {
+        page_id_t first_page_id = INVALID_PAGE_ID;
+        auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
+
+        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
+        buffer_pool_manager->UnpinPage(first_page_id, true);
+        buffer_pool_manager_ = buffer_pool_manager;
+        first_page_id_ = first_page_id;
     }
 
     /**

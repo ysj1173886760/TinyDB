@@ -113,7 +113,7 @@ public:
      * @param key_attrs indices of the columns of old schema that will constitute new schema
      * @return Tuple 
      */
-    Tuple KeyFromTuple(const Schema *schema, const Schema *key_schema, const std::vector<uint32_t> &key_attrs);
+    Tuple KeyFromTuple(const Schema *schema, const Schema *key_schema, const std::vector<uint32_t> &key_attrs) const;
 
     /**
      * @brief 
@@ -122,7 +122,7 @@ public:
      * @param key_schema 
      * @return Tuple 
      */
-    Tuple KeyFromTuple(const Schema *schema, const Schema *key_schema);
+    Tuple KeyFromTuple(const Schema *schema, const Schema *key_schema) const;
 
     // Is the column value null?
     inline bool IsNull(const Schema *schema, uint32_t column_idx) const {
