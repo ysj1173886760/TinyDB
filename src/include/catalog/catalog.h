@@ -85,21 +85,13 @@ public:
             return nullptr;
         }
 
-        table_oid_t table_oid = table_names_[table_name];
-        if (tables_.count(table_oid) == 0) {
-            return nullptr;
-        }
-
-        return tables_[table_oid].get();
+        return GetTableHelper(table_names_[table_name]);
     }
 
     TableInfo *GetTable(table_oid_t table_oid) {
         std::lock_guard<std::mutex> guard(latch_);
-        if (tables_.count(table_oid) == 0) {
-            return nullptr;
-        }
 
-        return tables_[table_oid].get();
+        return GetTableHelper(table_oid);
     }
 
     IndexInfo *CreateIndex(const std::string &index_name,
@@ -109,8 +101,7 @@ public:
                            IndexType type,
                            size_t key_size) {
         std::lock_guard<std::mutex> guard(latch_);
-        auto table = GetTable(table_name);
-        if (table == nullptr) {
+        if (table_names_.count(table_name) == 0) {
             return nullptr;
         }
 
@@ -129,6 +120,7 @@ public:
         // then we populate the data into index
         // TODO: should we use another abstraction layer to do the population?
         // i.e. hide the population detail which is decided by storage engine
+        auto table = GetTableHelper(table_names_[table_name]);
         for (auto it = table->table_->Begin(); it != table->table_->End(); ++it) {
             index->InsertEntryTupleSchema(*it, it->GetRID());
         }
@@ -149,20 +141,12 @@ public:
             return nullptr;
         }
 
-        // since we are holding the lock, i choose not to reuse the code
-        index_oid_t index_oid = index_names_[table_name][index_name];
-        if (indexes_.count(index_oid) == 0) {
-            return nullptr;
-        }
-        return indexes_[index_oid].get();
+        return GetIndexHelper(index_names_[table_name][index_name]);
     }
 
     IndexInfo *GetIndex(index_oid_t index_oid) {
         std::lock_guard<std::mutex> guard(latch_);
-        if (indexes_.count(index_oid) == 0) {
-            return nullptr;
-        }
-        return indexes_[index_oid].get();
+        return GetIndexHelper(index_oid);
     }
 
     std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) {
@@ -173,7 +157,7 @@ public:
         }
 
         for (const auto &indexes: index_names_[table_name]) {
-            auto ptr = GetIndex(indexes.second);
+            auto ptr = GetIndexHelper(indexes.second);
             if (ptr != nullptr) {
                 res.push_back(ptr);
             }
@@ -183,6 +167,21 @@ public:
     }
 
 private:
+    IndexInfo *GetIndexHelper(index_oid_t index_oid) {
+        if (indexes_.count(index_oid) == 0) {
+            return nullptr;
+        }
+        return indexes_[index_oid].get();
+    }
+
+    TableInfo *GetTableHelper(table_oid_t table_oid) {
+        if (tables_.count(table_oid) == 0) {
+            return nullptr;
+        }
+
+        return tables_[table_oid].get();
+    }
+
     // bpm
     BufferPoolManager *bpm_;
 

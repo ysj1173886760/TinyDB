@@ -157,6 +157,7 @@ bool TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
 
 TableIterator TableHeap::Begin() {
     TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "invalid table heap");
+    // default is invalid RID
     RID rid;
     auto cur_page = buffer_pool_manager_->FetchPage(first_page_id_);
     // shall we throw exception?
