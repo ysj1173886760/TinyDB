@@ -160,7 +160,6 @@ TableIterator TableHeap::Begin() {
     // default is invalid RID
     RID rid;
     auto cur_page = buffer_pool_manager_->FetchPage(first_page_id_);
-    // shall we throw exception?
     TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(cur_page != nullptr, "");
     // same logic as operator++ for table iterator
     cur_page->RLatch();
