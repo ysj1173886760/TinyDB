@@ -29,7 +29,9 @@ enum class ExpressionType {
     ComparisonExpression_LessThan,
     ComparisonExpression_LessThanEquals,
     ComparisonExpression_GreaterThan,
-    ComparisonExpression_GreaterThanEquals
+    ComparisonExpression_GreaterThanEquals,
+    // used to store constant value
+    ConstantValueExpression,
 };
 
 /**
