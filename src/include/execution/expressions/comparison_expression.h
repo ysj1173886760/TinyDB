@@ -23,10 +23,23 @@ namespace TinyDB {
 class ComparisonExpression : public AbstractExpression {
 public:
     ComparisonExpression(ExpressionType type, const AbstractExpression *left, const AbstractExpression *right)
-        : AbstractExpression(type, {left, right}, TypeId::BOOLEAN) {}
+        : AbstractExpression(type, {left, right}, TypeId::BOOLEAN) {
+        // check the expression type
+        switch (type) {
+        // fall though
+        case ExpressionType::ComparisonExpression_Equal:
+        case ExpressionType::ComparisonExpression_NotEqual:
+        case ExpressionType::ComparisonExpression_GreaterThan:
+        case ExpressionType::ComparisonExpression_GreaterThanEquals:
+        case ExpressionType::ComparisonExpression_LessThan:
+        case ExpressionType::ComparisonExpression_LessThanEquals:
+            break;
+        default:
+            TINYDB_ASSERT(false, "Invalid expression type for ComparisonExpression");
+        }
+    }
     
     Value Evaluate(const Tuple *tuple_left, const Tuple *tuple_right) const override;
-
 };
 
 }

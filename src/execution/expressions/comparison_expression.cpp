@@ -27,11 +27,11 @@ Value ComparisonExpression::Evaluate(const Tuple *tuple_left, const Tuple *tuple
     // so we will have 2 tuple as input to evaluate the tuple(one is from TableA, and another is from TableB)
     // then we can form an abstraction expression tree like this:
     //              Conjunction_And
-    //              /             \ 
+    //              /             | 
     //          Comp_GT         Conjunction_And
-    //         /      |         /             \ 
+    //         /      |         /             | 
     //     TupleA     10      Comp_LT       Comp_EQ
-    //                       /      \       /     \ 
+    //                       /      |       /     | 
     //                      20   TupleB   TupleA  TupleB
     // Note that i've changed TableB.b > 20 to 20 < TableB.b. So every tuple that from TableA is in lhs,
     // and tuple from TableB is in rhs. Thus we can pass tuple from TableA as "tuple_left" and tuple from TableB
@@ -41,13 +41,13 @@ Value ComparisonExpression::Evaluate(const Tuple *tuple_left, const Tuple *tuple
     // !!! But actual Abstraction Expression Tree is not like this one, because i've simplified some nodes. Thus i need to change
     // TableB.b > 20 to 20 < TableB.b to place TableB at right size. In the real implementation, the tree should be like this:
     //              Conjunction_And
-    //              /              \  
+    //              /              |  
     //          Comp_GT           Conjunction_And
-    //         /      |           /             \ 
+    //         /      |           /             | 
     //     Column    10         Comp_GT       Comp_EQ
-    //    /     \              /      \       /     \  
+    //    /     |              /      |       /     |  
     //   A      B            Column  20   Column    Column
-    //                       /   |        /   \      /   \  
+    //                       /   |        /   |      /   |  
     //                      A    B       A    B     A    B
     // Now you see the difference, ColumnValueExpression will help us to extract the value we need.
     // for the 1-ary operation, we just ignore one parameter.
