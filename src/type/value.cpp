@@ -13,6 +13,7 @@
 #define VALUE_CPP
 
 #include "common/exception.h"
+#include "common/logger.h"
 #include "type/value.h"
 
 #include <string>
