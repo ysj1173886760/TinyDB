@@ -32,6 +32,19 @@ enum class ExpressionType {
     ComparisonExpression_GreaterThanEquals,
     // used to store constant value
     ConstantValueExpression,
+    // used to do the arithmetical caculation
+    OperatorExpression_Add,
+    OperatorExpression_Subtract,
+    OperatorExpression_Multiply,
+    OperatorExpression_Divide,
+    OperatorExpression_Modulo,
+    OperatorExpression_Min,
+    OperatorExpression_Max,
+    OperatorExpression_NOT,
+    OperatorExpression_IS_NULL,
+    OperatorExpression_IS_NOT_NULL,
+    OperatorExpression_EXISTS,
+
 };
 
 /**

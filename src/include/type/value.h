@@ -240,6 +240,16 @@ public:
     // comparable is the subset of coerable
     bool CheckComparable(const Value &rhs) const;
 
+    // for the convenience when testing the value
+
+    bool operator==(const Value &rhs) const {
+        return this->CompareEquals(rhs) == CmpBool::CmpTrue;
+    }
+
+    bool operator!=(const Value &rhs) const {
+        return this->CompareNotEquals(rhs) == CmpBool::CmpTrue;
+    }
+
 private:
     // data it's self
     union Val {
