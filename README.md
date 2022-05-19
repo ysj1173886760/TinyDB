@@ -16,7 +16,7 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [x] table heap
 - [x] index
 - [x] catalog
-- [ ] expression
+- [x] expression
 - [ ] execution
 - [ ] transaction
 - [ ] logger
