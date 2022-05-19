@@ -43,6 +43,15 @@ public:
         return Value(TypeId::BOOLEAN, static_cast<int8_t>(val));
     }
 
+    static Value GetBooleanValue(CmpBool val) {
+        if (val == CmpBool::CmpNull) {
+            return Type::Null(TypeId::BOOLEAN);
+        }
+        return GetBooleanValue(val == CmpBool::CmpTrue ? 1 : 0);
+    }
+
+    // TODO: implement generic value factory for other type
+
     static Value GetTinyintValue(int8_t val) {
         return Value(TypeId::TINYINT, val);
     }
