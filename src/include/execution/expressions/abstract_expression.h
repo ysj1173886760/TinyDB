@@ -19,8 +19,17 @@
 namespace TinyDB {
 
 enum class ExpressionType {
-    AbstractExpression = 0,
+    // invalid expression
+    AbstractExpression,
+    // used to extract value from tuple
     ColumnValueExpression,
+    // used to compare the value
+    ComparisonExpression_Equal,
+    ComparisonExpression_NotEqual,
+    ComparisonExpression_LessThan,
+    ComparisonExpression_LessThanEquals,
+    ComparisonExpression_GreaterThan,
+    ComparisonExpression_GreaterThanEquals
 };
 
 /**
