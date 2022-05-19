@@ -117,6 +117,9 @@ private:
     // column offset in the tuple
     uint32_t column_offset_{0};
     // expression used to create this column
+    // FIXME: while we are copying column, we are doing the 
+    // shallow copy of the expression, which might introduce potential bugs.
+    // find a way to handle this, maybe use a unique_ptr to wrap it?
     const AbstractExpression *expr_;
 
 };

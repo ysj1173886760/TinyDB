@@ -18,6 +18,10 @@
 
 namespace TinyDB {
 
+enum class ExpressionType {
+    AbstractExpression = 0,
+};
+
 /**
  * @brief 
  * base class of all expressions in the system.
@@ -35,17 +39,18 @@ public:
      * @param children 
      * @param ret_type 
      */
-    AbstractExpression(std::vector<const AbstractExpression *> &&children, TypeId ret_type)
-        : children_(std::move(children)), ret_type_(ret_type) {}
+    AbstractExpression(ExpressionType type, std::vector<const AbstractExpression *> &&children, TypeId ret_type)
+        : type_(type), children_(std::move(children)), ret_type_(ret_type) {}
     
     /**
      * @brief 
-     * Evaluate the tuple with the given schema
-     * @param tuple tuple to be evaluated
-     * @param schema tuple schema
+     * Evaluate tuple
+     * @param tuple_left 
+     * @param tuple_right 
      * @return Value 
      */
-    virtual Value Evaluate(const Tuple &tuple, const Schema *schema) const = 0;
+    virtual Value Evaluate(const Tuple *tuple_left, 
+                           const Tuple *tuple_right) const = 0;
 
     /**
      * @brief
@@ -77,12 +82,14 @@ public:
         return ret_type_;
     }
 
-private:
+protected:
     // Children node of this expression
     std::vector<const AbstractExpression *> children_;
     // return type of this expression. 
     // sheep: does this matters?
     TypeId ret_type_;
+    // current expression type
+    ExpressionType type_;
 };
 
 }
