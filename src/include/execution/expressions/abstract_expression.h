@@ -20,6 +20,7 @@ namespace TinyDB {
 
 enum class ExpressionType {
     AbstractExpression = 0,
+    ColumnValueExpression,
 };
 
 /**
@@ -49,8 +50,7 @@ public:
      * @param tuple_right 
      * @return Value 
      */
-    virtual Value Evaluate(const Tuple *tuple_left, 
-                           const Tuple *tuple_right) const = 0;
+    virtual Value Evaluate(const Tuple *tuple_left, const Tuple *tuple_right) const = 0;
 
     /**
      * @brief
@@ -83,13 +83,13 @@ public:
     }
 
 protected:
+    // current expression type
+    ExpressionType type_;
     // Children node of this expression
     std::vector<const AbstractExpression *> children_;
     // return type of this expression. 
     // sheep: does this matters?
     TypeId ret_type_;
-    // current expression type
-    ExpressionType type_;
 };
 
 }
