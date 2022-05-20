@@ -46,6 +46,7 @@ void InsertExecutor::RawValueInsertion() {
 }
 
 void InsertExecutor::NonRawValueInsertion() {
+    // i wonder should we only insert one tuple at a time?
     auto node = GetPlanNode<InsertPlan>();
     // let's first check whether two schema matches
     TINYDB_ASSERT(child_->GetOutputSchema()->Equal(*table_schema_), "Tuple schema not match");

@@ -18,16 +18,8 @@
 
 namespace TinyDB {
 
-enum UpdateType {
-    Set,
-    Operation
-};
-
 struct UpdateInfo {
-    UpdateType type_;
-    Value value_;
     AbstractExpression *expression_{nullptr};
-
     // we may not read the whole tuple from child executor, and the corresponding
     // index information is stored in expression tree. i.e. the "expression_" has strong relation
     // to the output schema of child executor
@@ -37,15 +29,8 @@ struct UpdateInfo {
     // column idx for table schema.
     uint32_t column_idx_;
 
-    // TODO: provide an move constructor for Value type
-
-    UpdateInfo(const Value &val, uint32_t column_idx)
-        : type_(UpdateType::Set), value_(val), column_idx_(column_idx) {}
-
     UpdateInfo(AbstractExpression *expression, uint32_t column_idx)
-        : type_(UpdateType::Operation), expression_(expression), column_idx_(column_idx) {}
-
-    ~UpdateInfo() {};
+        : expression_(expression), column_idx_(column_idx) {}
 };
 
 /**
@@ -55,6 +40,7 @@ struct UpdateInfo {
  * or it could be a Operation, e.g. a = a + 1, which we need to specify the OperationExpression. 
  * note that for OperationExpression, we don't need to specify the constant value since it will be the
  * leaf node in expression tree. i.e. constant value expression
+ * sheep: i found that set could also represented by expression. i.e. constant value expression
  */
 class UpdatePlan : public AbstractPlan {
     friend class UpdateExecutor;

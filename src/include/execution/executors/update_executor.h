@@ -38,6 +38,9 @@ public:
     bool Next(Tuple *tuple) override;
 
 private:
+    // helper function to generate new tuple
+    Tuple GenerateUpdatedTuple(const Tuple &tuple);
+
     // child executor
     std::unique_ptr<AbstractExecutor> child_;
     // stored the pointer to table metadata to avoid additional indirection
