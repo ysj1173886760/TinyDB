@@ -77,6 +77,9 @@ TEST(SeqScanExecutorTest, BasicTest) {
         } else {
             EXPECT_EQ(result2, tmp);
         }
+        // rid should be valid, since other executor will depends on the RID
+        // that is embedded in tuple. So we need to guarantee this property.
+        EXPECT_EQ(tmp.GetRID().IsValid(), true);
         cnt++;
     }
     EXPECT_EQ(cnt, tuple_num);

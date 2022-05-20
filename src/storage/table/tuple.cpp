@@ -112,7 +112,10 @@ Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema, const 
         values.emplace_back(this->GetValue(schema, idx));
     }
     
-    return Tuple(values, key_schema);
+    auto res = Tuple(values, key_schema);
+    // inherit the RID
+    res.SetRID(GetRID());
+    return res;
 }
 
 Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema) const {
