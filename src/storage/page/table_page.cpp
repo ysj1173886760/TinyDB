@@ -64,7 +64,9 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid) {
     SetTupleSize(slot_id, tuple.GetSize());
 
     // set rid
-    rid->Set(GetPageId(), slot_id);
+    if (rid != nullptr) {
+        rid->Set(GetPageId(), slot_id);
+    }
 
     // if we are creating new slot, then we need to update tuple cnt
     if (slot_id == tuple_cnt) {

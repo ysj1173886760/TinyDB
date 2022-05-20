@@ -45,7 +45,9 @@ public:
 
     /**
      * @brief 
-     * convenience method to return plan node corresponding to this executor
+     * convenience method to return plan node corresponding to this executor.
+     * sheep: i was abusing this function while implementing executors, check whether this
+     * will introduce additional performance overhead
      * @tparam T 
      * @return const T& 
      */
@@ -54,6 +56,10 @@ public:
         const T *node = dynamic_cast<const T *>(node_);
         TINYDB_ASSERT(node != nullptr, "invalid casting");
         return *node;
+    }
+
+    Schema *GetOutputSchema() {
+        return node_->GetSchema();
     }
 
 protected:

@@ -16,6 +16,7 @@
 
 #include <assert.h>
 #include <vector>
+#include <functional>
 
 namespace TinyDB {
 
@@ -104,7 +105,45 @@ public:
      */
     std::vector<uint32_t> GenerateKeyAttrs(const Schema *schema) const;
 
+    // check whether two schema is identical
+    bool Equal(const Schema &other) const {
+        return CompareHelper(other, 
+            [](const Column &lhs, const Column &rhs) {
+                return lhs.Equal(rhs);
+            }
+        );
+    }
+
+    // check whether two schema is identical, ignoring the column name.
+    bool EqualIgnoreName(const Schema &other) const {
+        return CompareHelper(other, 
+            [](const Column &lhs, const Column &rhs) {
+                return lhs.EqualIgnoreName(rhs);
+            }
+        );
+    }
+
 private:
+    // helper function for comparing two schema
+    bool CompareHelper(const Schema &other,
+        const std::function<bool(const Column &, const Column &)> &column_comparator) const {
+        if (length_ != other.length_) {
+            return false;
+        }
+        if (columns_.size() != other.columns_.size()) {
+            return false;
+        }
+        for (uint i = 0; i < columns_.size(); i++) {
+            if (!column_comparator(columns_[i], other.columns_[i])) {
+                return false;
+            }
+            if (columns_[i].GetOffset() != other.columns_[i].GetOffset()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // length of one tuple, count by bytes
     uint32_t length_;
 

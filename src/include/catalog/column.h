@@ -34,10 +34,9 @@ public:
      * Non-variable-length constructor for creating a Column
      * @param column_name name of column
      * @param type_id type id
-     * @param expr expression used to create this column. thus we can use expression to create the output schema
      */
-    Column(std::string column_name, TypeId type_id, const AbstractExpression *expr = nullptr)
-        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)), expr_(expr) {
+    Column(std::string column_name, TypeId type_id)
+        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)) {
         TINYDB_ASSERT(type_id != TypeId::VARCHAR, "Wrong constructor for VARCHAR type");
     }
 
@@ -47,10 +46,9 @@ public:
      * @param column_name name of column
      * @param type_id type id
      * @param length maxium variable length
-     * @param expr expression used to create this column.
      */
-    Column(std::string column_name, TypeId type_id, uint32_t length, const AbstractExpression *expr = nullptr)
-        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)), variable_length_(length), expr_(expr) {
+    Column(std::string column_name, TypeId type_id, uint32_t length)
+        : column_name_(column_name), column_type_(type_id), fixed_length_(GetFixedLength(type_id)), variable_length_(length) {
         TINYDB_ASSERT(type_id == TypeId::VARCHAR, "Wrong constructor for non-varlen type");
     }
 
@@ -87,9 +85,20 @@ public:
     }
 
     std::string ToString() const;
+    
+    // check whether two column are identical
+    bool Equal(const Column &other) const {
+        return column_type_ == other.column_type_ &&
+               fixed_length_ == other.fixed_length_ &&
+               variable_length_ == other.variable_length_ &&
+               column_name_ == other.column_name_;
+    }
 
-    const AbstractExpression *GetExpr() const {
-        return expr_;
+    // check whether two column are identical, ignoring name
+    bool EqualIgnoreName(const Column &other) const {
+        return column_type_ == other.column_type_ &&
+               fixed_length_ == other.fixed_length_ &&
+               variable_length_ == other.variable_length_;
     }
 
 private:
@@ -116,11 +125,6 @@ private:
     uint32_t variable_length_{0};
     // column offset in the tuple
     uint32_t column_offset_{0};
-    // expression used to create this column
-    // FIXME: while we are copying column, we are doing the 
-    // shallow copy of the expression, which might introduce potential bugs.
-    // find a way to handle this, maybe use a unique_ptr to wrap it?
-    const AbstractExpression *expr_;
 
 };
 
