@@ -22,6 +22,7 @@ enum class PlanType {
     AbstractPlan,
     SeqScanPlan,
     InsertPlan,
+    UpdatePlan,
 };
 
 /**
