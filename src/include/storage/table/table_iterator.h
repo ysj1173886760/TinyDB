@@ -29,11 +29,21 @@ class TableHeap;
  */
 class TableIterator {
 public:
+    /**
+     * @brief
+     * Initialize an invalid table iterator
+     */
     TableIterator()
         : table_heap_(nullptr),
           rid_(RID()),
           tuple_(Tuple()) {}
 
+    /**
+     * @brief
+     * Initialize table iterator based on table heap
+     * @param table_heap 
+     * @param rid 
+     */
     TableIterator(TableHeap *table_heap, RID rid)
         : table_heap_(table_heap),
           rid_(rid),
@@ -74,6 +84,29 @@ public:
     }
 
     void GetTuple();
+
+    // provide interfaces like index iterator
+
+    /**
+     * @brief 
+     * Get tuple. behaviour is the same as operator*
+     * @return Tuple 
+     */
+    const Tuple &Get();
+
+    /**
+     * @brief 
+     * Advance the iterator. i.e. iterator++
+     */
+    void Advance();
+
+    /**
+     * @brief 
+     * Check whether current iterator reaches the end. i.e. this == End()
+     * @return true 
+     * @return false 
+     */
+    bool IsEnd();
 
 private:
     TableHeap *table_heap_;

@@ -20,6 +20,7 @@ namespace TinyDB {
 
 enum class PlanType {
     AbstractPlan,
+    SeqScanPlan,
 };
 
 /**
@@ -27,6 +28,7 @@ enum class PlanType {
  * Base abstract class for plan nodes.
  */
 class AbstractPlan {
+public:
     AbstractPlan(PlanType type, Schema *schema, std::vector<AbstractPlan *> &&children)
         : schema_(schema), children_(std::move(children)), type_(type) {}
     
@@ -55,10 +57,10 @@ class AbstractPlan {
     }
 
 protected:
-    // children nodes
-    std::vector<AbstractPlan *> children_;
     // out put schema for current node
     Schema *schema_;
+    // children nodes
+    std::vector<AbstractPlan *> children_;
     // plan type
     PlanType type_;
 };

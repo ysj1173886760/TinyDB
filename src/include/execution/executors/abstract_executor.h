@@ -23,10 +23,9 @@ public:
      * @brief Construct a new Abstract Executor object
      * @param context 
      * @param node 
-     * @param children 
      */
-    AbstractExecutor(ExecutionContext *context, AbstractPlan *node, std::vector<AbstractExecutor *> &&children)
-        : context_(context), node_(node), children_(std::move(children)) {}
+    AbstractExecutor(ExecutionContext *context, AbstractPlan *node)
+        : context_(context), node_(node) {}
     
     virtual ~AbstractExecutor() = default;
 
@@ -39,11 +38,10 @@ public:
     /**
      * @brief 
      * Get a tuple from child executor
-     * @param tuple 
-     * @param rid 
+     * @param[out] tuple tuple from child executor
      * @return true when succeed, false when there are no more tuples
      */
-    virtual bool Next(Tuple *tuple, RID *rid) = 0;
+    virtual bool Next(Tuple *tuple) = 0;
 
     /**
      * @brief 
@@ -63,10 +61,12 @@ protected:
     ExecutionContext *context_;
     // plan node corresponding to this executor
     AbstractPlan *node_;
+    
+    // sheep: ignore this for now, let's use PlanNode to form the overall tree structure.
     // child nodes
     // since we are forming tree structure in PlanNode, i wonder do we 
     // need to store these nodes in executor?
-    std::vector<AbstractExecutor *> children_;
+    // std::vector<AbstractExecutor *> children_;
 };
 
 }

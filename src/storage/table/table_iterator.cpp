@@ -88,4 +88,16 @@ TableIterator TableIterator::operator++(int) {
     return copy;
 }
 
+const Tuple &TableIterator::Get() {
+    return this->operator*();
+}
+
+void TableIterator::Advance() {
+    this->operator++();
+}
+
+bool TableIterator::IsEnd() {
+    return rid_.GetPageId() == INVALID_PAGE_ID;
+}
+
 }
