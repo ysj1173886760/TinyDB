@@ -1,0 +1,45 @@
+/**
+ * @file executor_factory.cpp
+ * @author sheep
+ * @brief implementation of executor factory
+ * @version 0.1
+ * @date 2022-05-20
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
+#include "execution/executor_factory.h"
+#include "execution/executors/delete_executor.h"
+#include "execution/executors/insert_executor.h"
+#include "execution/executors/seq_scan_executor.h"
+#include "execution/executors/update_executor.h"
+
+namespace TinyDB {
+
+std::unique_ptr<AbstractExecutor> ExecutorFactory::CreateExecutor(ExecutionContext *context, AbstractPlan *node) {
+    switch (node->GetType()) {
+    case PlanType::SeqScanPlan: {
+        return std::move(std::make_unique<SeqScanExecutor>(context, node));
+    }
+    case PlanType::DeletePlan: {
+        auto child_executor = ExecutorFactory::CreateExecutor(context, node->GetChildAt(0));
+        return std::make_unique<DeleteExecutor>(context, node, std::move(child_executor));
+    }
+    case PlanType::InsertPlan: {
+        auto child_executor = ExecutorFactory::CreateExecutor(context, node->GetChildAt(0));
+        return std::make_unique<InsertExecutor>(context, node, std::move(child_executor));
+    }
+    case PlanType::UpdatePlan: {
+        auto child_executor = ExecutorFactory::CreateExecutor(context, node->GetChildAt(0));
+        return std::make_unique<UpdateExecutor>(context, node, std::move(child_executor));
+    }
+
+    default:
+        TINYDB_ASSERT(false, "Invalid plan type");
+    }
+
+    UNREACHABLE("logic error");
+}
+
+}

@@ -51,7 +51,7 @@ public:
         other.data_ = nullptr;
         other.size_ = 0;
     }
-        
+
     void Swap(Tuple &rhs) {
         std::swap(rhs.data_, data_);
         std::swap(rhs.size_, size_);
