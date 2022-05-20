@@ -50,6 +50,7 @@ void InsertExecutor::NonRawValueInsertion() {
     // let's first check whether two schema matches
     TINYDB_ASSERT(child_->GetOutputSchema()->Equal(*table_schema_), "Tuple schema not match");
     Tuple tuple;
+    // sheep: should we pop out all value first to avoid endless loop?
     while (child_->Next(&tuple)) {
         InsertTuple(tuple);
     }
