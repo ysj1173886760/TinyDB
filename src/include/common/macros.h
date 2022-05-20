@@ -41,6 +41,8 @@ namespace TinyDB {
     DISALLOW_COPY(cname);               \
     DISALLOW_MOVE(cname);
 
+#define UNUSED_ATTRIBUTE __attribute__((unused))
+
 }
 
 #endif
