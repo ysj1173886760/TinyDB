@@ -176,7 +176,7 @@ std::string Tuple::ToString(const Schema *schema) const {
         auto value = GetValue(schema, i);
         os << value.ToString() << ", ";
     }
-    os << GetValue(schema, len).ToString() << ") Tuple size is " << size_;
+    os << GetValue(schema, len - 1).ToString() << ") Tuple size is " << size_;
 
     return os.str();
 }

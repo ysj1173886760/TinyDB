@@ -27,13 +27,15 @@ void SeqScanExecutor::Init() {
 bool SeqScanExecutor::Next(Tuple *tuple) {
     auto plan = GetPlanNode<SeqScanPlan>();
 
-    for (; !iterator_.IsEnd(); iterator_.Advance()) {
+    while (!iterator_.IsEnd()) {
         // read the tuple
         auto tmp = iterator_.Get();
+        // advance the iterator
+        iterator_.Advance();
 
         // processing tuple
         // if tuple is invalid, then we skip this round
-        if (!tuple->IsValid()) {
+        if (!tmp.IsValid()) {
             continue;
         }
 
@@ -47,6 +49,7 @@ bool SeqScanExecutor::Next(Tuple *tuple) {
         // this method only support convertion the schema based on column name.
         // more generic method shoud be based on column position.
         *tuple = tmp.KeyFromTuple(table_schema_, plan.GetSchema());
+
         return true;
     }
 

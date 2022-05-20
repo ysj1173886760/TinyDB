@@ -44,6 +44,8 @@ Tuple *TableIterator::operator->() {
 
 // logic here is very similar to TableHeap::Begin()
 TableIterator &TableIterator::operator++() {
+    TINYDB_ASSERT(rid_.GetPageId() != INVALID_PAGE_ID, "logic error");
+
     BufferPoolManager *bpm = table_heap_->buffer_pool_manager_;
     auto cur_page = bpm->FetchPage(rid_.GetPageId());
     // we should find a good way to handle out of memory issue here
