@@ -14,6 +14,7 @@
 #include "execution/executors/insert_executor.h"
 #include "execution/executors/seq_scan_executor.h"
 #include "execution/executors/update_executor.h"
+#include "execution/executors/nested_loop_join_executor.h"
 
 namespace TinyDB {
 
@@ -33,6 +34,11 @@ std::unique_ptr<AbstractExecutor> ExecutorFactory::CreateExecutor(ExecutionConte
     case PlanType::UpdatePlan: {
         auto child_executor = ExecutorFactory::CreateExecutor(context, node->GetChildAt(0));
         return std::make_unique<UpdateExecutor>(context, node, std::move(child_executor));
+    }
+    case PlanType::NestedLoopJoinPlan: {
+        auto left_child = ExecutorFactory::CreateExecutor(context, node->GetChildAt(0));
+        auto right_child = ExecutorFactory::CreateExecutor(context, node->GetChildAt(1));
+        return std::make_unique<NestedLoopJoinExecutor>(context, node, std::move(left_child), std::move(right_child));
     }
 
     default:

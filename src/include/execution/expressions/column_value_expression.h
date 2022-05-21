@@ -23,6 +23,14 @@ namespace TinyDB {
  */
 class ColumnValueExpression : public AbstractExpression {
 public:
+    /**
+     * @brief Construct a new Column Value Expression object.
+     * 
+     * @param ret_type Return Type
+     * @param tuple_idx tuple idx, could be 0 or 1, indicating tuple is lhs or rhs
+     * @param col_idx index of the column we need to extract
+     * @param schema original tuple schema
+     */
     ColumnValueExpression(TypeId ret_type, uint32_t tuple_idx, uint32_t col_idx, Schema *schema)
         : AbstractExpression(ExpressionType::ColumnValueExpression, {}, ret_type),
           tuple_idx_(tuple_idx),
