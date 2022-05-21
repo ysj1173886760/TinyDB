@@ -17,7 +17,11 @@
 namespace TinyDB {
 
 Tuple::Tuple(std::vector<Value> values, const Schema *schema) {
-    assert(values.size() == schema->GetColumnCount());
+    // check value type first
+    TINYDB_ASSERT(values.size() == schema->GetColumnCount(), "Wrong value num");
+    for (uint i = 0; i < schema->GetColumnCount(); i++) {
+        TINYDB_ASSERT(values[i].GetTypeId() == schema->GetColumn(i).GetType(), "Type doesn't match");
+    }
 
     // calculate the size of tuple
     // for varlen type, if it's null, the size would be 4
