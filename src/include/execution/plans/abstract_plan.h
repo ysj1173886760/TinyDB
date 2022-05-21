@@ -24,6 +24,7 @@ enum class PlanType {
     InsertPlan,
     UpdatePlan,
     DeletePlan,
+    NestedLoopJoinPlan,
 };
 
 /**
