@@ -43,7 +43,11 @@ enum class IsolationLevel {
  * One transaction context correspond to one transaction.
  */
 class TransactionContext {
-    TransactionContext() = default;
+public:
+    TransactionContext(txn_id_t txn_id, IsolationLevel isolation_level)
+        : txn_id_(txn_id),
+          isolation_level_(isolation_level),
+          state_(TransactionState::RUNNING) {}
 
     inline TransactionState GetTxnState() {
         return state_;
@@ -80,6 +84,8 @@ protected:
     std::forward_list<TxnEndAction> commit_action_;
     // actions to be executed when txn aborts
     std::forward_list<TxnEndAction> abort_action_;
+    // isolatin level
+    IsolationLevel isolation_level_;
     
 };
 
