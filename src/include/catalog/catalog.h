@@ -27,19 +27,6 @@ using table_oid_t = uint32_t;
 using column_oid_t = uint32_t;
 using index_oid_t = uint32_t;
 
-struct TableInfo {
-    TableInfo(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
-        : schema_(schema),
-          name_(name),
-          table_(std::move(table)),
-          oid_(oid) {}
-    
-    Schema schema_;
-    std::string name_;
-    std::unique_ptr<TableHeap> table_;
-    table_oid_t oid_;
-};
-
 struct IndexInfo {
     IndexInfo(std::unique_ptr<Index> &&index, index_oid_t index_oid)
         : index_(std::move(index)),
@@ -48,6 +35,31 @@ struct IndexInfo {
     // index has the index metadata, so we don't need to store additional metadata
     std::unique_ptr<Index> index_;
     index_oid_t index_oid_;
+};
+
+/**
+ * @brief 
+ * Table metadata
+ */
+struct TableInfo {
+    TableInfo(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
+        : schema_(schema),
+          name_(name),
+          table_(std::move(table)),
+          oid_(oid) {}
+    
+    // table schema
+    Schema schema_;
+    // table name
+    std::string name_;
+    // pointer to table page heap
+    std::unique_ptr<TableHeap> table_;
+    // table oid
+    table_oid_t oid_;
+    // index_oid -> index metadata
+    std::unordered_map<index_oid_t, std::unique_ptr<IndexInfo>> indexes_;
+    // index_name -> index_oid
+    std::unordered_map<std::string, index_oid_t> index_names_;
 };
 
 /**
@@ -127,37 +139,34 @@ public:
 
         auto index_info =
             std::make_unique<IndexInfo>(std::move(index), new_oid);
-        indexes_[new_oid] = std::move(index_info);
-        index_names_[table_name][index_name] = new_oid;
-        return indexes_[new_oid].get();
+        table->indexes_[new_oid] = std::move(index_info);
+        table->index_names_[index_name] = new_oid;
+        return table->indexes_[new_oid].get();
     }
 
     IndexInfo *GetIndex(const std::string &index_name, const std::string &table_name) {
         std::lock_guard<std::mutex> guard(latch_);
-        if (index_names_.count(table_name) == 0) {
+        if (table_names_.count(table_name) == 0) {
             return nullptr;
         }
-        if (index_names_[table_name].count(index_name) == 0) {
+        auto table = tables_[table_names_[table_name]].get();
+        auto it = table->index_names_.find(index_name);
+        if (it == table->index_names_.end()) {
             return nullptr;
         }
 
-        return GetIndexHelper(index_names_[table_name][index_name]);
-    }
-
-    IndexInfo *GetIndex(index_oid_t index_oid) {
-        std::lock_guard<std::mutex> guard(latch_);
-        return GetIndexHelper(index_oid);
+        return table->indexes_[it->second].get();
     }
 
     std::vector<IndexInfo *> GetTableIndexes(const std::string &table_name) {
         std::lock_guard<std::mutex> guard(latch_);
         std::vector<IndexInfo *> res;
-        if (index_names_.count(table_name) == 0) {
+        if (table_names_.count(table_name) == 0) {
             return res;
         }
 
-        for (const auto &indexes: index_names_[table_name]) {
-            auto ptr = GetIndexHelper(indexes.second);
+        for (const auto &index: tables_[table_names_[table_name]]->indexes_) {
+            auto ptr = index.second.get();
             if (ptr != nullptr) {
                 res.push_back(ptr);
             }
@@ -167,13 +176,6 @@ public:
     }
 
 private:
-    IndexInfo *GetIndexHelper(index_oid_t index_oid) {
-        if (indexes_.count(index_oid) == 0) {
-            return nullptr;
-        }
-        return indexes_[index_oid].get();
-    }
-
     TableInfo *GetTableHelper(table_oid_t table_oid) {
         if (tables_.count(table_oid) == 0) {
             return nullptr;
@@ -193,12 +195,6 @@ private:
 
     // next table identifier
     table_oid_t next_table_oid_{0};
-
-    // index_oid -> index metadata
-    std::unordered_map<index_oid_t, std::unique_ptr<IndexInfo>> indexes_;
-
-    // table_name : index_name -> index_oid
-    std::unordered_map<std::string, std::unordered_map<std::string, index_oid_t>> index_names_;
 
     // next index identifier
     index_oid_t next_index_oid_{0};
