@@ -17,11 +17,17 @@
 
 namespace TinyDB {
 
+enum class LockStage {
+    GROWING,
+    SHRINKING,
+};
+
 /**
  * @brief 
  * transaction context for 2pl protocol
  */
 class TwoPLContext : public TransactionContext {
+    friend class LockManager;
 public:
     TwoPLContext(txn_id_t txn_id, IsolationLevel isolation_level)
         : TransactionContext(txn_id, isolation_level) {}
@@ -31,6 +37,8 @@ private:
     std::unique_ptr<std::unordered_set<RID>> shared_lock_set_;
     // the set of exclusive-locked tuple held by this transaction
     std::unique_ptr<std::unordered_set<RID>> exclusive_lock_set_;
+    // current locking phase
+    LockStage stage_{LockStage::GROWING};
 };
 
 /**

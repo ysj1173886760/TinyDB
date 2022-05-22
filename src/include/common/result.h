@@ -16,6 +16,8 @@
 
 namespace TinyDB {
 
+struct Empty {};
+
 /**
  * @brief 
  * type that i was trying to mimic "Result" in rust. 
@@ -25,7 +27,7 @@ namespace TinyDB {
  * or maybe just introduce C++20 and introduce std::expect which i think it's similar to "Result"
  * @tparam T 
  */
-template <typename T>
+template <typename T = Empty>
 class Result {
 public:
     Result(T &&data)

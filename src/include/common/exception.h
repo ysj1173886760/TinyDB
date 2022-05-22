@@ -12,6 +12,8 @@
 #ifndef EXCEPTION_H
 #define EXCEPTION_H
 
+#include "common/config.h"
+
 #include <stdexcept>
 #include <iostream>
 #include <string>
@@ -49,6 +51,9 @@ enum class ExceptionType {
 };
 
 // we don't use try catch, so any exception will cause a crash
+// sheep: above statement is not true, we do use try catch when executing transaction now
+// but the code below is rather like an assertion since it will print the place where we throw exception
+// i wonder should we replace it by something else
 class Exception : public std::runtime_error {
 public:
     explicit Exception(const std::string &message)
@@ -139,6 +144,17 @@ private:
 
 #define THROW_LOGIC_ERROR_EXCEPTION(msg)   \
     throw Exception(ExceptionType::LOGIC_ERROR, msg, __FILE__, __LINE__);
+
+// transaction abort exception
+
+class TransactionAbortException : public std::exception {
+public:
+    TransactionAbortException(txn_id_t txn_id, const std::string &reason)
+        : txn_id_(txn_id), reason_(reason) {}
+
+    txn_id_t txn_id_;
+    std::string reason_;
+};
 
 }
 

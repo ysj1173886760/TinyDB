@@ -13,6 +13,7 @@
 #define TRANSACTION_CONTEXT_H
 
 #include "common/config.h"
+#include "common/macros.h"
 
 #include <functional>
 #include <forward_list>
@@ -45,9 +46,11 @@ enum class IsolationLevel {
 class TransactionContext {
 public:
     TransactionContext(txn_id_t txn_id, IsolationLevel isolation_level)
-        : txn_id_(txn_id),
-          isolation_level_(isolation_level),
-          state_(TransactionState::RUNNING) {}
+        : state_(TransactionState::RUNNING),
+          txn_id_(txn_id),
+          isolation_level_(isolation_level) {}
+        
+    virtual ~TransactionContext() {}
 
     inline TransactionState GetTxnState() {
         return state_;
@@ -55,6 +58,10 @@ public:
 
     inline txn_id_t GetTxnId() {
         return txn_id_;
+    }
+
+    inline void SetAborted() {
+        state_ = TransactionState::ABORTED;
     }
 
     /**
@@ -73,6 +80,19 @@ public:
      */
     void RegisterAbortAction(const TxnEndAction &action) {
         abort_action_.push_front(action);
+    }
+
+    /**
+     * @brief 
+     * syntax sugar for casting txn context to it's sub-class
+     * @tparam T 
+     * @return T* 
+     */
+    template<typename T>
+    T* Cast() {
+        auto context = dynamic_cast<T*> (this);
+        TINYDB_ASSERT(context != nullptr, "invalid casting");
+        return context;
     }
 
 protected:

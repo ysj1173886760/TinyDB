@@ -112,7 +112,7 @@ namespace std {
 // specifiy the hash function for RID
 template<>
 struct hash<TinyDB::RID> {
-    size_t operator()(const TinyDB::RID &rid) {
+    size_t operator()(const TinyDB::RID &rid) const {
         return hash<int64_t>()(rid.Get());
     }
 };

@@ -11,6 +11,7 @@
 
 #include "common/config.h"
 #include "common/rid.h"
+#include "common/result.h"
 
 #include <list>
 #include <condition_variable>
@@ -35,15 +36,15 @@ class TransactionContext;
 class LockManager {
     enum class LockMode {
         SHARED,
-        EXECLUSIVE,
+        EXCLUSIVE,
     };
 
+    // just a struct
     class LockRequest {
     public:
         LockRequest(txn_id_t txn_id, LockMode mode)
             : txn_id_(txn_id), lock_mode_(mode), granted_(false) {}
 
-    private:
         txn_id_t txn_id_;
         LockMode lock_mode_;
         bool granted_;
@@ -69,6 +70,42 @@ public:
         : resolve_protocol_(resolve_protocol) {}
     
     ~LockManager() = default;
+
+    /**
+     * @brief 
+     * Acquire lock on RID in shared move
+     * @param txn_context 
+     * @param rid 
+     * @return Result<> 
+     */
+    Result<> LockShared(TransactionContext *txn_context, const RID &rid);
+
+    /**
+     * @brief 
+     * Acquire lock on RID in exclusive mode
+     * @param txn_context 
+     * @param rid 
+     * @return Result<>
+     */
+    Result<> LockExclusive(TransactionContext *txn_context, const RID &rid);
+
+    /**
+     * @brief 
+     * Update a lock from a shared lock to an exclusive lock
+     * @param txn_context 
+     * @param rid 
+     * @return Result<>
+     */
+    Result<> LockUpgrade(TransactionContext *txn_context, const RID &rid);
+
+    /**
+     * @brief 
+     * Release the lock held by the transaction
+     * @param txn_context 
+     * @param rid 
+     * @return Result<>
+     */
+    Result<> Unlock(TransactionContext *txn_context, const RID &rid);
 
 private:
     // global latch
