@@ -30,10 +30,13 @@ struct Empty {};
 template <typename T = Empty>
 class Result {
 public:
-    Result(T &&data)
+    Result()
+        : code_(ErrorCode::INVALID) {}
+
+    explicit Result(T &&data)
         : data_(data), code_(ErrorCode::INVALID) {}
     
-    Result(ErrorCode code)
+    explicit Result(ErrorCode code)
         : code_(code) {
         assert(code != ErrorCode::INVALID);
     }

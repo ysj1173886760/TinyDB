@@ -30,8 +30,18 @@ class TwoPLContext : public TransactionContext {
     friend class LockManager;
 public:
     TwoPLContext(txn_id_t txn_id, IsolationLevel isolation_level)
-        : TransactionContext(txn_id, isolation_level) {}
+        : TransactionContext(txn_id, isolation_level),
+          shared_lock_set_(new std::unordered_set<RID>()),
+          exclusive_lock_set_(new std::unordered_set<RID>()) {}
         
+    std::unordered_set<RID> *GetSharedLockSet() {
+        return shared_lock_set_.get();
+    }
+
+    std::unordered_set<RID> *GetExclusiveLockSet() {
+        return exclusive_lock_set_.get();
+    }
+
 private:
     // the set of shared-locked tuple held by this transaction
     std::unique_ptr<std::unordered_set<RID>> shared_lock_set_;

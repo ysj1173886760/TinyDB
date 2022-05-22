@@ -66,8 +66,10 @@ Result<> LockManager::LockShared(TransactionContext *txn_context, const RID &rid
     context->shared_lock_set_->emplace(rid);
     it->granted_ = true;
     lock_queue->shared_count_ += 1;
+    
+    // LOG_INFO("txn %d acquire shared lock on %s", context->GetTxnId(), rid.ToString().c_str());
 
-    return Result({});
+    return Result();
 }
 
 Result<> LockManager::LockExclusive(TransactionContext *txn_context, const RID &rid) {
@@ -87,7 +89,7 @@ Result<> LockManager::LockExclusive(TransactionContext *txn_context, const RID &
     }
 
     auto *lock_queue = &lock_table_[rid];
-    lock_queue->request_queue_.emplace_back(LockRequest(context->GetTxnId(), LockMode::SHARED));
+    lock_queue->request_queue_.emplace_back(LockRequest(context->GetTxnId(), LockMode::EXCLUSIVE));
     auto it = std::prev(lock_queue->request_queue_.end());
 
     // wait until there is no other writer and reader
@@ -104,11 +106,13 @@ Result<> LockManager::LockExclusive(TransactionContext *txn_context, const RID &
         throw TransactionAbortException(context->GetTxnId(), "Deadlock");
     }
 
-    context->exclusive_lock_set_->emplace(rid);
+    context->exclusive_lock_set_->insert(rid);
     lock_queue->writing_ = true;
     it->granted_ = true;
 
-    return Result({});
+    // LOG_INFO("txn %d acquire exclusive lock on %s", context->GetTxnId(), rid.ToString().c_str());
+
+    return Result();
 }
 
 Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &rid) {
@@ -175,12 +179,12 @@ Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &ri
         throw TransactionAbortException(context->GetTxnId(), "Deadlock");
     }
 
-    context->exclusive_lock_set_->emplace(rid);
+    context->exclusive_lock_set_->insert(rid);
     lock_queue->writing_ = true;
     lock_queue->upgrading_ = false;
     it->granted_ = true;
 
-    return Result({});
+    return Result();
 }
 
 Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
@@ -211,6 +215,7 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
 
     bool should_notify = false;
     if (it->lock_mode_ == LockMode::EXCLUSIVE) {
+        should_notify = true;
         lock_queue->writing_ = false;
         if (context->stage_ == LockStage::GROWING) {
             context->stage_ = LockStage::SHRINKING;
@@ -229,6 +234,8 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
         }
     }
 
+    // LOG_INFO("txn %d release lock on %s", context->GetTxnId(), rid.ToString().c_str());
+
     lock_queue->request_queue_.erase(it);
 
     // notify all other blocking transactions
@@ -237,7 +244,7 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
         lock_queue->cv_.notify_all();
     }
 
-    return Result({});
+    return Result();
 }
 
 }
