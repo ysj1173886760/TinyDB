@@ -183,4 +183,61 @@ Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &ri
     return Result({});
 }
 
+Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
+    std::lock_guard<std::mutex> latch(latch_);
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    // erase the lock
+    context->shared_lock_set_->erase(rid);
+    context->exclusive_lock_set_->erase(rid);
+    
+    auto *lock_queue = &lock_table_[rid];
+
+    // find the request
+    auto it = lock_queue->request_queue_.begin();
+    for (; it != lock_queue->request_queue_.end(); it++) {
+        if (it->txn_id_ == context->GetTxnId()) {
+            break;
+        }
+    }
+
+    // we didn't even hold the lock, this should be the logic error
+    // or lock didn't granted
+    // this is a logic error, we will crash the program immediately
+    if (it == lock_queue->request_queue_.end() || 
+        it->granted_ == false ) {
+        TINYDB_ASSERT(false, "upgrade lock");
+    }
+
+    bool should_notify = false;
+    if (it->lock_mode_ == LockMode::EXCLUSIVE) {
+        lock_queue->writing_ = false;
+        if (context->stage_ == LockStage::GROWING) {
+            context->stage_ = LockStage::SHRINKING;
+        }
+    } else {
+        lock_queue->shared_count_ -= 1;
+        if (lock_queue->shared_count_ == 0) {
+            should_notify = true;
+        }
+
+        // for read committed, we will always release the lock after reading them
+        // so we won't count for it in LockStage
+        if (context->isolation_level_ != IsolationLevel::READ_COMMITTED &&
+            context->stage_ == LockStage::GROWING) {
+            context->stage_ = LockStage::SHRINKING;
+        }
+    }
+
+    lock_queue->request_queue_.erase(it);
+
+    // notify all other blocking transactions
+    // because newer transactions will either wait for write to quit, or wait for all readers to quit
+    if (should_notify) {
+        lock_queue->cv_.notify_all();
+    }
+
+    return Result({});
+}
+
 }
