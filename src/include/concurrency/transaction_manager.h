@@ -26,6 +26,7 @@ namespace TinyDB {
  */
 enum class Protocol {
     INVALID,
+    TwoPL,
 };
 
 /**
