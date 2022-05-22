@@ -35,6 +35,7 @@ public:
     
     Result(ErrorCode code)
         : code_(code) {
+        assert(code != ErrorCode::INVALID);
     }
 
     ~Result() {}

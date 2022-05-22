@@ -70,4 +70,117 @@ Result<> LockManager::LockShared(TransactionContext *txn_context, const RID &rid
     return Result({});
 }
 
+Result<> LockManager::LockExclusive(TransactionContext *txn_context, const RID &rid) {
+    std::unique_lock<std::mutex> latch(latch_);
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    // some assertions
+    if (context->stage_ == LockStage::SHRINKING) {
+        TINYDB_ASSERT(false, "Acquire lock on shrinking phase");
+    }
+
+    // acquire locks
+
+    // first try to construct lock request queue
+    if (lock_table_.count(rid) == 0) {
+        lock_table_.emplace(std::piecewise_construct, std::forward_as_tuple(rid), std::forward_as_tuple());
+    }
+
+    auto *lock_queue = &lock_table_[rid];
+    lock_queue->request_queue_.emplace_back(LockRequest(context->GetTxnId(), LockMode::SHARED));
+    auto it = std::prev(lock_queue->request_queue_.end());
+
+    // wait until there is no other writer and reader
+    if (lock_queue->writing_ || lock_queue->shared_count_ > 0) {
+        lock_queue->cv_.wait(latch, 
+            [lock_queue, context]() {
+                return context->GetTxnState() ==  TransactionState::ABORTED ||
+                       (!lock_queue->writing_ && lock_queue->shared_count_ == 0); });
+    }
+
+    if (context->GetTxnState() == TransactionState::ABORTED) {
+        // erase the request
+        lock_queue->request_queue_.erase(it);
+        throw TransactionAbortException(context->GetTxnId(), "Deadlock");
+    }
+
+    context->exclusive_lock_set_->emplace(rid);
+    lock_queue->writing_ = true;
+    it->granted_ = true;
+
+    return Result({});
+}
+
+Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &rid) {
+    std::unique_lock<std::mutex> latch(latch_);
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    // some assertions
+    if (context->stage_ == LockStage::SHRINKING) {
+        TINYDB_ASSERT(false, "Acquire lock on shrinking phase");
+    }
+
+    // acquire locks
+
+    // first try to construct lock request queue
+    if (lock_table_.count(rid) == 0) {
+        lock_table_.emplace(std::piecewise_construct, std::forward_as_tuple(rid), std::forward_as_tuple());
+    }
+
+    auto *lock_queue = &lock_table_[rid];
+
+    // only one transaction can wait for upgrading the lock
+    // otherwise, we will encounter deadlock situation
+    if (lock_queue->upgrading_) {
+        // first comes win
+        context->SetAborted();
+        throw TransactionAbortException(context->GetTxnId(), "Upgrade Conflict");
+    }
+
+    // find the corresponding request in queue
+    auto it = lock_queue->request_queue_.begin();
+    for (; it != lock_queue->request_queue_.end(); it++) {
+        if (it->txn_id_ == context->GetTxnId()) {
+            break;
+        }
+    }
+
+    // we didn't even hold the lock, this should be the logic error
+    // or lock didn't granted
+    // or lock mode is not shared
+    if (it == lock_queue->request_queue_.end() || 
+        it->granted_ == false ||
+        it->lock_mode_ != LockMode::SHARED) {
+        TINYDB_ASSERT(false, "upgrade lock");
+    }
+
+    // upgrade the request
+    it->granted_ = false;
+    it->lock_mode_ = LockMode::EXCLUSIVE;
+    lock_queue->shared_count_ -= 1;
+    lock_queue->upgrading_ = true;
+    context->shared_lock_set_->erase(rid);
+
+    // wait until there is no other writer and reader
+    if (lock_queue->writing_ || lock_queue->shared_count_ > 0) {
+        lock_queue->cv_.wait(latch, 
+            [lock_queue, context]() {
+                return context->GetTxnState() ==  TransactionState::ABORTED ||
+                       (!lock_queue->writing_ && lock_queue->shared_count_ == 0); });
+    }
+
+    if (context->GetTxnState() == TransactionState::ABORTED) {
+        // erase the request
+        lock_queue->request_queue_.erase(it);
+        throw TransactionAbortException(context->GetTxnId(), "Deadlock");
+    }
+
+    context->exclusive_lock_set_->emplace(rid);
+    lock_queue->writing_ = true;
+    lock_queue->upgrading_ = false;
+    it->granted_ = true;
+
+    return Result({});
+}
+
 }

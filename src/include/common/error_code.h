@@ -14,6 +14,7 @@ namespace TinyDB {
 enum class ErrorCode {
     INVALID,
     OUT_OF_MEMORY,
+    DEADLOCK,
 };
 
 }
