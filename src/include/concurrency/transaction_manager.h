@@ -114,7 +114,13 @@ public:
      */
     virtual void Abort(TransactionContext *txn_context) = 0;
 
-    inline TransactionContext *GetTransaction(txn_id_t txn_id) {
+    /**
+     * @brief Get the Transaction context based on txn id
+     * 
+     * @param txn_id 
+     * @return TransactionContext* 
+     */
+    static TransactionContext *GetTransaction(txn_id_t txn_id) {
         return txn_map_[txn_id];
     }
 
@@ -124,7 +130,7 @@ protected:
     // transaction id to be assigned
     std::atomic<txn_id_t> next_txn_id_{0};
     // txn map
-    std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
+    static std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
 };
 
 }

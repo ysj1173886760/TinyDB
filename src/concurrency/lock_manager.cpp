@@ -13,6 +13,9 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/two_phase_locking.h"
 #include "common/logger.h"
+#include "common/config.h"
+
+#include <queue>
 
 namespace TinyDB {
 
@@ -245,6 +248,68 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
     }
 
     return Result();
+}
+
+void LockManager::RunCycleDetection() {
+    while (enable_cycle_detection_.load()) {
+        std::this_thread::sleep_for(CYCLE_DETECTION_INTERVAL);
+        {
+            // record txn is waiting for what RID
+            std::unordered_map<txn_id_t, RID> rid_map;
+            // graph
+            std::unordered_map<txn_id_t, std::vector<txn_id_t>> waits_for;
+            // table for avoiding duplicated access
+            std::unordered_set<txn_id_t> finished;
+            // current access stack, used to detect cycle
+            std::unordered_set<txn_id_t> stack;
+
+            // acquire the latch first
+            std::lock_guard<std::mutex> latch(latch_);
+            for (const auto &[rid, lock_queue] : lock_table_) {
+                for (const auto &lock_request : lock_queue.request_queue_) {
+                    if (lock_request.granted_) {
+                        continue;
+                    }
+
+                    // i'm waiting on rid
+                    rid_map[lock_request.txn_id_] = rid;
+
+                    for (const auto &granted_request : lock_queue.request_queue_) {
+                        if (!granted_request.granted_) {
+                            continue;
+                        }
+                        // lock_request.txn_id is waiting for granted_request.txn_id
+                        waits_for[lock_request.txn_id_].push_back(granted_request.txn_id_);
+                    }
+                }
+            }
+
+            txn_id_t txn_id;
+            while (HasCycle(&txn_id)) {
+                // if there is a cycle
+                auto context = TransactionManager::GetTransaction(txn_id);
+                context->SetAborted();
+                // remove this transaction
+                waits_for.erase(txn_id);
+                for (auto &[vertex, edges]: waits_for) {
+                    auto it = std::find(edges.begin(), edges.end(), txn_id);
+                    if (it != edges.end()) {
+                        edges.erase(it);
+                    }
+                }
+                // notify the aborted transaction
+                // then it will realize it has been aborted
+                // txn manager will trigger the abort call, which will release all locks
+                // then deadlock is resolved
+                lock_table_[rid_map[txn_id]].cv_.notify_all();
+            }
+
+        }
+    }
+}
+
+bool LockManager::HasCycle(txn_id_t *txn_id) {
+    THROW_NOT_IMPLEMENTED_EXCEPTION("not implemented");
 }
 
 }

@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <stddef.h>
+#include <chrono>
 
 namespace TinyDB {
 
@@ -32,6 +33,12 @@ using page_id_t = int32_t;
 using frame_id_t = int32_t;
 using lsn_t = int32_t;
 using txn_id_t = int32_t;
+
+// configurations
+
+// interval for running cycle detection
+// we will store it in cpp file, to prevent multiple definition error
+extern std::chrono::milliseconds CYCLE_DETECTION_INTERVAL;
 
 };
 

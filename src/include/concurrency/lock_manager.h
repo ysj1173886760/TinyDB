@@ -17,6 +17,8 @@
 #include <condition_variable>
 #include <mutex>
 #include <unordered_map>
+#include <atomic>
+#include <thread>
 
 namespace TinyDB {
 
@@ -117,6 +119,14 @@ private:
 
     // Deadlock resolve protocol specific
 
+    // flag variable
+    std::atomic<bool> enable_cycle_detection_{false};
+    // background thread
+    std::thread *cycle_detection_thread_{nullptr};
+    // background thread for deadlock detection
+    void RunCycleDetection();
+    // run cycle detection
+    bool HasCycle(txn_id_t *txn_id);
 };
 
 }
