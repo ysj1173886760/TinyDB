@@ -105,7 +105,7 @@ TEST(LockManagerTest, DeadLockDetectTest) {
     RID rid2(0, 1);
     std::vector<std::thread> worker_list;
     std::atomic<int> cnt(0);
-    int iteration_num = 100;
+    int iteration_num = 10;
     // 8 writer
     for (int i = 0; i < 8; i++) {
         worker_list.push_back(std::thread([&](int i) {
