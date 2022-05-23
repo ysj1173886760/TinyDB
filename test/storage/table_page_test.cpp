@@ -106,8 +106,9 @@ TEST(TablePageTest, BasicTest) {
     // we still able see the mark-deleted tuple
     EXPECT_EQ(page0->GetFirstTupleRid(&tmp_rid), true);
     EXPECT_EQ(tmp_rid == first_rid, true);
+    // deprecated
     // We shouldn't able to update deleted tuple
-    EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, tmp_rid), false);
+    // EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, tmp_rid), false);
     page0->RollbackDelete(tmp_rid);
     EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, tmp_rid), true);
     EXPECT_EQ(page0->GetTuple(tmp_rid, &tuple0), true);

@@ -18,7 +18,7 @@ namespace TinyDB {
 void TableIterator::GetTuple() {
     // At the end of the day, we wil call deserialize in tuple
     // which will handle previous tuple buffer for us
-    bool res = table_heap_->GetTuple(rid_, &tuple_);
+    bool res = table_heap_->GetTuple(rid_, &tuple_).IsOk();
     // log the event
     if (!res) {
         LOG_INFO("Reading Invalid tuple though table iterator RID: %s", rid_.ToString().c_str());

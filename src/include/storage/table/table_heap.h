@@ -16,6 +16,7 @@
 #include "storage/page/table_page.h"
 #include "storage/table/table_iterator.h"
 #include "common/exception.h"
+#include "common/result.h"
 
 namespace TinyDB {
 
@@ -83,7 +84,7 @@ public:
      * 2PL concurrency control protocols since we need to acquire the lock right after we inserted a new tuple
      * @return true when insertion succeed
      */
-    bool InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback = nullptr);
+    Result<> InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback = nullptr);
 
     /**
      * @brief 
@@ -91,7 +92,7 @@ public:
      * @param rid rid of target tuple
      * @return true when mark succeed
      */
-    bool MarkDelete(const RID &rid);
+    Result<> MarkDelete(const RID &rid);
 
     /**
      * @brief 
@@ -102,7 +103,7 @@ public:
      * @param rid target tuple rid
      * @return true when updation succeed
      */
-    bool UpdateTuple(const Tuple &tuple, const RID &rid);
+    Result<> UpdateTuple(const Tuple &tuple, const RID &rid);
 
     /**
      * @brief 
@@ -125,7 +126,7 @@ public:
      * @param tuple tuple value
      * @return true when reading succeed
      */
-    bool GetTuple(const RID &rid, Tuple *tuple);
+    Result<> GetTuple(const RID &rid, Tuple *tuple);
 
     inline page_id_t GetFirstPageId() const {
         return first_page_id_;

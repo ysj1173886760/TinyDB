@@ -28,14 +28,9 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, RID r
         lock_manager_->LockShared(context, rid);
     }
 
-    auto res = Result();
-
     // there are many reasons that might lead to reading failure
     // TODO: check the detailed reason then decide whether we need to abort txn
-    if (!table_info->table_->GetTuple(rid, tuple)) {
-        // skip this tuple
-        res = Result(ErrorCode::SKIP);
-    }
+    auto res = table_info->table_->GetTuple(rid, tuple);
 
     // after reading, if we are read committed, then we need to release the lock
     // note that we only need to release shared lock

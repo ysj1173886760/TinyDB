@@ -16,7 +16,7 @@
 
 namespace TinyDB {
 
-bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback) {
+Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback) {
     // we couldn't store it anyway
     if (tuple.GetSize() + TablePage::SIZE_TABLE_PAGE_HEADER + TablePage::SIZE_SLOT > PAGE_SIZE) {
         THROW_NOT_IMPLEMENTED_EXCEPTION("TinyDB Couldn't support very large tuple");
@@ -25,7 +25,7 @@ bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<vo
     auto cur_page = buffer_pool_manager_->FetchPage(first_page_id_);
     if (cur_page == nullptr) {
         // we run out of memory, return false directly
-        return false;
+        return Result(ErrorCode::OUT_OF_MEMORY);
     }
     auto table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
 
@@ -39,11 +39,9 @@ bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<vo
             cur_page->WUnlatch();
             buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
             cur_page = buffer_pool_manager_->FetchPage(next_page_id);
-            // TINYDB_ASSERT(cur_page != nullptr, "TinyDB running out of memory");
-            // should we throw exception or return false?
             if (cur_page == nullptr) {
                 // we are not holding any lock
-                return false;
+                return Result(ErrorCode::OUT_OF_MEMORY);
             }
             cur_page->WLatch();
         } else {
@@ -52,7 +50,7 @@ bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<vo
             if (new_page == nullptr) {
                 cur_page->WUnlatch();
                 buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), false);
-                return false;
+                return Result(ErrorCode::OUT_OF_MEMORY);
             }
             auto new_table_page = reinterpret_cast<TablePage *> (new_page->GetData());
             // initialize the new page
@@ -79,13 +77,13 @@ bool TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<vo
     cur_page->WUnlatch();
     buffer_pool_manager_->UnpinPage(cur_page->GetPageId(), true);
 
-    return true;
+    return Result();
 }
 
-bool TableHeap::MarkDelete(const RID &rid) {
+Result<> TableHeap::MarkDelete(const RID &rid) {
     auto page = (buffer_pool_manager_->FetchPage(rid.GetPageId()));
     if (page == nullptr) {
-        return false;
+        return Result(ErrorCode::OUT_OF_MEMORY);
     }
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -95,13 +93,18 @@ bool TableHeap::MarkDelete(const RID &rid) {
     // if we failed to mark delete, then we don't need to flush the page
     buffer_pool_manager_->UnpinPage(page->GetPageId(), res);
 
-    return res;
+    if (res) {
+        return Result();
+    } else {
+        // skip this tuple
+        return Result(ErrorCode::SKIP);
+    }
 }
 
-bool TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid) {
+Result<> TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid) {
     auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
     if (page == nullptr) {
-        return false;
+        return Result(ErrorCode::OUT_OF_MEMORY);
     }
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -115,7 +118,12 @@ bool TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid) {
     // if we failed to update tuple, then we don't need to flush the page
     buffer_pool_manager_->UnpinPage(page->GetPageId(), res);
 
-    return res;
+    if (res) {
+        return Result();
+    } else {
+        // we should abort this transaction
+        return Result(ErrorCode::ABORT);
+    }
 }
 
 void TableHeap::ApplyDelete(const RID &rid) {
@@ -146,10 +154,10 @@ void TableHeap::RollbackDelete(const RID &rid) {
     buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
 }
 
-bool TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
+Result<> TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
     auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
     if (page == nullptr) {
-        return false;
+        return Result(ErrorCode::OUT_OF_MEMORY);
     }
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -157,7 +165,13 @@ bool TableHeap::GetTuple(const RID &rid, Tuple *tuple) {
     bool res = table_page->GetTuple(rid, tuple);
     page->RUnlatch();
     buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
-    return res;
+
+    if (res) {
+        return Result();
+    } else {
+        // skip this tuple
+        return Result(ErrorCode::SKIP);
+    }
 }
 
 TableIterator TableHeap::Begin() {

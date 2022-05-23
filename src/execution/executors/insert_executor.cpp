@@ -59,7 +59,7 @@ void InsertExecutor::NonRawValueInsertion() {
 
 void InsertExecutor::InsertTuple(const Tuple &tuple) {
     RID rid;
-    if (table_info_->table_->InsertTuple(tuple, &rid)) {
+    if (table_info_->table_->InsertTuple(tuple, &rid).IsOk()) {
         // insert tuple into indexes
         for (auto index_info : indexes_) {
             index_info->index_->InsertEntryTupleSchema(tuple, rid);

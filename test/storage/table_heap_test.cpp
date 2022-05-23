@@ -51,26 +51,26 @@ TEST(TableHeapTest, BasicTest) {
     std::vector<RID> tuple_list(tuple_num);
     // insert many tuple
     for (int i = 0; i < tuple_num; i++) {
-        EXPECT_EQ(table->InsertTuple(tuple, &tuple_list[i]), true);
+        EXPECT_EQ(table->InsertTuple(tuple, &tuple_list[i]).IsOk(), true);
     }
     // scan them
     for (int i = 0; i < tuple_num; i++) {
         auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), true);
+        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp).IsOk(), true);
         EXPECT_EQ(tmp == tuple, true);
     }
     // update many tuple
     for (int i = 0; i < tuple_num; i++) {
-        if (table->UpdateTuple(tuple_update, tuple_list[i]) == false) {
+        if (table->UpdateTuple(tuple_update, tuple_list[i]).IsErr()) {
             // if inplace updation failed, then we perform the deletion/insertion
             table->ApplyDelete(tuple_list[i]);
-            EXPECT_EQ(table->InsertTuple(tuple_update, &tuple_list[i]), true);
+            EXPECT_EQ(table->InsertTuple(tuple_update, &tuple_list[i]).IsOk(), true);
         }
     }
     // scan them
     for (int i = 0; i < tuple_num; i++) {
         auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), true);
+        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp).IsOk(), true);
         EXPECT_EQ(tmp == tuple_update, true);
     }
     // delete many tuple
@@ -80,7 +80,7 @@ TEST(TableHeapTest, BasicTest) {
     // scan should fail
     for (int i = 0; i < tuple_num; i++) {
         auto tmp = Tuple();
-        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp), false);
+        EXPECT_EQ(table->GetTuple(tuple_list[i], &tmp).IsOk(), false);
     }
 
     remove(filename.c_str());
@@ -125,7 +125,7 @@ TEST(TableHeapTest, IteratorTest) {
     std::vector<RID> tuple_list(tuple_num);
     // insert many tuple
     for (int i = 0; i < tuple_num; i++) {
-        EXPECT_EQ(table->InsertTuple(tuple, &tuple_list[i]), true);
+        EXPECT_EQ(table->InsertTuple(tuple, &tuple_list[i]).IsOk(), true);
     }
     // scan them
     // since we are not doing concurrent test, we won't get any invalid tuple
@@ -139,10 +139,10 @@ TEST(TableHeapTest, IteratorTest) {
 
     // update many tuple
     for (int i = 0; i < tuple_num; i++) {
-        if (table->UpdateTuple(tuple_update, tuple_list[i]) == false) {
+        if (table->UpdateTuple(tuple_update, tuple_list[i]).IsErr()) {
             // if inplace updation failed, then we perform the deletion/insertion
             table->ApplyDelete(tuple_list[i]);
-            EXPECT_EQ(table->InsertTuple(tuple_update, &tuple_list[i]), true);
+            EXPECT_EQ(table->InsertTuple(tuple_update, &tuple_list[i]).IsOk(), true);
         }
     }
     // scan them

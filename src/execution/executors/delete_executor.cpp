@@ -26,7 +26,7 @@ void DeleteExecutor::Init() {
 bool DeleteExecutor::Next(UNUSED_ATTRIBUTE Tuple *tuple) {
     Tuple tmp;
     if (child_->Next(&tmp)) {
-        if (!table_info_->table_->MarkDelete(tmp.GetRID())) {
+        if (table_info_->table_->MarkDelete(tmp.GetRID()).IsErr()) {
             THROW_UNKNOWN_TYPE_EXCEPTION("Failed to MarkDelete");
         }
 

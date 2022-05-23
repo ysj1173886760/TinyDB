@@ -51,7 +51,7 @@ TEST(UpdateExecutorTest, BasicTest) {
     // insert tuple
     for (int i = 0; i < tuple_num; i++) {
         RID rid;
-        EXPECT_EQ(table_meta->table_->InsertTuple(tuple, &rid), true);
+        EXPECT_EQ(table_meta->table_->InsertTuple(tuple, &rid).IsOk(), true);
     }
 
     // scenario: set colA = colA + 10, colB = 42

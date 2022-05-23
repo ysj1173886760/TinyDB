@@ -55,9 +55,9 @@ TEST(SeqScanExecutorTest, BasicTest) {
     for (int i = 0; i < tuple_num; i++) {
         RID rid;
         if (i % 2 == 0) {
-            EXPECT_EQ(table_meta->table_->InsertTuple(tuple, &rid), true);
+            EXPECT_EQ(table_meta->table_->InsertTuple(tuple, &rid).IsOk(), true);
         } else {
-            EXPECT_EQ(table_meta->table_->InsertTuple(tuple_update, &rid), true);
+            EXPECT_EQ(table_meta->table_->InsertTuple(tuple_update, &rid).IsOk(), true);
         }
     }
 

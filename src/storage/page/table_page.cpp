@@ -85,15 +85,16 @@ bool TablePage::MarkDelete(const RID &rid) {
     }
 
     uint32_t tuple_size = GetTupleSize(slot_id);
-    // check whether tuple is already deleted
-    if (IsDeleted(tuple_size)) {
-        return false;
-    }
 
     // we don't want to delete a empty tuple
     if (tuple_size == 0) {
         return false;
     }
+
+    // we are encountering double marking, i.e. ww-conflict
+    // this should be a logic error
+    TINYDB_ASSERT(IsDeleted(tuple_size) == false, "Deleting an tuple with deletion mark");
+
     SetTupleSize(slot_id, SetDeletedFlag(tuple_size));
     return true;
 }
@@ -108,10 +109,15 @@ bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID 
     }
 
     uint32_t tuple_size = GetTupleSize(slot_id);
-    // check whether tuple is deleted
-    if (IsDeleted(tuple_size)) {
+
+    if (tuple_size == 0) {
         return false;
     }
+
+    // this should be a logic error
+    // because if we have the ownership of this tuple, we should see either the full tuple
+    // or an empty tuple
+    TINYDB_ASSERT(IsDeleted(tuple_size) == false, "updating an tuple with deletion mark");
 
     // check whether we have enough space
     if (GetFreeSpaceRemaining() + tuple_size < new_tuple.GetSize()) {

@@ -40,7 +40,7 @@ bool UpdateExecutor::Next(Tuple *tuple) {
     if (child_->Next(&tmp)) {
         Tuple newTuple = GenerateUpdatedTuple(tmp);
         // first update table
-        if (!table_info_->table_->UpdateTuple(newTuple, tmp.GetRID())) {
+        if (table_info_->table_->UpdateTuple(newTuple, tmp.GetRID()).IsErr()) {
             THROW_UNKNOWN_TYPE_EXCEPTION("Failed to perform updation");
         }
 

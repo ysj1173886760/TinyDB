@@ -22,6 +22,10 @@ enum class ErrorCode {
     DEADLOCK,
     // we should skip this tuple
     SKIP,
+    // out of space when updating tuple
+    OUT_OF_SPACE,
+    // indicate that we should abort the txn
+    ABORT,
 };
 
 }
