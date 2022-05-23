@@ -26,6 +26,8 @@ enum class ErrorCode {
     OUT_OF_SPACE,
     // indicate that we should abort the txn
     ABORT,
+    // failed 
+    FAILED,
 };
 
 }

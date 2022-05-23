@@ -45,6 +45,11 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, RID r
 void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, RID *rid, TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
+    // for insertion, we will first try to acquire the exclusive lock on an empty slot
+    // if succeed, then we perform insertion.
+    // otherwise, we may not able to acquire the lock right after we've inserted the tuple.
+    // because in current implementation, we will wait on the tuple that might be deleted by another transaction 
+    // to prevent tuple loss
 
 }
 

@@ -128,6 +128,15 @@ public:
      */
     Result<> Unlock(TransactionContext *txn_context, const RID &rid);
 
+    /**
+     * @brief 
+     * try to acquire the exclusive lock. We will return immediately if it will block us.
+     * @param txn_context 
+     * @param rid 
+     * @return Result<> 
+     */
+    Result<> TryLockExclusive(TransactionContext *txn_context, const RID &rid);
+
 private:
     // global latch
     std::mutex latch_;

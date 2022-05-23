@@ -286,6 +286,43 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
     return Result();
 }
 
+Result<> LockManager::TryLockExclusive(TransactionContext *txn_context, const RID &rid) {
+    std::unique_lock<std::mutex> latch(latch_);
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    // some assertions
+    if (context->stage_ == LockStage::SHRINKING) {
+        TINYDB_ASSERT(false, "Acquire lock on shrinking phase");
+    }
+
+    // acquire locks
+
+    // first try to construct lock request queue
+    if (lock_table_.count(rid) == 0) {
+        lock_table_.emplace(std::piecewise_construct, std::forward_as_tuple(rid), std::forward_as_tuple());
+    }
+
+    auto *lock_queue = &lock_table_[rid];
+
+    // if there is another outstanding writer, or readers
+    // we will return immediately
+    if (lock_queue->writing_ || lock_queue->shared_count_ > 0) {
+        return Result(ErrorCode::FAILED);
+    }
+
+    lock_queue->request_queue_.emplace_back(LockRequest(context->GetTxnId(), LockMode::EXCLUSIVE));
+    auto it = std::prev(lock_queue->request_queue_.end());
+    
+    // acquire the lock safely
+    context->exclusive_lock_set_->insert(rid);
+    lock_queue->writing_ = true;
+    it->granted_ = true;
+
+    // LOG_INFO("txn %d acquire exclusive lock on %s", context->GetTxnId(), rid.ToString().c_str());
+
+    return Result();
+}
+
 void LockManager::RunCycleDetection() {
     while (enable_cycle_detection_.load()) {
         std::this_thread::sleep_for(CYCLE_DETECTION_INTERVAL);
