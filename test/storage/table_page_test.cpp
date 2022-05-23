@@ -103,15 +103,14 @@ TEST(TablePageTest, BasicTest) {
     // delete tuple in page 0
     EXPECT_EQ(page0->MarkDelete(first_rid), true);
     EXPECT_EQ(page0->MarkDelete(second_rid), true);
-    // we still able see the mark-deleted tuple
-    EXPECT_EQ(page0->GetFirstTupleRid(&tmp_rid), true);
-    EXPECT_EQ(tmp_rid == first_rid, true);
+    // we shouldn't able to see the deleted tuple
+    EXPECT_EQ(page0->GetFirstTupleRid(&tmp_rid), false);
     // deprecated
     // We shouldn't able to update deleted tuple
     // EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, tmp_rid), false);
-    page0->RollbackDelete(tmp_rid);
-    EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, tmp_rid), true);
-    EXPECT_EQ(page0->GetTuple(tmp_rid, &tuple0), true);
+    page0->RollbackDelete(first_rid);
+    EXPECT_EQ(page0->UpdateTuple(tuple_update, &tuple0, first_rid), true);
+    EXPECT_EQ(page0->GetTuple(first_rid, &tuple0), true);
     EXPECT_EQ(tuple0 == tuple_update, true);
 
     // delete two tuple

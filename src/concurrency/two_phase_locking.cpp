@@ -50,6 +50,11 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
     // otherwise, we may not able to acquire the lock right after we've inserted the tuple.
     // because in current implementation, we will wait on the tuple that might be deleted by another transaction 
     // to prevent tuple loss
+    // sheep: above statement is not true,
+    // i decide to skip maybe deleted tuple. So we might loss some tuples when their transaction has been aborted,
+    // i will regard this as phantom scenario, and let intention lock(or some table-level lock) to handle it in higher
+    // isolation level.
+    // this would simplify our implementation a lot.
 
 }
 

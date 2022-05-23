@@ -34,10 +34,8 @@ bool SeqScanExecutor::Next(Tuple *tuple) {
         iterator_.Advance();
 
         // processing tuple
-        // if tuple is invalid, then we skip this round
-        if (!tmp.IsValid()) {
-            continue;
-        }
+        // tuple should always be valid
+        TINYDB_ASSERT(tmp.IsValid(), "tuple should always valid");
 
         // check the legality
         if (!(plan.GetPredicate() == nullptr ||

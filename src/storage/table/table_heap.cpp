@@ -16,7 +16,7 @@
 
 namespace TinyDB {
 
-Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback) {
+Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid) {
     // we couldn't store it anyway
     if (tuple.GetSize() + TablePage::SIZE_TABLE_PAGE_HEADER + TablePage::SIZE_SLOT > PAGE_SIZE) {
         THROW_NOT_IMPLEMENTED_EXCEPTION("TinyDB Couldn't support very large tuple");
@@ -65,11 +65,6 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::functio
         }
 
         table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
-    }
-    // calling the callback
-    if (callback) {
-        // currently, we will use it for acquiring the lock right after a tuple insertion
-        callback();
     }
 
     // insertion is done

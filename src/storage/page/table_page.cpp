@@ -235,7 +235,7 @@ bool TablePage::GetFirstTupleRid(RID *first_rid) {
     auto tuple_cnt = GetTupleCount();
     for (uint32_t i = 0; i < tuple_cnt; i++) {
         // find the first valid tuple
-        if (IsValid(GetTupleSize(i))) {
+        if (!IsDeleted(GetTupleSize(i))) {
             first_rid->Set(GetPageId(), i);
             return true;
         }
@@ -250,7 +250,7 @@ bool TablePage::GetNextTupleRid(const RID &cur_rid, RID *next_rid) {
     // find the first valid tuple after cur_rid
     auto tuple_cnt = GetTupleCount();
     for (uint32_t i = cur_rid.GetSlotId() + 1; i < tuple_cnt; i++) {
-        if (IsValid(GetTupleSize(i))) {
+        if (!IsDeleted(GetTupleSize(i))) {
             next_rid->Set(GetPageId(), i);
             return true;
         }
