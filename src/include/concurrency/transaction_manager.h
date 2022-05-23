@@ -81,20 +81,22 @@ public:
      * @brief 
      * Perform Deletion
      * @param txn_context 
+     * @param tuple old tuple
      * @param rid rid of the tuple that we want to delete
      * @param[in] table_info table metadata
      */
-    virtual void Delete(TransactionContext *txn_context, RID rid, TableInfo *table_info) = 0;
+    virtual void Delete(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) = 0;
 
     /**
      * @brief 
      * Perform Updation
      * @param txn_context 
-     * @param tuple new tuple
+     * @param tuple old tuple
+     * @param new_tuple new tuple
      * @param rid rid of tuple that we want to update
      * @param[in] table_info table metadata
      */
-    virtual void Update(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) = 0;
+    virtual void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, RID rid, TableInfo *table_info) = 0;
 
     // sheep: i wonder do we need to provide a scan method?
 

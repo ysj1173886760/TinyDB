@@ -35,6 +35,8 @@ bool SeqScanExecutor::Next(Tuple *tuple) {
 
         // processing tuple
         // tuple should always be valid
+        // sheep: is above statement true? because we might read some invalid RID from index
+        // but that won't happends in seq scan
         TINYDB_ASSERT(tmp.IsValid(), "tuple should always valid");
 
         // check the legality

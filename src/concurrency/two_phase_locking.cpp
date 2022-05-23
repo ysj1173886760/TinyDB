@@ -69,7 +69,7 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
         throw TransactionAbortException(context->GetTxnId(), "Failed to insert tuple");
     }
     // we should already holding the exclusive lock
-    TINYDB_ASSERT(context->GetExclusiveLockSet()->count(*rid) != 0, "we should have acquired exclusive lock on new tuple");
+    TINYDB_ASSERT(context->IsExclusiveLocked(*rid) != 0, "we should have acquired exclusive lock on new tuple");
 
     // insert index directly, and remove these entries when we aborted
     auto indexes = table_info->GetIndexes();
@@ -77,21 +77,92 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
         index_info->index_->InsertEntryTupleSchema(tuple, *rid);
     }
     // register abort action
+    auto tuple_rid = *rid;
     for (auto index_info : indexes) {
         auto index = index_info->index_.get();
         context->RegisterAbortAction([=]() {
-            index->DeleteEntryTupleSchema(tuple, *rid);
+            index->DeleteEntryTupleSchema(tuple, tuple_rid);
         });
     }
 
 }
 
-void TwoPLManager::Delete(TransactionContext *txn_context, RID rid, TableInfo *table_info) {
+void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    if (context->IsSharedLocked(rid)) {
+        // upgrade lock
+        lock_manager_->LockUpgrade(txn_context, rid);
+    } else if (!context->IsExclusiveLocked(rid)) {
+        // otherwise, we are not holding any lock, then try to acquire the exclusive lock
+        lock_manager_->LockExclusive(txn_context, rid);
+    }
+
+    // mark the tuple
+    auto res = table_info->table_->MarkDelete(rid);
+
+    if (res.GetErr() == ErrorCode::SKIP) {
+        // skip this tuple
+        // release the lock
+        lock_manager_->Unlock(txn_context, rid);
+    } else {
+        // register commit action
+        auto indexes = table_info->GetIndexes();
+        // we shall delete entry after we've commited txn
+        for (auto index_info : indexes) {
+            // careful to what we are going to capture
+            auto index = index_info->index_.get();
+            context->RegisterCommitAction([=]() {
+                index->DeleteEntryTupleSchema(tuple, rid);
+            });
+        }
+        // delete tuple on table
+        context->RegisterCommitAction([=]() {
+            table_info->table_->ApplyDelete(rid);
+        });
+        // register abort action
+        context->RegisterAbortAction([=]() {
+            table_info->table_->RollbackDelete(rid);
+        });
+    }
 }
 
-void TwoPLManager::Update(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) {
+void TwoPLManager::Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, RID rid, TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
+    auto context = txn_context->Cast<TwoPLContext>();
+
+    if (context->IsSharedLocked(rid)) {
+        // upgrade lock
+        lock_manager_->LockUpgrade(txn_context, rid);
+    } else if (!context->IsExclusiveLocked(rid)) {
+        // otherwise, we are not holding any lock, then try to acquire the exclusive lock
+        lock_manager_->LockExclusive(txn_context, rid);
+    }
+
+    auto res = table_info->table_->UpdateTuple(new_tuple, rid);
+    if (res.GetErr() == ErrorCode::ABORT) {
+        throw TransactionAbortException(context->GetTxnId(), "Failed to update");
+    }
+
+    auto indexes = table_info->GetIndexes();
+    for (auto index_info : indexes) {
+        auto index = index_info->index_.get();
+        // insert new entry right now
+        index->InsertEntryTupleSchema(new_tuple, rid);
+        // only delete entry when we commits
+        context->RegisterCommitAction([=]() {
+            index->DeleteEntryTupleSchema(tuple, rid);
+        });
+        // delete new entry when aborts
+        context->RegisterAbortAction([=] {
+            index->DeleteEntryTupleSchema(new_tuple, rid);
+        });
+    }
+    // restore the tuple when aborts
+    context->RegisterAbortAction([=] {
+        TINYDB_ASSERT(table_info->table_->UpdateTuple(tuple, rid).IsOk(), "Failed to update");
+    });
 }
 
 TransactionContext *TwoPLManager::Begin(IsolationLevel isolation_level) {
