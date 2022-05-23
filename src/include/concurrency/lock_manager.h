@@ -9,6 +9,9 @@
  * 
  */
 
+#ifndef LOCK_MANAGER_H
+#define LOCK_MANAGER_H
+
 #include "common/config.h"
 #include "common/rid.h"
 #include "common/result.h"
@@ -81,6 +84,15 @@ public:
     ~LockManager();
 
     /**
+     * @brief Get the deadlock resolve protocol
+     * 
+     * @return DeadLockResolveProtocol 
+     */
+    DeadLockResolveProtocol GetResolveProtocol() {
+        return resolve_protocol_;
+    }
+
+    /**
      * @brief 
      * Acquire lock on RID in shared move
      * @param txn_context 
@@ -137,3 +149,5 @@ private:
 };
 
 }
+
+#endif

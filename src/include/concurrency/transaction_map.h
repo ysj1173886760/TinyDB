@@ -26,6 +26,7 @@ class TransactionMap {
 public:
     static TransactionContext *GetTransactionContext(txn_id_t txn_id);
     static void AddTransactionContext(TransactionContext *context);
+    static void RemoveTransactionContext(txn_id_t txn_id);
 private:
     static std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
     static std::mutex latch_;

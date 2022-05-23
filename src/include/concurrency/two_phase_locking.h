@@ -11,6 +11,7 @@
 
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager.h"
+#include "concurrency/lock_manager.h"
 
 #include <memory>
 #include <unordered_set>
@@ -28,6 +29,7 @@ enum class LockStage {
  */
 class TwoPLContext : public TransactionContext {
     friend class LockManager;
+    friend class TwoPLManager;
 public:
     TwoPLContext(txn_id_t txn_id, IsolationLevel isolation_level)
         : TransactionContext(txn_id, isolation_level),
@@ -56,12 +58,15 @@ private:
  * Transaction manager for 2pl protocol
  */
 class TwoPLManager : public TransactionManager {
+public:
     /**
-     * @brief
-     * Create transaction manager for 2pl protocol
+     * @brief Create transaction manager with 2PL protocol
+     * 
+     * @param lock_manager lock manager
      */
-    TwoPLManager()
-        : TransactionManager(Protocol::TwoPL) {}
+    TwoPLManager(LockManager *lock_manager)
+        : TransactionManager(Protocol::TwoPL),
+          lock_manager_(lock_manager) {}
     
     ~TwoPLManager() = default;
 
@@ -107,10 +112,10 @@ class TwoPLManager : public TransactionManager {
     /**
      * @brief 
      * Begin a transaction
-     * @param[in] txn_context transaction context to be initialized
      * @param isolation_level isolation of this transaction
+     * @return new transaction context
      */
-    void Begin(TransactionContext *txn_context, IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) override;
+    virtual TransactionContext *Begin(IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) = 0;
 
     /**
      * @brief 
@@ -125,6 +130,14 @@ class TwoPLManager : public TransactionManager {
      * @param txn_context 
      */
     void Abort(TransactionContext *txn_context) override;
+
+private:
+    // helper functions
+    void ReleaseAllLocks(TransactionContext *txn_context);
+
+private:
+    // lock manager
+    const std::unique_ptr<LockManager> lock_manager_;
 
 };
 

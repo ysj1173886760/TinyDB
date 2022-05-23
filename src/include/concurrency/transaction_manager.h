@@ -46,6 +46,8 @@ public:
     TransactionManager(Protocol protocol)
         : protocol_(protocol) {}
     
+    virtual ~TransactionManager() {}
+    
     // i wonder should we use RID here? since RID represent the disk location and it's bound to 
     // slotted storage format.
     // maybe we should use some generic tuple location instead
@@ -95,10 +97,10 @@ public:
     /**
      * @brief 
      * Begin a transaction
-     * @param[in] txn_context transaction context to be initialized
      * @param isolation_level isolation of this transaction
+     * @return new transaction context
      */
-    virtual void Begin(TransactionContext *txn_context, IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) = 0;
+    virtual TransactionContext *Begin(IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) = 0;
 
     /**
      * @brief 
@@ -117,7 +119,7 @@ public:
 protected:
     // protocol of this transaction manager
     Protocol protocol_;
-    // transaction id to be assigned
+    // transaction id to be assigned, this might be replaced later by timestamp manager
     std::atomic<txn_id_t> next_txn_id_{0};
 };
 

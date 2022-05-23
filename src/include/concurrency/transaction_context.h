@@ -61,7 +61,17 @@ public:
     }
 
     inline void SetAborted() {
+        assert(state_ == TransactionState::RUNNING);
         state_ = TransactionState::ABORTED;
+    }
+
+    inline bool IsAborted() {
+        return state_ == TransactionState::ABORTED;
+    }
+
+    inline void SetCommitted() {
+        assert(state_ == TransactionState::RUNNING);
+        state_ = TransactionState::COMMITTED;
     }
 
     /**

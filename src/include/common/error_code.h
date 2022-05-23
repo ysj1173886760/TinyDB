@@ -9,6 +9,9 @@
  * 
  */
 
+#ifndef ERROR_CODE_H
+#define ERROR_CODE_H
+
 namespace TinyDB {
 
 enum class ErrorCode {
@@ -18,3 +21,5 @@ enum class ErrorCode {
 };
 
 }
+
+#endif
