@@ -16,7 +16,7 @@
 
 namespace TinyDB {
 
-Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid) {
+Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::function<void(const RID &)> &callback) {
     // we couldn't store it anyway
     if (tuple.GetSize() + TablePage::SIZE_TABLE_PAGE_HEADER + TablePage::SIZE_SLOT > PAGE_SIZE) {
         THROW_NOT_IMPLEMENTED_EXCEPTION("TinyDB Couldn't support very large tuple");
@@ -65,6 +65,11 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid) {
         }
 
         table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
+    }
+
+    // callback, acquire the ownership of newly inserted tuple
+    if (callback) {
+        callback(*rid);
     }
 
     // insertion is done

@@ -56,6 +56,34 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
     // isolation level.
     // this would simplify our implementation a lot.
 
+    // capture lock manager and txn context
+    // make an intermediate copy, since cpp doesn't allow us to capture member variable
+    auto lock_manager = lock_manager_.get();
+    std::function<void(const RID &)> callback = [lock_manager, context](const RID &rid) {
+        lock_manager->LockExclusive(context, rid);
+    };
+
+    auto res = table_info->table_->InsertTuple(tuple, rid, callback);
+    if (res.IsErr()) {
+        // we abort the transaction
+        throw TransactionAbortException(context->GetTxnId(), "Failed to insert tuple");
+    }
+    // we should already holding the exclusive lock
+    TINYDB_ASSERT(context->GetExclusiveLockSet()->count(*rid) != 0, "we should have acquired exclusive lock on new tuple");
+
+    // insert index directly, and remove these entries when we aborted
+    auto indexes = table_info->GetIndexes();
+    for (auto index_info : indexes) {
+        index_info->index_->InsertEntryTupleSchema(tuple, *rid);
+    }
+    // register abort action
+    for (auto index_info : indexes) {
+        auto index = index_info->index_.get();
+        context->RegisterAbortAction([=]() {
+            index->DeleteEntryTupleSchema(tuple, *rid);
+        });
+    }
+
 }
 
 void TwoPLManager::Delete(TransactionContext *txn_context, RID rid, TableInfo *table_info) {

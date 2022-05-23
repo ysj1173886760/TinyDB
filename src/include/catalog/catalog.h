@@ -41,7 +41,8 @@ struct IndexInfo {
  * @brief 
  * Table metadata
  */
-struct TableInfo {
+class TableInfo {
+public:
     TableInfo(Schema schema, std::string name, std::unique_ptr<TableHeap> &&table, table_oid_t oid)
         : schema_(schema),
           name_(name),
@@ -60,6 +61,14 @@ struct TableInfo {
     std::unordered_map<index_oid_t, std::unique_ptr<IndexInfo>> indexes_;
     // index_name -> index_oid
     std::unordered_map<std::string, index_oid_t> index_names_;
+
+    std::vector<IndexInfo *> GetIndexes() {
+        std::vector<IndexInfo *> res;
+        for (const auto &[oid, ptr] : indexes_) {
+            res.push_back(ptr.get());
+        }
+        return res;
+    }
 };
 
 /**
