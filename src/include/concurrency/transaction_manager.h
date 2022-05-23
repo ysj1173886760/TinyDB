@@ -13,10 +13,12 @@
 #define TRANSACTION_MANAGER_H
 
 #include "concurrency/transaction_context.h"
+#include "concurrency/transaction_map.h"
 #include "storage/table/tuple.h"
 #include "catalog/catalog.h"
 
 #include <atomic>
+#include <memory>
 
 namespace TinyDB {
 
@@ -44,7 +46,8 @@ public:
      * @param protocol protocol we want to use
      */
     TransactionManager(Protocol protocol)
-        : protocol_(protocol) {}
+        : protocol_(protocol),
+          txn_map_(new TransactionMap) {}
     
     virtual ~TransactionManager() {}
     
@@ -121,6 +124,8 @@ protected:
     Protocol protocol_;
     // transaction id to be assigned, this might be replaced later by timestamp manager
     std::atomic<txn_id_t> next_txn_id_{0};
+    // global transaction map
+    std::unique_ptr<TransactionMap> txn_map_;
 };
 
 }

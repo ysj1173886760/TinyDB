@@ -34,7 +34,7 @@ void TwoPLManager::Update(TransactionContext *txn_context, const Tuple &tuple, R
 TransactionContext *TwoPLManager::Begin(IsolationLevel isolation_level) {
     auto txn_id = next_txn_id_.fetch_add(1);
     TransactionContext *context = new TwoPLContext(txn_id, isolation_level);
-    TransactionMap::AddTransactionContext(context);
+    txn_map_->AddTransactionContext(context);
 
     return context;
 }
@@ -52,7 +52,7 @@ void TwoPLManager::Commit(TransactionContext *txn_context) {
     ReleaseAllLocks(txn_context);
 
     // free the txn context
-    TransactionMap::RemoveTransactionContext(txn_context->GetTxnId());
+    txn_map_->RemoveTransactionContext(txn_context->GetTxnId());
     delete txn_context;
 }
 
@@ -70,7 +70,7 @@ void TwoPLManager::Abort(TransactionContext *txn_context) {
     ReleaseAllLocks(txn_context);
 
     // free the txn context
-    TransactionMap::RemoveTransactionContext(txn_context->GetTxnId());
+    txn_map_->RemoveTransactionContext(txn_context->GetTxnId());
     delete txn_context;
 }
 

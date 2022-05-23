@@ -9,6 +9,9 @@
  * 
  */
 
+#ifndef TRANSACTION_MAP_H
+#define TRANSACTION_MAP_H
+
 #include "concurrency/transaction_context.h"
 
 #include <mutex>
@@ -24,12 +27,35 @@ class TransactionContext;
  */
 class TransactionMap {
 public:
-    static TransactionContext *GetTransactionContext(txn_id_t txn_id);
-    static void AddTransactionContext(TransactionContext *context);
-    static void RemoveTransactionContext(txn_id_t txn_id);
+    TransactionMap() = default;
+    ~TransactionMap() = default;
+
+    /**
+     * @brief Get the Transaction Context though txn id
+     * 
+     * @param txn_id 
+     * @return TransactionContext* 
+     */
+    TransactionContext *GetTransactionContext(txn_id_t txn_id);
+
+    /**
+     * @brief 
+     * Add a new transaction context
+     * @param context 
+     */
+    void AddTransactionContext(TransactionContext *context);
+    /**
+     * @brief 
+     * Remove a transaction from global map
+     * @param txn_id 
+     */
+    void RemoveTransactionContext(txn_id_t txn_id);
+
 private:
-    static std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
-    static std::mutex latch_;
+    std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
+    std::mutex latch_;
 };
 
 }
+
+#endif

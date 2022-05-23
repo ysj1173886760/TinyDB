@@ -14,11 +14,6 @@
 
 namespace TinyDB {
 
-// this file is only used to initialize txn_map
-
-std::unordered_map<txn_id_t, TransactionContext *> TransactionMap::txn_map_ = {};
-std::mutex TransactionMap::latch_ = {};
-
 TransactionContext *TransactionMap::GetTransactionContext(txn_id_t txn_id) {
     std::lock_guard<std::mutex> latch(latch_);
     assert(txn_map_.count(txn_id) != 0);
@@ -29,6 +24,12 @@ void TransactionMap::AddTransactionContext(TransactionContext *context) {
     std::lock_guard<std::mutex> latch(latch_);
     assert(txn_map_.count(context->GetTxnId()) == 0);
     txn_map_[context->GetTxnId()] = context;
+}
+
+void TransactionMap::RemoveTransactionContext(txn_id_t txn_id) {
+    std::lock_guard<std::mutex> latch(latch_);
+    assert(txn_map_.count(txn_id) != 0);
+    txn_map_.erase(txn_id);
 }
 
 }
