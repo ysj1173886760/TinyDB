@@ -70,9 +70,15 @@ Result<> LockManager::LockShared(TransactionContext *txn_context, const RID &rid
     // if someone is holding the lock in exclusive mode, then we must wait
     if (lock_queue->writing_) {
         lock_queue->cv_.wait(latch, 
-            [lock_queue, context]() {
+            [lock_queue, context, it]() {
                 return context->GetTxnState() ==  TransactionState::ABORTED ||
+                       it->should_abort_ == true ||
                        !lock_queue->writing_; });
+    }
+
+    // notified by deadlock lock detection thread
+    if (it->should_abort_) {
+        context->SetAborted();
     }
 
     // check whether we are still alive, or we are killed by others
@@ -116,9 +122,15 @@ Result<> LockManager::LockExclusive(TransactionContext *txn_context, const RID &
     // wait until there is no other writer and reader
     if (lock_queue->writing_ || lock_queue->shared_count_ > 0) {
         lock_queue->cv_.wait(latch, 
-            [lock_queue, context]() {
+            [lock_queue, context, it]() {
                 return context->GetTxnState() ==  TransactionState::ABORTED ||
+                       it->should_abort_ == true ||
                        (!lock_queue->writing_ && lock_queue->shared_count_ == 0); });
+    }
+    
+    // notified by deadlock lock detection thread
+    if (it->should_abort_) {
+        context->SetAborted();
     }
 
     if (context->GetTxnState() == TransactionState::ABORTED) {
@@ -189,9 +201,15 @@ Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &ri
     // wait until there is no other writer and reader
     if (lock_queue->writing_ || lock_queue->shared_count_ > 0) {
         lock_queue->cv_.wait(latch, 
-            [lock_queue, context]() {
+            [lock_queue, context, it]() {
                 return context->GetTxnState() ==  TransactionState::ABORTED ||
+                       it->should_abort_ == true ||
                        (!lock_queue->writing_ && lock_queue->shared_count_ == 0); });
+    }
+
+    // notified by deadlock lock detection thread
+    if (it->should_abort_) {
+        context->SetAborted();
     }
 
     if (context->GetTxnState() == TransactionState::ABORTED) {
@@ -298,17 +316,31 @@ void LockManager::RunCycleDetection() {
                 }
             }
 
+            // LOG_INFO("print graph:");
+            // for (const auto &[txn_id, list] : waits_for) {
+            //     for (const auto &to : list) {
+            //         LOG_INFO("%d %d", txn_id, to);
+            //     }
+            // }
+
             txn_id_t txn_id;
             while (HasCycle(&txn_id, waits_for)) {
                 // if there is a cycle
-                auto context = TransactionManager::GetTransaction(txn_id);
-                context->SetAborted();
-                // remove this transaction
+                // remove this transaction in wait_for graph
                 waits_for.erase(txn_id);
                 for (auto &[vertex, edges]: waits_for) {
                     auto it = std::find(edges.begin(), edges.end(), txn_id);
                     if (it != edges.end()) {
                         edges.erase(it);
+                    }
+                }
+
+                // notify this transaction should abort
+                auto lock_queue = &lock_table_[rid_map[txn_id]];
+                for (auto &request : lock_queue->request_queue_) {
+                    if (request.txn_id_ == txn_id) {
+                        // set to abort
+                        request.should_abort_ = true;
                     }
                 }
                 // notify the aborted transaction
@@ -356,9 +388,24 @@ bool LockManager::HasCycle(txn_id_t *txn_id, std::unordered_map<txn_id_t, std::v
         finished.insert(cur);
     };
 
-    if (found_cycle) {
-        LOG_INFO("Found Cycle Point %d", *txn_id);
+    // iterate all vertex and detect the cycle though DFS.
+    // because there might be several isolated sub-graphs
+    for (const auto &cur_pair : wait_for) {
+        if (finished.count(cur_pair.first) != 0) {
+            continue;
+        }
+
+        stack.clear();
+        dfs(cur_pair.first);
+        if (found_cycle) {
+            break;
+        }
     }
+
+    // use some option to enable logging in single module
+    // if (found_cycle) {
+    //     LOG_INFO("Found Cycle Point %d", *txn_id);
+    // }
     return found_cycle;
 }
 

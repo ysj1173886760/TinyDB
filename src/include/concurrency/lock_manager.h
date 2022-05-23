@@ -46,11 +46,13 @@ class LockManager {
     class LockRequest {
     public:
         LockRequest(txn_id_t txn_id, LockMode mode)
-            : txn_id_(txn_id), lock_mode_(mode), granted_(false) {}
+            : txn_id_(txn_id), lock_mode_(mode) {}
 
         txn_id_t txn_id_;
         LockMode lock_mode_;
-        bool granted_;
+        bool granted_{false};
+        // indicate whether current transaction should abort
+        bool should_abort_{false};
     };
 
     // just a struct

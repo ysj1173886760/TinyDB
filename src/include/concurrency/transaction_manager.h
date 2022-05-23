@@ -124,6 +124,16 @@ public:
         return txn_map_[txn_id];
     }
 
+    /**
+     * @brief
+     * Insert an transaction. For debug purpose. Do not use it outside the test code.
+     * This is not thread-safe!!!
+     * @param context 
+     */
+    static void InsertTransaction(TransactionContext *context) {
+        txn_map_[context->GetTxnId()] = context;
+    }
+
 protected:
     // protocol of this transaction manager
     Protocol protocol_;
