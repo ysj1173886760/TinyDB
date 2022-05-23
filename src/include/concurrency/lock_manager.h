@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <thread>
+#include <vector>
 
 namespace TinyDB {
 
@@ -68,10 +69,14 @@ class LockManager {
     };
 
 public:
-    LockManager(DeadLockResolveProtocol resolve_protocol)
-        : resolve_protocol_(resolve_protocol) {}
+    /**
+     * @brief
+     * Construct LockManager
+     * @param resolve_protocol resolve protocol used to handle deadlock scenario
+     */
+    LockManager(DeadLockResolveProtocol resolve_protocol);
     
-    ~LockManager() = default;
+    ~LockManager();
 
     /**
      * @brief 
@@ -126,7 +131,7 @@ private:
     // background thread for deadlock detection
     void RunCycleDetection();
     // run cycle detection
-    bool HasCycle(txn_id_t *txn_id);
+    bool HasCycle(txn_id_t *txn_id, std::unordered_map<txn_id_t, std::vector<txn_id_t>> &wait_for);
 };
 
 }

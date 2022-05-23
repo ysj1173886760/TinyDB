@@ -19,6 +19,24 @@
 
 namespace TinyDB {
 
+LockManager::LockManager(DeadLockResolveProtocol resolve_protocol)
+    : resolve_protocol_(resolve_protocol) {
+    if (resolve_protocol_ == DeadLockResolveProtocol::DL_DETECT) {
+        LOG_INFO("Deadlock Detection Thread Started...");
+        enable_cycle_detection_.store(true);
+        cycle_detection_thread_ = new std::thread(&LockManager::RunCycleDetection, this);
+    }
+}
+    
+LockManager::~LockManager() {
+    if (resolve_protocol_ == DeadLockResolveProtocol::DL_DETECT) {
+        enable_cycle_detection_.store(false);
+        cycle_detection_thread_->join();
+        delete cycle_detection_thread_;
+        LOG_INFO("Deadlock Detection Thread Stopped...");
+    }
+}
+
 Result<> LockManager::LockShared(TransactionContext *txn_context, const RID &rid) {
     std::unique_lock<std::mutex> latch(latch_);
     auto context = txn_context->Cast<TwoPLContext>();
@@ -258,10 +276,6 @@ void LockManager::RunCycleDetection() {
             std::unordered_map<txn_id_t, RID> rid_map;
             // graph
             std::unordered_map<txn_id_t, std::vector<txn_id_t>> waits_for;
-            // table for avoiding duplicated access
-            std::unordered_set<txn_id_t> finished;
-            // current access stack, used to detect cycle
-            std::unordered_set<txn_id_t> stack;
 
             // acquire the latch first
             std::lock_guard<std::mutex> latch(latch_);
@@ -285,7 +299,7 @@ void LockManager::RunCycleDetection() {
             }
 
             txn_id_t txn_id;
-            while (HasCycle(&txn_id)) {
+            while (HasCycle(&txn_id, waits_for)) {
                 // if there is a cycle
                 auto context = TransactionManager::GetTransaction(txn_id);
                 context->SetAborted();
@@ -308,8 +322,44 @@ void LockManager::RunCycleDetection() {
     }
 }
 
-bool LockManager::HasCycle(txn_id_t *txn_id) {
-    THROW_NOT_IMPLEMENTED_EXCEPTION("not implemented");
+bool LockManager::HasCycle(txn_id_t *txn_id, std::unordered_map<txn_id_t, std::vector<txn_id_t>> &wait_for) {
+    // table for avoiding duplicated access
+    std::unordered_set<txn_id_t> finished;
+    // current access stack, used to detect cycle
+    std::unordered_set<txn_id_t> stack;
+    // flag indicate whether we've found cycle point
+    bool found_cycle = false;
+
+    std::function<void(txn_id_t)> dfs = [&](txn_id_t cur) {
+        if (found_cycle || finished.count(cur) != 0) {
+            return;
+        }
+
+        // push into stack
+        stack.insert(cur);
+        // iterate outgoing vertices
+        for (const auto &to : wait_for[cur]) {
+            if (stack.count(to) != 0 && !found_cycle) {
+                *txn_id = to;
+                found_cycle = true;
+                return;
+            }
+            dfs(to);
+
+            // as long as we found the cycle point, we will return immediately
+            if (found_cycle) {
+                return;
+            }
+        }
+
+        stack.erase(cur);
+        finished.insert(cur);
+    };
+
+    if (found_cycle) {
+        LOG_INFO("Found Cycle Point %d", *txn_id);
+    }
+    return found_cycle;
 }
 
 }
