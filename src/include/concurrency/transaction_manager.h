@@ -114,33 +114,11 @@ public:
      */
     virtual void Abort(TransactionContext *txn_context) = 0;
 
-    /**
-     * @brief Get the Transaction context based on txn id
-     * 
-     * @param txn_id 
-     * @return TransactionContext* 
-     */
-    static TransactionContext *GetTransaction(txn_id_t txn_id) {
-        return txn_map_[txn_id];
-    }
-
-    /**
-     * @brief
-     * Insert an transaction. For debug purpose. Do not use it outside the test code.
-     * This is not thread-safe!!!
-     * @param context 
-     */
-    static void InsertTransaction(TransactionContext *context) {
-        txn_map_[context->GetTxnId()] = context;
-    }
-
 protected:
     // protocol of this transaction manager
     Protocol protocol_;
     // transaction id to be assigned
     std::atomic<txn_id_t> next_txn_id_{0};
-    // txn map
-    static std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
 };
 
 }
