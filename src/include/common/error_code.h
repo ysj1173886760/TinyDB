@@ -16,8 +16,12 @@ namespace TinyDB {
 
 enum class ErrorCode {
     INVALID,
+    // out of memory, buffer pool manager is full
     OUT_OF_MEMORY,
+    // encountered a deadlock situation
     DEADLOCK,
+    // we should skip this tuple
+    SKIP,
 };
 
 }

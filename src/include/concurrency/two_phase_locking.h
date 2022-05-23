@@ -12,6 +12,7 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager.h"
 #include "concurrency/lock_manager.h"
+#include "common/result.h"
 
 #include <memory>
 #include <unordered_set>
@@ -42,6 +43,14 @@ public:
 
     std::unordered_set<RID> *GetExclusiveLockSet() {
         return exclusive_lock_set_.get();
+    }
+
+    bool IsSharedLocked(const RID &rid) {
+        return shared_lock_set_->count(rid) != 0;
+    }
+
+    bool IsExclusiveLocked(const RID &rid) {
+        return exclusive_lock_set_->count(rid) != 0;
     }
 
 private:
@@ -78,7 +87,7 @@ public:
      * @param[in] rid rid of tuple that we want to read
      * @param[in] table_info table metadata
      */
-    void Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) override;
+    Result<> Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) override;
 
     /**
      * @brief 

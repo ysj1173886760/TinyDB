@@ -16,6 +16,7 @@
 #include "concurrency/transaction_map.h"
 #include "storage/table/tuple.h"
 #include "catalog/catalog.h"
+#include "common/result.h"
 
 #include <atomic>
 #include <memory>
@@ -64,7 +65,7 @@ public:
      * @param[in] rid rid of tuple that we want to read
      * @param[in] table_info table metadata
      */
-    virtual void Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) = 0;
+    virtual Result<> Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) = 0;
 
     /**
      * @brief 

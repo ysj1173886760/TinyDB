@@ -79,9 +79,11 @@ public:
      * insert new tuple into table heap
      * @param tuple tuple to be inserted
      * @param rid rid of new tuple
+     * @param callback callback function to be called after the insertion is done. this is used for 
+     * 2PL concurrency control protocols since we need to acquire the lock right after we inserted a new tuple
      * @return true when insertion succeed
      */
-    bool InsertTuple(const Tuple &tuple, RID *rid);
+    bool InsertTuple(const Tuple &tuple, RID *rid, const std::function<void()> &callback = nullptr);
 
     /**
      * @brief 

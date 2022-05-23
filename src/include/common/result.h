@@ -9,6 +9,9 @@
  * 
  */
 
+#ifndef RESULT_H
+#define RESULT_H
+
 #include "common/error_code.h"
 
 #include <utility>
@@ -66,3 +69,5 @@ private:
 };
 
 }
+
+#endif

@@ -83,6 +83,10 @@ public:
         return *this;
     }
 
+    RID GetRID() {
+        return rid_;
+    }
+
     void GetTuple();
 
     // provide interfaces like index iterator
