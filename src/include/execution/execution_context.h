@@ -14,6 +14,8 @@
 
 #include "catalog/catalog.h"
 #include "buffer/buffer_pool_manager.h"
+#include "concurrency/transaction_manager.h"
+#include "concurrency/transaction_context.h"
 
 namespace TinyDB {
 
@@ -26,13 +28,28 @@ class ExecutionContext {
 public:
     /**
      * @brief
-     * Creates a execution context which is used in execution engine
+     * Creates a execution context which is used in execution engine,
+     * without transaction support.
      * @param catalog 
      * @param bpm 
      */
     ExecutionContext(Catalog *catalog, BufferPoolManager *bpm):
         catalog_(catalog),
         bpm_(bpm) {}
+
+    /**
+     * @brief
+     * Creates a execution context which is used in execution engine, with transaction support.
+     * @param catalog 
+     * @param bpm 
+     * @param txn_manager 
+     * @param txn_context 
+     */
+    ExecutionContext(Catalog *catalog, BufferPoolManager *bpm, TransactionManager *txn_manager, TransactionContext *txn_context):
+        catalog_(catalog),
+        bpm_(bpm),
+        txn_manager_(txn_manager),
+        txn_context_(txn_context) {}
 
     // avoid implicit copy and move
     DISALLOW_COPY_AND_MOVE(ExecutionContext);
@@ -53,6 +70,10 @@ private:
     // in order to avoid another indirection, i will store 
     // an additional pointer here
     BufferPoolManager *bpm_;
+    // transaction manager
+    TransactionManager *txn_manager_{nullptr};
+    // transaction context for current txn
+    TransactionContext *txn_context_{nullptr};
 };
 
 }
