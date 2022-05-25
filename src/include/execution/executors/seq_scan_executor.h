@@ -34,12 +34,21 @@ public:
     bool Next(Tuple *tuple) override;
 
 private:
+    // helper function
+
+    bool NextWithTxn(Tuple *tuple);
+    bool NextWithoutTxn(Tuple *tuple);
+
     // stored the pointer to table metadata to avoid additional indirection
     TableInfo *table_info_;
     // iterator used to scan table
     TableIterator iterator_;
     // cache the table schema
     Schema *table_schema_;
+    // cache txn manager to avoid indirection
+    TransactionManager *txn_manager_;
+    // cache txn context to avoid indirection
+    TransactionContext *txn_context_;
 };
 
 }

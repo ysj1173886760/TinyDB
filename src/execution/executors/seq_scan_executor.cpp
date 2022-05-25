@@ -22,9 +22,19 @@ void SeqScanExecutor::Init() {
     // initialize the iterator
     iterator_ = table_info_->table_->Begin();
     table_schema_ = &table_info_->schema_;
+    txn_context_ = context_->GetTransactionContext();
+    txn_manager_ = context_->GetTransactionManager();
 }
 
 bool SeqScanExecutor::Next(Tuple *tuple) {
+    if (!txn_manager_) {
+        return NextWithoutTxn(tuple);
+    } else {
+        return NextWithTxn(tuple);
+    }
+}
+
+bool SeqScanExecutor::NextWithoutTxn(Tuple *tuple) {
     auto plan = GetPlanNode<SeqScanPlan>();
 
     while (!iterator_.IsEnd()) {
@@ -54,6 +64,36 @@ bool SeqScanExecutor::Next(Tuple *tuple) {
     }
 
     // table is consumed
+    return false;
+}
+
+bool SeqScanExecutor::NextWithTxn(Tuple *tuple) {
+    auto plan = GetPlanNode<SeqScanPlan>();
+
+    Tuple tmp_tuple;
+    while (!iterator_.IsEnd()) {
+        // read the tuple
+        auto rid = iterator_.GetRID();
+        // advance the iterator
+        iterator_.Advance();
+
+        if (txn_manager_->Read(txn_context_, &tmp_tuple, rid, table_info_).IsErr()) {
+            // skip this tuple
+            continue;
+        }
+
+        // check the legality
+        if (!(plan.GetPredicate() == nullptr ||
+            plan.GetPredicate()->Evaluate(&tmp_tuple, nullptr).IsTrue())) {
+            continue;
+        }
+
+        // same as the version without txn support
+        *tuple = tmp_tuple.KeyFromTuple(table_schema_, plan.GetSchema());
+
+        return true;
+    }
+
     return false;
 }
 
