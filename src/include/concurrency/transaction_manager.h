@@ -65,7 +65,7 @@ public:
      * @param[in] rid rid of tuple that we want to read
      * @param[in] table_info table metadata
      */
-    virtual Result<> Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) = 0;
+    virtual Result<> Read(TransactionContext *txn_context, Tuple *tuple, const RID &rid, TableInfo *table_info) = 0;
 
     /**
      * @brief 
@@ -85,7 +85,7 @@ public:
      * @param rid rid of the tuple that we want to delete
      * @param[in] table_info table metadata
      */
-    virtual void Delete(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) = 0;
+    virtual void Delete(TransactionContext *txn_context, const Tuple &tuple, const RID &rid, TableInfo *table_info) = 0;
 
     /**
      * @brief 
@@ -96,7 +96,7 @@ public:
      * @param rid rid of tuple that we want to update
      * @param[in] table_info table metadata
      */
-    virtual void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, RID rid, TableInfo *table_info) = 0;
+    virtual void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, const RID &rid, TableInfo *table_info) = 0;
 
     // sheep: i wonder do we need to provide a scan method?
 

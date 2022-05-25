@@ -87,7 +87,7 @@ public:
      * @param[in] rid rid of tuple that we want to read
      * @param[in] table_info table metadata
      */
-    Result<> Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) override;
+    Result<> Read(TransactionContext *txn_context, Tuple *tuple, const RID &rid, TableInfo *table_info) override;
 
     /**
      * @brief 
@@ -107,7 +107,7 @@ public:
      * @param rid rid of the tuple that we want to delete
      * @param[in] table_info table metadata
      */
-    void Delete(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) override;
+    void Delete(TransactionContext *txn_context, const Tuple &tuple, const RID &rid, TableInfo *table_info) override;
 
     /**
      * @brief 
@@ -118,7 +118,7 @@ public:
      * @param rid rid of tuple that we want to update
      * @param[in] table_info table metadata
      */
-    void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, RID rid, TableInfo *table_info) override;
+    void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, const RID &rid, TableInfo *table_info) override;
 
     /**
      * @brief 

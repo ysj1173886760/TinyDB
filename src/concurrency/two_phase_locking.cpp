@@ -15,7 +15,7 @@
 namespace TinyDB {
 
 
-Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, RID rid, TableInfo *table_info) {
+Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, const RID &rid, TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
 
@@ -87,7 +87,7 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
 
 }
 
-void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, RID rid, TableInfo *table_info) {
+void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, const RID &rid, TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
 
@@ -128,7 +128,11 @@ void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, R
     }
 }
 
-void TwoPLManager::Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, RID rid, TableInfo *table_info) {
+void TwoPLManager::Update(TransactionContext *txn_context, 
+                          const Tuple &tuple, 
+                          const Tuple &new_tuple, 
+                          const RID &rid, 
+                          TableInfo *table_info) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
 
