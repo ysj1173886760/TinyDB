@@ -71,13 +71,13 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
     // we should already holding the exclusive lock
     TINYDB_ASSERT(context->IsExclusiveLocked(*rid) != 0, "we should have acquired exclusive lock on new tuple");
 
+    auto tuple_rid = *rid;
     // insert index directly, and remove these entries when we aborted
     auto indexes = table_info->GetIndexes();
     for (auto index_info : indexes) {
-        index_info->index_->InsertEntryTupleSchema(tuple, *rid);
+        index_info->index_->InsertEntryTupleSchema(tuple, tuple_rid);
     }
     // register abort action
-    auto tuple_rid = *rid;
     for (auto index_info : indexes) {
         auto index = index_info->index_.get();
         context->RegisterAbortAction([=]() {

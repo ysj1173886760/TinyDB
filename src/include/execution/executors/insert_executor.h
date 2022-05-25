@@ -34,6 +34,9 @@ public:
 private:
     // helper function
 
+    bool NextWithTxn(Tuple *tuple);
+    bool NextWithoutTxn(Tuple *tuple);
+
     // insert tuple from raw value
     void RawValueInsertion();
     // insert tuple from child
@@ -49,6 +52,10 @@ private:
     std::unique_ptr<AbstractExecutor> child_;
     // caching all the indexes that we need to insert
     std::vector<IndexInfo *> indexes_;
+    // cache txn manager to avoid indirection
+    TransactionManager *txn_manager_;
+    // cache txn context to avoid indirection
+    TransactionContext *txn_context_;
 };
 
 }
