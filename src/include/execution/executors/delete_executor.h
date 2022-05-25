@@ -11,6 +11,8 @@
 
 #include "execution/plans/delete_plan.h"
 #include "execution/executors/abstract_executor.h"
+#include "concurrency/transaction_context.h"
+#include "concurrency/transaction_manager.h"
 
 namespace TinyDB {
 
@@ -32,6 +34,12 @@ public:
     bool Next(Tuple *tuple) override;
 
 private:
+    // helper function
+    // calling next with txn support
+    bool NextWithTxn(Tuple *tuple);
+    // calling next without txn support
+    bool NextWithoutTxn(Tuple *tuple);
+
     // child executor
     std::unique_ptr<AbstractExecutor> child_;
     // stored the pointer to table metadata to avoid additional indirection
@@ -40,6 +48,10 @@ private:
     Schema *table_schema_;
     // caching all the indexes that we need to insert
     std::vector<IndexInfo *> indexes_;
+    // cache txn manager to avoid indirection
+    TransactionManager *txn_manager_;
+    // cache txn context to avoid indirection
+    TransactionContext *txn_context_;
 };
 
 }

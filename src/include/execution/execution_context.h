@@ -64,6 +64,14 @@ public:
         return bpm_;
     }
 
+    inline TransactionManager *GetTransactionManager() {
+        return txn_manager_;
+    }
+
+    inline TransactionContext *GetTransactionContext() {
+        return txn_context_;
+    }
+
 private:
     Catalog *catalog_;
     // actually we've stored bpm in catalog
