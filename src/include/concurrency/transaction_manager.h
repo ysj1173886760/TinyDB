@@ -91,12 +91,16 @@ public:
      * @brief 
      * Perform Updation
      * @param txn_context 
-     * @param tuple old tuple
+     * @param old_tuple old tuple
      * @param new_tuple new tuple
      * @param rid rid of tuple that we want to update
      * @param[in] table_info table metadata
      */
-    virtual void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, const RID &rid, TableInfo *table_info) = 0;
+    virtual void Update(TransactionContext *txn_context, 
+                        const Tuple &old_tuple, 
+                        const Tuple &new_tuple, 
+                        const RID &rid, 
+                        TableInfo *table_info) = 0;
 
     // sheep: i wonder do we need to provide a scan method?
 

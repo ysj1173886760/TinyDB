@@ -41,6 +41,9 @@ private:
     // helper function to generate new tuple
     Tuple GenerateUpdatedTuple(const Tuple &tuple);
 
+    bool NextWithTxn(Tuple *tuple);
+    bool NextWithoutTxn(Tuple *tuple);
+
     // child executor
     std::unique_ptr<AbstractExecutor> child_;
     // stored the pointer to table metadata to avoid additional indirection
@@ -49,6 +52,10 @@ private:
     Schema *table_schema_;
     // caching all the indexes that we need to insert
     std::vector<IndexInfo *> indexes_;
+    // cache txn manager to avoid indirection
+    TransactionManager *txn_manager_;
+    // cache txn context to avoid indirection
+    TransactionContext *txn_context_;
 };
 
 }

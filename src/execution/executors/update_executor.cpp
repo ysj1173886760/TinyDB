@@ -33,9 +33,20 @@ void UpdateExecutor::Init() {
     // for the simplicity, i will assume output schema of child will always be the same
     // as table schema
     TINYDB_ASSERT(child_->GetOutputSchema()->Equal(*table_schema_), "Schema doesn't match");
+
+    txn_context_ = context_->GetTransactionContext();
+    txn_manager_ = context_->GetTransactionManager();
 }
 
 bool UpdateExecutor::Next(Tuple *tuple) {
+    if (!txn_manager_) {
+        return NextWithoutTxn(tuple);
+    } else {
+        return NextWithTxn(tuple);
+    }
+}
+
+bool UpdateExecutor::NextWithoutTxn(Tuple *tuple) {
     Tuple tmp;
     if (child_->Next(&tmp)) {
         Tuple newTuple = GenerateUpdatedTuple(tmp);
@@ -51,6 +62,19 @@ bool UpdateExecutor::Next(Tuple *tuple) {
             index_info->index_->DeleteEntryTupleSchema(tmp, tmp.GetRID());
             index_info->index_->InsertEntryTupleSchema(newTuple, tmp.GetRID());
         }
+        return true;
+    }
+
+    return false;
+}
+
+bool UpdateExecutor::NextWithTxn(Tuple *tuple) {
+    Tuple tmp;
+    if (child_->Next(&tmp)) {
+        Tuple newTuple = GenerateUpdatedTuple(tmp);
+        // txn manager will abort when updation is failed
+        txn_manager_->Update(txn_context_, tmp, newTuple, tmp.GetRID(), table_info_);
+
         return true;
     }
 

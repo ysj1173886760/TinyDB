@@ -129,7 +129,7 @@ void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, c
 }
 
 void TwoPLManager::Update(TransactionContext *txn_context, 
-                          const Tuple &tuple, 
+                          const Tuple &old_tuple, 
                           const Tuple &new_tuple, 
                           const RID &rid, 
                           TableInfo *table_info) {
@@ -156,7 +156,7 @@ void TwoPLManager::Update(TransactionContext *txn_context,
         index->InsertEntryTupleSchema(new_tuple, rid);
         // only delete entry when we commits
         context->RegisterCommitAction([=]() {
-            index->DeleteEntryTupleSchema(tuple, rid);
+            index->DeleteEntryTupleSchema(old_tuple, rid);
         });
         // delete new entry when aborts
         context->RegisterAbortAction([=] {
@@ -165,7 +165,7 @@ void TwoPLManager::Update(TransactionContext *txn_context,
     }
     // restore the tuple when aborts
     context->RegisterAbortAction([=] {
-        TINYDB_ASSERT(table_info->table_->UpdateTuple(tuple, rid).IsOk(), "Failed to update");
+        TINYDB_ASSERT(table_info->table_->UpdateTuple(old_tuple, rid).IsOk(), "Failed to update");
     });
 }
 

@@ -113,12 +113,16 @@ public:
      * @brief 
      * Perform Updation
      * @param txn_context 
-     * @param tuple old tuple
+     * @param old_tuple old tuple
      * @param new_tuple new tuple
      * @param rid rid of tuple that we want to update
      * @param[in] table_info table metadata
      */
-    void Update(TransactionContext *txn_context, const Tuple &tuple, const Tuple &new_tuple, const RID &rid, TableInfo *table_info) override;
+    void Update(TransactionContext *txn_context, 
+                const Tuple &old_tuple, 
+                const Tuple &new_tuple, 
+                const RID &rid, 
+                TableInfo *table_info) override;
 
     /**
      * @brief 
