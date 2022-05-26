@@ -124,9 +124,10 @@ public:
      * Release the lock held by the transaction
      * @param txn_context 
      * @param rid 
+     * @param oblivious whether we need to enter the shrinking phase
      * @return Result<>
      */
-    Result<> Unlock(TransactionContext *txn_context, const RID &rid);
+    Result<> Unlock(TransactionContext *txn_context, const RID &rid, bool oblivious = false);
 
     /**
      * @brief 

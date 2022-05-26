@@ -131,6 +131,10 @@ public:
      */
     virtual void Abort(TransactionContext *txn_context) = 0;
 
+    bool IsTransactionAlive(txn_id_t txn_id) {
+        return txn_map_->IsTransactionAlive(txn_id);
+    }
+
 protected:
     // protocol of this transaction manager
     Protocol protocol_;

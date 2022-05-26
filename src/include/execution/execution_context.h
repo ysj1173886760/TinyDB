@@ -72,6 +72,14 @@ public:
         return txn_context_;
     }
 
+    void SetTransactionManager(TransactionManager *txn_manager) {
+        txn_manager_ = txn_manager;
+    }
+
+    void SetTransactionContext(TransactionContext *txn_context) {
+        txn_context_ = txn_context;
+    }
+
 private:
     Catalog *catalog_;
     // actually we've stored bpm in catalog

@@ -226,7 +226,7 @@ Result<> LockManager::LockUpgrade(TransactionContext *txn_context, const RID &ri
     return Result();
 }
 
-Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
+Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid, bool oblivious) {
     std::lock_guard<std::mutex> latch(latch_);
     auto context = txn_context->Cast<TwoPLContext>();
 
@@ -256,7 +256,7 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
     if (it->lock_mode_ == LockMode::EXCLUSIVE) {
         should_notify = true;
         lock_queue->writing_ = false;
-        if (context->stage_ == LockStage::GROWING) {
+        if (!oblivious && context->stage_ == LockStage::GROWING) {
             context->stage_ = LockStage::SHRINKING;
         }
     } else {
@@ -268,7 +268,8 @@ Result<> LockManager::Unlock(TransactionContext *txn_context, const RID &rid) {
         // for read committed, we will always release the lock after reading them
         // so we won't count for it in LockStage
         if (context->isolation_level_ != IsolationLevel::READ_COMMITTED &&
-            context->stage_ == LockStage::GROWING) {
+            context->stage_ == LockStage::GROWING &&
+            !oblivious) {
             context->stage_ = LockStage::SHRINKING;
         }
     }

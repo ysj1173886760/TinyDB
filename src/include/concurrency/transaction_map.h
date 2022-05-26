@@ -51,6 +51,15 @@ public:
      */
     void RemoveTransactionContext(txn_id_t txn_id);
 
+    /**
+     * @brief 
+     * Check whether transaction still alive
+     * @param txn_id 
+     * @return true 
+     * @return false 
+     */
+    bool IsTransactionAlive(txn_id_t txn_id);
+
 private:
     std::unordered_map<txn_id_t, TransactionContext *> txn_map_;
     std::mutex latch_;

@@ -14,6 +14,7 @@
 
 #include "common/config.h"
 #include "common/macros.h"
+#include "common/logger.h"
 
 #include <functional>
 #include <forward_list>
@@ -24,10 +25,10 @@ namespace TinyDB {
 using TxnEndAction = std::function<void()>;
 
 enum class TransactionState {
-    INVALID,
-    RUNNING,
-    COMMITTED,
-    ABORTED,
+    INVALID = 0,
+    RUNNING = 1,
+    COMMITTED = 2,
+    ABORTED = 3,
 };
 
 enum class IsolationLevel {

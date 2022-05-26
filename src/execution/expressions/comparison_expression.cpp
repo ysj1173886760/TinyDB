@@ -16,8 +16,8 @@
 namespace TinyDB {
 
 Value ComparisonExpression::Evaluate(const Tuple *tuple_left, const Tuple *tuple_right) const {
-    TINYDB_ASSERT(tuple_left != nullptr, "null tuple");
-    TINYDB_ASSERT(tuple_right != nullptr, "null tuple");
+    TINYDB_ASSERT(tuple_left != nullptr || tuple_right != nullptr, "null tuple");
+    // TINYDB_ASSERT(tuple_right != nullptr, "null tuple");
     // intuitively, we only need to pass tuple_left to left child, and pass tuple_right to right child
     // i'm not sure which one is better
     // sheep: actually, tuple_left and tuple_right doesn't mean the tuple used by left child. It actually means 

@@ -39,12 +39,12 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context,
     // note that we only need to release shared lock
     if (context->isolation_level_ == IsolationLevel::READ_COMMITTED &&
         context->IsSharedLocked(rid)) {
-        lock_manager_->Unlock(context, rid);
+        lock_manager_->Unlock(context, rid, true);
     } else if (predicate && 
                !predicate(*tuple) && 
                context->IsSharedLocked(rid)) {
         // if we have predicate, and the evaluation result is false. then we can release the lock
-        lock_manager_->Unlock(context, rid);
+        lock_manager_->Unlock(context, rid, true);
         // and we should also skip this tuple
         res = Result(ErrorCode::SKIP);
     }
@@ -114,8 +114,8 @@ void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, c
 
     if (res.GetErr() == ErrorCode::SKIP) {
         // skip this tuple
-        // release the lock
-        lock_manager_->Unlock(txn_context, rid);
+        // release the lock obliviously
+        lock_manager_->Unlock(txn_context, rid, true);
     } else {
         // register commit action
         auto indexes = table_info->GetIndexes();
@@ -206,7 +206,9 @@ void TwoPLManager::Commit(TransactionContext *txn_context) {
 
 void TwoPLManager::Abort(TransactionContext *txn_context) {
     auto context = txn_context->Cast<TwoPLContext>();
-    context->SetAborted();
+    if (!context->IsAborted()) {
+        context->SetAborted();
+    }
 
     // rollback before releasing the lock
     // should we abort in reverse order?

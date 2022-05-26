@@ -71,11 +71,11 @@ public:
     /**
      * @brief Create transaction manager with 2PL protocol
      * 
-     * @param lock_manager lock manager
+     * @param lock_manager lock manager, moving the ownership
      */
-    TwoPLManager(LockManager *lock_manager)
+    TwoPLManager(std::unique_ptr<LockManager> &&lock_manager)
         : TransactionManager(Protocol::TwoPL),
-          lock_manager_(lock_manager) {}
+          lock_manager_(std::move(lock_manager)) {}
     
     ~TwoPLManager() = default;
 
@@ -88,11 +88,11 @@ public:
      * @param[in] table_info table metadata
      * @param predicate predicate used to evaluate the legality of tuple
      */
-    virtual Result<> Read(TransactionContext *txn_context, 
+    Result<> Read(TransactionContext *txn_context, 
                           Tuple *tuple, 
                           const RID &rid, 
                           TableInfo *table_info,
-                          const std::function<bool(const Tuple &)> &predicate = nullptr) = 0;
+                          const std::function<bool(const Tuple &)> &predicate = nullptr) override;
 
     /**
      * @brief 
@@ -135,7 +135,7 @@ public:
      * @param isolation_level isolation of this transaction
      * @return new transaction context
      */
-    virtual TransactionContext *Begin(IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) = 0;
+    TransactionContext *Begin(IsolationLevel isolation_level = IsolationLevel::READ_COMMITTED) override;
 
     /**
      * @brief 

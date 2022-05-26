@@ -32,4 +32,9 @@ void TransactionMap::RemoveTransactionContext(txn_id_t txn_id) {
     txn_map_.erase(txn_id);
 }
 
+bool TransactionMap::IsTransactionAlive(txn_id_t txn_id) {
+    std::lock_guard<std::mutex> latch(latch_);
+    return txn_map_.count(txn_id) != 0;
+}
+
 }
