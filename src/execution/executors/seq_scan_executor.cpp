@@ -77,15 +77,16 @@ bool SeqScanExecutor::NextWithTxn(Tuple *tuple) {
         // advance the iterator
         iterator_.Advance();
 
-        if (txn_manager_->Read(txn_context_, &tmp_tuple, rid, table_info_).IsErr()) {
+        auto predicate = plan.GetPredicate();
+        auto predicate_callback = [=](const Tuple &tuple) {
+            if (!(predicate == nullptr ||
+                predicate->Evaluate(&tuple, nullptr).IsTrue())) {
+                return false;
+            }
+            return true;
+        };
+        if (txn_manager_->Read(txn_context_, &tmp_tuple, rid, table_info_, predicate_callback).IsErr()) {
             // skip this tuple
-            continue;
-        }
-
-        // check the legality
-        // if this tuple is not legal, should we release the ownership?
-        if (!(plan.GetPredicate() == nullptr ||
-            plan.GetPredicate()->Evaluate(&tmp_tuple, nullptr).IsTrue())) {
             continue;
         }
 

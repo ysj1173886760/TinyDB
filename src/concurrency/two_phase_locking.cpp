@@ -14,8 +14,11 @@
 
 namespace TinyDB {
 
-
-Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, const RID &rid, TableInfo *table_info) {
+Result<> TwoPLManager::Read(TransactionContext *txn_context, 
+                        Tuple *tuple, 
+                        const RID &rid, 
+                        TableInfo *table_info,
+                        const std::function<bool(const Tuple &)> &predicate) {
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
 
@@ -37,6 +40,13 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context, Tuple *tuple, const
     if (context->isolation_level_ == IsolationLevel::READ_COMMITTED &&
         context->IsSharedLocked(rid)) {
         lock_manager_->Unlock(context, rid);
+    } else if (predicate && 
+               !predicate(*tuple) && 
+               context->IsSharedLocked(rid)) {
+        // if we have predicate, and the evaluation result is false. then we can release the lock
+        lock_manager_->Unlock(context, rid);
+        // and we should also skip this tuple
+        res = Result(ErrorCode::SKIP);
     }
 
     return res;

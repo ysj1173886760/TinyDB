@@ -86,8 +86,13 @@ public:
      * @param[out] tuple tuple that we read
      * @param[in] rid rid of tuple that we want to read
      * @param[in] table_info table metadata
+     * @param predicate predicate used to evaluate the legality of tuple
      */
-    Result<> Read(TransactionContext *txn_context, Tuple *tuple, const RID &rid, TableInfo *table_info) override;
+    virtual Result<> Read(TransactionContext *txn_context, 
+                          Tuple *tuple, 
+                          const RID &rid, 
+                          TableInfo *table_info,
+                          const std::function<bool(const Tuple &)> &predicate = nullptr) = 0;
 
     /**
      * @brief 
