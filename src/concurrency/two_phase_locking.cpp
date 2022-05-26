@@ -36,6 +36,8 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context,
     // TODO: check the detailed reason then decide whether we need to abort txn
     auto res = table_info->table_->GetTuple(rid, tuple);
 
+    // TODO: this might still contains bugs, try to organize the logic here.
+    // i.e. figure out when should we skip tuple, and when should we unlock tuple.
     if (predicate && !predicate(*tuple)) {
         // if we have predicate, and the evaluation result is false. then we can release the lock
         // we can only unlock the tuple when we are locking it. because maybe the tuple was previously locked
