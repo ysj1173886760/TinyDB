@@ -83,6 +83,7 @@ bool SeqScanExecutor::NextWithTxn(Tuple *tuple) {
         }
 
         // check the legality
+        // if this tuple is not legal, should we release the ownership?
         if (!(plan.GetPredicate() == nullptr ||
             plan.GetPredicate()->Evaluate(&tmp_tuple, nullptr).IsTrue())) {
             continue;

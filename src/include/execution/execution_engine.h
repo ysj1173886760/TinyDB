@@ -45,7 +45,8 @@ public:
                 }
             }
         } catch (std::exception &e) {
-            LOG_INFO("%s", e.what());
+            // LOG_INFO("%s", e.what());
+            context->GetTransactionManager()->Abort(context->GetTransactionContext());
         }
     }
 
