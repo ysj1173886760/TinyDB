@@ -22,6 +22,7 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context,
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
 
+    bool is_already_locked = context->IsSharedLocked(rid);
     // if we are not read_uncommitted(don't need lock)
     // and we are not holding the lock
     // then we trying to acquire the lock
@@ -35,19 +36,23 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context,
     // TODO: check the detailed reason then decide whether we need to abort txn
     auto res = table_info->table_->GetTuple(rid, tuple);
 
+    if (predicate && !predicate(*tuple)) {
+        // if we have predicate, and the evaluation result is false. then we can release the lock
+        // we can only unlock the tuple when we are locking it. because maybe the tuple was previously locked
+        // and it didn't satisfied predicate this time. then we should unlock it.
+        if (!is_already_locked && context->IsSharedLocked(rid)) {
+            lock_manager_->Unlock(context, rid, true);
+        }
+        // and we should also skip this tuple
+        return Result(ErrorCode::SKIP);
+    }
+
     // after reading, if we are read committed, then we need to release the lock
     // note that we only need to release shared lock
     if (context->isolation_level_ == IsolationLevel::READ_COMMITTED &&
         context->IsSharedLocked(rid)) {
         lock_manager_->Unlock(context, rid, true);
-    } else if (predicate && 
-               !predicate(*tuple) && 
-               context->IsSharedLocked(rid)) {
-        // if we have predicate, and the evaluation result is false. then we can release the lock
-        lock_manager_->Unlock(context, rid, true);
-        // and we should also skip this tuple
-        res = Result(ErrorCode::SKIP);
-    }
+    } 
 
     return res;
 }

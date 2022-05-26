@@ -44,8 +44,8 @@ public:
                     result_set->push_back(tuple);
                 }
             }
-        } catch (std::exception &e) {
-            // LOG_INFO("%s", e.what());
+        } catch (TransactionAbortException &e) {
+            // LOG_INFO("%s", e.reason_.c_str());
             context->GetTransactionManager()->Abort(context->GetTransactionContext());
         }
     }

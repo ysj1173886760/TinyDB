@@ -79,11 +79,11 @@ bool SeqScanExecutor::NextWithTxn(Tuple *tuple) {
 
         auto predicate = plan.GetPredicate();
         auto predicate_callback = [=](const Tuple &tuple) {
-            if (!(predicate == nullptr ||
-                predicate->Evaluate(&tuple, nullptr).IsTrue())) {
-                return false;
+            if (predicate == nullptr ||
+                predicate->Evaluate(&tuple, nullptr).IsTrue()) {
+                return true;
             }
-            return true;
+            return false;
         };
         if (txn_manager_->Read(txn_context_, &tmp_tuple, rid, table_info_, predicate_callback).IsErr()) {
             // skip this tuple
