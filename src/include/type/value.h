@@ -69,7 +69,15 @@ public:
     Value(const Value &other);
     Value &operator=(Value other);
     ~Value();
-    Value(Value &&other);
+
+    // move constructor
+    Value(Value &&other):
+        value_(other.value_),
+        len_(other.len_),
+        type_id_(other.type_id_) {
+        other.type_id_ = TypeId::INVALID;
+    }
+
 
     friend void Swap(Value &first, Value &second) {
         std::swap(first.value_, second.value_);

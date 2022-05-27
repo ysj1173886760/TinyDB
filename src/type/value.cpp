@@ -45,14 +45,6 @@ Value &Value::operator=(Value other) {
     return *this;
 }
 
-// move constructor
-Value::Value(Value &&other):
-    value_(other.value_),
-    len_(other.len_),
-    type_id_(other.type_id_) {
-    other.type_id_ = TypeId::INVALID;
-}
-
 // boolean and tinyint
 Value::Value(TypeId type_id, int8_t i): Value(type_id) {
     switch (type_id) {
