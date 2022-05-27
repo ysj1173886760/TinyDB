@@ -26,7 +26,7 @@
 
 namespace TinyDB {
 
-bool PerformWrite(ExecutionContext *context, int from, int to, int money) {
+bool PerformWrite(ExecutionContext *context, int from, int to, int money, bool enable_checking = false) {
     ExecutionEngine engine;
     auto table = context->GetCatalog()->GetTable("table");
     auto txn_id = context->GetTransactionContext()->GetTxnId();
@@ -40,34 +40,36 @@ bool PerformWrite(ExecutionContext *context, int from, int to, int money) {
         context->GetTransactionManager()->Abort(context->GetTransactionContext());
         return false;
     }
-    {
-        result_set.clear();
-        auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
-        auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(from));
-        auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
-        auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
-        engine.Execute(context, scan_plan.get(), &result_set);
+    if (enable_checking) {
+        {
+            result_set.clear();
+            auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
+            auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(from));
+            auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
+            auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
+            engine.Execute(context, scan_plan.get(), &result_set);
+        }
+        if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
+            return false;
+        }
+        EXPECT_EQ(result_set.size(), 1);
+        EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), from);
+        from_before = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
+        {
+            result_set.clear();
+            auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
+            auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(to));
+            auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
+            auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
+            engine.Execute(context, scan_plan.get(), &result_set);
+        }
+        if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
+            return false;
+        }
+        EXPECT_EQ(result_set.size(), 1);
+        EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), to);
+        to_before = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
     }
-    if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
-        return false;
-    }
-    EXPECT_EQ(result_set.size(), 1);
-    EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), from);
-    from_before = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
-    {
-        result_set.clear();
-        auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
-        auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(to));
-        auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
-        auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
-        engine.Execute(context, scan_plan.get(), &result_set);
-    }
-    if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
-        return false;
-    }
-    EXPECT_EQ(result_set.size(), 1);
-    EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), to);
-    to_before = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
     {
         result_set.clear();
         auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
@@ -103,39 +105,41 @@ bool PerformWrite(ExecutionContext *context, int from, int to, int money) {
     if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
         return false;
     }
-    {
-        result_set.clear();
-        auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
-        auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(from));
-        auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
-        auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
-        engine.Execute(context, scan_plan.get(), &result_set);
-    }
-    if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
-        return false;
-    }
-    EXPECT_EQ(result_set.size(), 1);
-    EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), from);
-    from_after = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
-    {
-        result_set.clear();
-        auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
-        auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(to));
-        auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
-        auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
-        engine.Execute(context, scan_plan.get(), &result_set);
-    }
-    if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
-        return false;
-    }
-    EXPECT_EQ(result_set.size(), 1);
-    EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), to);
-    to_after = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
+    if (enable_checking) {
+        {
+            result_set.clear();
+            auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
+            auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(from));
+            auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
+            auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
+            engine.Execute(context, scan_plan.get(), &result_set);
+        }
+        if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
+            return false;
+        }
+        EXPECT_EQ(result_set.size(), 1);
+        EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), from);
+        from_after = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
+        {
+            result_set.clear();
+            auto getID = std::make_unique<ColumnValueExpression>(TypeId::INTEGER, 0, 0, &table->schema_);
+            auto constval = std::make_unique<ConstantValueExpression>(ValueFactory::GetIntegerValue(to));
+            auto equal = std::make_unique<ComparisonExpression>(ExpressionType::ComparisonExpression_Equal, getID.get(), constval.get());
+            auto scan_plan = std::make_unique<SeqScanPlan>(&table->schema_, equal.get(), table->oid_);
+            engine.Execute(context, scan_plan.get(), &result_set);
+        }
+        if (!context->GetTransactionManager()->IsTransactionAlive(txn_id)) {
+            return false;
+        }
+        EXPECT_EQ(result_set.size(), 1);
+        EXPECT_EQ(result_set[0].GetValue(&table->schema_, 0).GetAs<int>(), to);
+        to_after = result_set[0].GetValue(&table->schema_, 1).GetAs<int>();
 
-    // LOG_DEBUG("%d %d %d %d", from_before, from_after, to_before, to_after);
-    EXPECT_EQ(from_after + to_after, from_before + to_before);
-    EXPECT_EQ(from_after, from_before - money);
-    EXPECT_EQ(to_after, to_before + money);
+        // LOG_DEBUG("%d %d %d %d", from_before, from_after, to_before, to_after);
+        EXPECT_EQ(from_after + to_after, from_before + to_before);
+        EXPECT_EQ(from_after, from_before - money);
+        EXPECT_EQ(to_after, to_before + money);
+    }
     // commit txn
     context->GetTransactionManager()->Commit(context->GetTransactionContext());
     return true;
@@ -157,7 +161,7 @@ TEST(TwoPhaseLockingTest, BasicTest) {
     int total = 0;
     int account_num = 100;
     int iteration_num = 10;
-    int worker_num = 8;
+    int worker_num = 2;
     auto lock_manager = std::make_unique<LockManager>(DeadLockResolveProtocol::DL_DETECT);
     auto txn_manager = new TwoPLManager(std::move(lock_manager));
     {
