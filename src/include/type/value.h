@@ -69,6 +69,7 @@ public:
     Value(const Value &other);
     Value &operator=(Value other);
     ~Value();
+    Value(Value &&other);
 
     friend void Swap(Value &first, Value &second) {
         std::swap(first.value_, second.value_);

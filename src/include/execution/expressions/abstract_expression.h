@@ -44,6 +44,9 @@ enum class ExpressionType {
     OperatorExpression_IS_NULL,
     OperatorExpression_IS_NOT_NULL,
     OperatorExpression_EXISTS,
+    // conjunction expression
+    ConjunctionExpression_OR,
+    ConjunctionExpression_AND,
 
 };
 
