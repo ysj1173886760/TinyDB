@@ -18,12 +18,22 @@ lsn_t LogManager::AppendLogRecord(LogRecord *log_record) {
 
 }
 
-void LogManager::RunFlushThread() {
+void LogManager::FlushThread() {
+    while (enable_flushing_.load()) {
+        std::unique_lock<std::mutex> latch(latch_);
 
+    }
+}
+
+void LogManager::RunFlushThread() {
+    enable_flushing_.store(true);
+    flush_thread_ = new std::thread(&LogManager::FlushThread, this);
 }
 
 void LogManager::StopFlushThread() {
-
+    enable_flushing_.store(false);
+    flush_thread_->join();
+    delete flush_thread_;
 }
 
 void LogManager::Flush(bool force) {
