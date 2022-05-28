@@ -71,6 +71,24 @@ public:
     inline int GetDeallocateCount() {
         return deallocate_count_;
     }
+
+    /**
+     * @brief 
+     * Read a log entry from log file
+     * @param log_data 
+     * @param size 
+     * @param offset 
+     * @return return false means we are reaching the end
+     */
+    bool ReadLog(char *log_data, int size, int offset);
+
+    /**
+     * @brief 
+     * Flush the log buffer into disk
+     * @param log_data 
+     * @param size 
+     */
+    void WriteLog(char *log_data, int size);
     
 private:
     /**
@@ -82,9 +100,19 @@ private:
     int GetFileSize(const std::string &filename);
 
 private:
-    std::string filename_;
+    // file name for db file
+    std::string db_name_;
+    // file stream for db file
     std::fstream db_file_;
+    // file name for log file
+    std::string log_name_;
+    // file stream for log file
+    std::fstream log_file_;
+    // id for next page
     page_id_t next_page_id_;
+    // record the previous buffer we used to enforce
+    // swapping buffer
+    char *buffer_used_;
     
     // for debug purpose
     int allocate_count_;
