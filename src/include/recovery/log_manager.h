@@ -33,6 +33,9 @@ class LogManager {
 public:
     explicit LogManager(DiskManager *disk_manager)
         : next_lsn_(0), persistent_lsn_(INVALID_LSN), enable_flushing_(false), disk_manager_(disk_manager) {
+        log_size_ = 0;
+        flush_size_ = 0;
+        need_flush_ = false;
         log_buffer_ = new char[LOG_BUFFER_SIZE];
         flush_buffer_ = new char[LOG_BUFFER_SIZE];
         // start running background flush thread
@@ -62,6 +65,7 @@ public:
 private:
     // helper function
     void FlushThread();
+    void SwapBuffer();
 
     // next lsn to be used
     std::atomic<lsn_t> next_lsn_;
@@ -69,9 +73,15 @@ private:
     std::atomic<lsn_t> persistent_lsn_;
     // whether background flush thread is enabled
     std::atomic<bool> enable_flushing_;
-
+    // log buffer
     char *log_buffer_;
+    // i wonder is that two atomic variable too redundant here?
+    // log size
+    std::atomic<uint32_t> log_size_;
+    // flush buffer
     char *flush_buffer_;
+    // size of log that is flushing
+    std::atomic<uint32_t> flush_size_;
     // global latch
     std::mutex latch_;
     // flush thread
@@ -80,10 +90,12 @@ private:
     DiskManager *disk_manager_;
     // cv used to wakeup the background thread
     std::condition_variable flush_cv_;
-    // cv used to resume the execution of normal operation.
-    // e.g. when log buffer is full, then AppendLogRecord will get blocked until
-    // log has been flushed to disk
+    // cv used to block normal operation
     std::condition_variable operation_cv_;
+    // whether flush thread need to flush the log
+    // since this variable will be guarded by mutex, we don't need to
+    // declare it as atomic variable
+    bool need_flush_;
 };
     
 } // namespace TinyDB
