@@ -114,6 +114,51 @@ public:
         size_ = HEADER_SIZE + sizeof(RID) + sizeof(uint32_t) * 2 + old_tuple.GetSize() + new_tuple.GetSize();
     }
 
+    ~LogRecord() = default;
+
+    const Tuple &GetNewTuple() {
+        return new_tuple_;
+    }
+
+    const Tuple &GetOldTuple() {
+        return old_tuple_;
+    }
+
+    const RID &GetRID() {
+        return rid_;
+    }
+
+    LogRecordType GetType() {
+        return type_;
+    }
+
+    uint32_t GetSize() {
+        return size_;
+    }
+
+    lsn_t GetLSN() {
+        return lsn_;
+    }
+
+    lsn_t GetPrevLSN() {
+        return prev_lsn_;
+    }
+
+    txn_id_t GetTxnId() {
+        return txn_id_;
+    }
+
+    std::string ToString() const {
+        std::ostringstream os;
+        os << "Log["
+           << "size: " << size_ << ", "
+           << "LSN: " << lsn_ << ", "
+           << "txnID: " << txn_id_ << ", "
+           << "prevLSN: " << prev_lsn_ << ", "
+           << "LogType: " << static_cast<int>(type_) << "]";
+        return os.str();
+    }
+
 private:
     static constexpr uint32_t HEADER_SIZE = 
         sizeof(uint32_t) + sizeof(lsn_t) + sizeof(txn_id_t) + sizeof(lsn_t) + sizeof(LogRecordType);
