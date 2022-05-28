@@ -25,9 +25,6 @@ namespace TinyDB {
 /**
  * @brief 
  * LogManager that will flush the log to disk.
- * In current implementation, even i've used two buffer to store log records, normal operation
- * would still be blocked as if they have only one buffer.
- * TODO: find a way to flush the log asynchronizly, and only block when it's necessary. i.e. both buffer is full
  */
 class LogManager {
 public:
@@ -65,23 +62,26 @@ public:
 private:
     // helper function
     void FlushThread();
+    /**
+     * @brief 
+     * Swap the flush buffer and log buffer
+     */
     void SwapBuffer();
 
     // next lsn to be used
-    std::atomic<lsn_t> next_lsn_;
+    lsn_t next_lsn_;
     // all log with lsn less that persistent_lsn_ has been flushed to disk
     std::atomic<lsn_t> persistent_lsn_;
     // whether background flush thread is enabled
     std::atomic<bool> enable_flushing_;
     // log buffer
     char *log_buffer_;
-    // i wonder is that two atomic variable too redundant here?
     // log size
-    std::atomic<uint32_t> log_size_;
+    uint32_t log_size_;
     // flush buffer
     char *flush_buffer_;
     // size of log that is flushing
-    std::atomic<uint32_t> flush_size_;
+    uint32_t flush_size_;
     // global latch
     std::mutex latch_;
     // flush thread

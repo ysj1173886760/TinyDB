@@ -187,9 +187,10 @@ bool DiskManager::ReadLog(char *log_data, int size, int offset) {
 }
 
 void DiskManager::WriteLog(char *log_data, int size) {
+    // deprecated
     // enforce swap log buffer
-    assert(log_data != buffer_used_);
-    buffer_used_ = log_data;
+    // assert(log_data != buffer_used_);
+    // buffer_used_ = log_data;
 
     if (size == 0) {
         return;

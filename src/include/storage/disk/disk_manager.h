@@ -113,6 +113,8 @@ private:
     // record the previous buffer we used to enforce
     // swapping buffer
     char *buffer_used_;
+    // whether we are flushing the log
+    // std::atomic<bool> is_flushing_;
     
     // for debug purpose
     int allocate_count_;
