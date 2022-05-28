@@ -27,6 +27,7 @@ static constexpr uint32_t BUFFER_POOL_SIZE = 10;
 // special values
 static constexpr int INVALID_PAGE_ID = -1;
 static constexpr int INVALID_TXN_ID = -1;
+static constexpr int INVALID_LSN = -1;
 
 // type definitions
 using page_id_t = int32_t;
