@@ -109,7 +109,7 @@ public:
      * @param new_tuple 
      */
     LogRecord(txn_id_t txn_id, lsn_t prev_lsn, LogRecordType type, const RID &rid, const Tuple &old_tuple, const Tuple &new_tuple)
-        : txn_id_(txn_id), prev_lsn_(prev_lsn), type_(type), rid_(rid), old_tuple_(old_tuple), new_tuple_(new_tuple) {
+        : txn_id_(txn_id), prev_lsn_(prev_lsn), type_(type), old_tuple_(old_tuple), new_tuple_(new_tuple), rid_(rid) {
         TINYDB_ASSERT(type == LogRecordType::UPDATE, "Invalid Log Type");
         size_ = HEADER_SIZE + sizeof(RID) + sizeof(uint32_t) * 2 + old_tuple.GetSize() + new_tuple.GetSize();
     }

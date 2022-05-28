@@ -24,6 +24,9 @@ static constexpr uint32_t PAGE_SIZE = 4096;
 // size of buffer pool, should be configured based on your memory
 static constexpr uint32_t BUFFER_POOL_SIZE = 10;
 
+// size of log buffer
+static constexpr int LOG_BUFFER_SIZE = ((BUFFER_POOL_SIZE + 1) * PAGE_SIZE);
+
 // special values
 static constexpr int INVALID_PAGE_ID = -1;
 static constexpr int INVALID_TXN_ID = -1;
@@ -40,6 +43,9 @@ using txn_id_t = int32_t;
 // interval for running cycle detection
 // we will store it in cpp file, to prevent multiple definition error
 extern std::chrono::milliseconds CYCLE_DETECTION_INTERVAL;
+
+// interval for flushing the log
+extern std::chrono::duration<int64_t> log_timeout;
 
 };
 
