@@ -74,7 +74,7 @@ public:
 
     /**
      * @brief 
-     * Read a log entry from log file
+     * Read log from disk. could be many log at a time
      * @param log_data 
      * @param size 
      * @param offset 

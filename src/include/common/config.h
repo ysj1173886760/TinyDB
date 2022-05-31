@@ -45,7 +45,7 @@ using txn_id_t = int32_t;
 extern std::chrono::milliseconds CYCLE_DETECTION_INTERVAL;
 
 // interval for flushing the log
-extern std::chrono::duration<int64_t> log_timeout;
+extern std::chrono::milliseconds log_timeout;
 
 };
 
