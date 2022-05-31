@@ -16,6 +16,8 @@
 #include "common/rid.h"
 #include "storage/table/tuple.h"
 
+#include <cstring>
+
 namespace TinyDB {
 
 enum class LogRecordType {
@@ -57,7 +59,10 @@ enum class LogRecordType {
  * sheep: i wonder do we need to store tuple size? for insert and delete type log since we can
  * simply derive it from total size
  */
+
 class LogRecord {
+    friend class LogManager;
+
 public:
     LogRecord() = default;
 
@@ -159,10 +164,96 @@ public:
         return os.str();
     }
 
-private:
+    void SerializeTo(char *storage) {
+        assert(type_ != LogRecordType::INVALID);
+        switch (type_) {
+        case LogRecordType::COMMIT:
+        case LogRecordType::ABORT:
+        case LogRecordType::BEGIN:
+            // only serialize header
+            memcpy(storage, (char *)this, HEADER_SIZE);
+            storage += HEADER_SIZE;
+            // fall though
+        case LogRecordType::APPLYDELETE:
+        case LogRecordType::ROLLBACKDELETE:
+        case LogRecordType::MARKDELETE: {
+            auto size = rid_.SerializeTo(storage);
+            old_tuple_.SerializeToWithSize(storage + size);
+            break;
+        }
+        case LogRecordType::INSERT: {
+            auto size = rid_.SerializeTo(storage);
+            new_tuple_.SerializeToWithSize(storage + size);
+            break;
+        }
+        case LogRecordType::UPDATE: {
+            auto size = rid_.SerializeTo(storage);
+            auto tp_size = old_tuple_.SerializeToWithSize(storage + size);
+            new_tuple_.SerializeToWithSize(storage + tp_size);
+            break;
+        }
+        default:
+            TINYDB_ASSERT(false, "Invalid Log Type");
+        }
+    }
+
+    static LogRecord DeserializeFrom(const char *storage) {
+        // i wonder do we really need to store size?
+        // first deserialize header
+        uint32_t size = *reinterpret_cast<const uint32_t *>(storage);
+        storage += sizeof(uint32_t);
+        lsn_t lsn = *reinterpret_cast<const lsn_t *>(storage);
+        storage += sizeof(lsn_t);
+        txn_id_t txn_id = *reinterpret_cast<const txn_id_t *>(storage);
+        storage += sizeof(txn_id_t);
+        lsn_t prev_lsn = *reinterpret_cast<const lsn_t *>(storage);
+        storage += sizeof(lsn_t);
+        LogRecordType type = *reinterpret_cast<const LogRecordType *>(storage);
+        storage += sizeof(LogRecordType);
+        
+        assert(type != LogRecordType::INVALID);
+        // then deserialize data based on type
+        switch (type) {
+        case LogRecordType::COMMIT:
+        case LogRecordType::ABORT:
+        case LogRecordType::BEGIN: {
+            auto res = LogRecord(txn_id, prev_lsn, type);
+            res.lsn_ = lsn;
+            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
+            return res;
+        }
+        case LogRecordType::INSERT:
+        case LogRecordType::APPLYDELETE:
+        case LogRecordType::ROLLBACKDELETE:
+        case LogRecordType::MARKDELETE: {
+            auto rid = RID::DeserializeFrom(storage);
+            storage += rid.GetSerializationSize();
+            auto tuple = Tuple::DeserializeFromWithSize(storage);
+            auto res = LogRecord(txn_id, prev_lsn, type, rid, tuple);
+            res.lsn_ = lsn;
+            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
+            return res;
+        }
+        case LogRecordType::UPDATE: {
+            auto rid = RID::DeserializeFrom(storage);
+            storage += rid.GetSerializationSize();
+            auto old_tuple = Tuple::DeserializeFromWithSize(storage);
+            storage += old_tuple.GetSerializationSize();
+            auto new_tuple = Tuple::DeserializeFromWithSize(storage);
+            auto res = LogRecord(txn_id, prev_lsn, type, rid, old_tuple, new_tuple);
+            res.lsn_ = lsn;
+            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
+            return res;
+        }
+        default:
+            TINYDB_ASSERT(false, "Invalid Log Type");
+        }
+    }
+
     static constexpr uint32_t HEADER_SIZE = 
         sizeof(uint32_t) + sizeof(lsn_t) + sizeof(txn_id_t) + sizeof(lsn_t) + sizeof(LogRecordType);
 
+private:
     // length of log record, for serialization
     uint32_t size_{0};
     // header

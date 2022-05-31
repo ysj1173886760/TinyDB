@@ -32,7 +32,6 @@ public:
         : next_lsn_(0), persistent_lsn_(INVALID_LSN), enable_flushing_(false), disk_manager_(disk_manager) {
         log_size_ = 0;
         flush_size_ = 0;
-        need_flush_ = false;
         log_buffer_ = new char[LOG_BUFFER_SIZE];
         flush_buffer_ = new char[LOG_BUFFER_SIZE];
         // start running background flush thread
@@ -53,11 +52,14 @@ public:
      */
     lsn_t AppendLogRecord(LogRecord *log_record);
 
-    void RunFlushThread();
 
-    void StopFlushThread();
-
-    void Flush(bool force);
+    /**
+     * @brief 
+     * Flush all the log which lsn is smaller than "lsn"
+     * @param lsn 
+     * @param force whether we need to perform flush immediately, or we just wait until log has been flushed to disk
+     */
+    void Flush(lsn_t lsn, bool force);
 
 private:
     // helper function
@@ -67,6 +69,10 @@ private:
      * Swap the flush buffer and log buffer
      */
     void SwapBuffer();
+
+    void RunFlushThread();
+
+    void StopFlushThread();
 
     // next lsn to be used
     lsn_t next_lsn_;
@@ -92,10 +98,6 @@ private:
     std::condition_variable flush_cv_;
     // cv used to block normal operation
     std::condition_variable operation_cv_;
-    // whether flush thread need to flush the log
-    // since this variable will be guarded by mutex, we don't need to
-    // declare it as atomic variable
-    bool need_flush_;
 };
     
 } // namespace TinyDB

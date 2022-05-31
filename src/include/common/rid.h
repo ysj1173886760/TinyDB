@@ -15,6 +15,7 @@
 #include "common/config.h"
 
 #include <sstream>
+#include <cstring>
 
 namespace TinyDB {
 
@@ -99,6 +100,33 @@ public:
 
     inline bool IsValid() const {
         return page_id_ != INVALID_PAGE_ID;
+    }
+
+    /**
+     * @brief 
+     * serialize rid, return the size we used
+     * @param storage 
+     * @return size_t 
+     */
+    size_t SerializeTo(char *storage) {
+        memcpy(storage, &page_id_, sizeof(page_id_t));
+        memcpy(storage + sizeof(page_id_t), &slot_id_, sizeof(uint32_t));
+        return GetSerializationSize();
+    }
+
+    static RID DeserializeFrom(const char *storage) {
+        page_id_t page_id = *reinterpret_cast<const page_id_t *>(storage);
+        uint32_t slot_id = *reinterpret_cast<const uint32_t *>(storage + sizeof(page_id_t));
+        return RID(page_id, slot_id);
+    }
+
+    /**
+     * @brief 
+     * get the size that we need to use on disk. i.e. byte num that we need to use to perform serialization
+     * @return size_t 
+     */
+    size_t GetSerializationSize() const {
+        return sizeof(page_id_t) + sizeof(uint32_t);
     }
 
 private:

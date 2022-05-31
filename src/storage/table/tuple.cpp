@@ -127,7 +127,7 @@ Tuple Tuple::KeyFromTuple(const Schema *schema, const Schema *key_schema) const 
     return KeyFromTuple(schema, key_schema, key_attrs);
 }
 
-void Tuple::SerializeToWithSize(char *storage) const {
+size_t Tuple::SerializeToWithSize(char *storage) const {
     // do we need to serialize size_ here?
     // i think we can retrieve all of the metadata from tuple indirectly though fixed-length data field
     // because we can get the last varlen offset though schema and read the length of that varlen type
@@ -135,6 +135,7 @@ void Tuple::SerializeToWithSize(char *storage) const {
     // anyway, i think 4 byte is not a big deal here. for the sake of simplicity, i will store tuple size here
     memcpy(storage, &size_, sizeof(uint32_t));
     memcpy(storage + sizeof(uint32_t), data_, size_);
+    return GetSerializationSize();
 }
 
 Tuple Tuple::DeserializeFromWithSize(const char *storage) {

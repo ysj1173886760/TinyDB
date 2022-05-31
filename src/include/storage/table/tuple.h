@@ -132,8 +132,13 @@ public:
 
     std::string ToString(const Schema *schema) const;
 
-    // serialize tuple data with size
-    void SerializeToWithSize(char *storage) const;
+    /**
+     * @brief 
+     * serialize tuple data with size
+     * @param storage 
+     * @return size_t return the size we used
+     */
+    size_t SerializeToWithSize(char *storage) const;
 
     // deserialize tuple data with size
     static Tuple DeserializeFromWithSize(const char *storage);
@@ -184,6 +189,17 @@ public:
         }
 
         return memcmp(rhs.GetData(), GetData(), GetSize()) == 0;
+    }
+
+    /**
+     * @brief
+     * Get the size we need to use on disk.
+     * WARNING::Only used for serialization with size.
+     * currently, it will return sizeof(uint32_t) + size of tuple
+     * @return size_t 
+     */
+    size_t GetSerializationSize() const {
+        return sizeof(uint32_t) + size_;
     }
 
 private:
