@@ -58,7 +58,7 @@ TEST(LogManagerTest, BasicFlushTest) {
     int log_num = 1000;
     std::vector<LogRecord> log_list;
     // shrink the time to speed up the test
-    log_timeout = std::chrono::milliseconds(300);
+    LOG_TIMEOUT = std::chrono::milliseconds(300);
     
     {
         auto t1 = std::chrono::steady_clock::now();
@@ -143,7 +143,7 @@ TEST(LogManagerTest, ForceFlushTest) {
     int log_num = 1000;
     std::vector<LogRecord> log_list;
     // shrink the time to speed up the test
-    log_timeout = std::chrono::milliseconds(300);
+    LOG_TIMEOUT = std::chrono::milliseconds(300);
     
     {
         auto t1 = std::chrono::steady_clock::now();

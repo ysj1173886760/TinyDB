@@ -15,6 +15,6 @@ namespace TinyDB {
 
 std::chrono::milliseconds CYCLE_DETECTION_INTERVAL = std::chrono::milliseconds(50);
 
-std::chrono::milliseconds log_timeout = std::chrono::seconds(1);
+std::chrono::milliseconds LOG_TIMEOUT = std::chrono::seconds(1);
 
 }

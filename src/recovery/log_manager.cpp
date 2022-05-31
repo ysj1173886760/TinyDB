@@ -45,7 +45,7 @@ void LogManager::FlushThread() {
     while (enable_flushing_.load()) {
         std::unique_lock<std::mutex> latch(latch_);
         // wait until log timeout or buffer is full or forcing log is needed
-        flush_cv_.wait_for(latch, log_timeout);
+        flush_cv_.wait_for(latch, LOG_TIMEOUT);
         // swap buffer
         SwapBuffer();
         // remember the biggest lsn in buffer
