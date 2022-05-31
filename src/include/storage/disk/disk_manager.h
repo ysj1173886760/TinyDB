@@ -91,9 +91,9 @@ public:
      */
     void WriteLog(char *log_data, int size);
 
-    std::chrono::milliseconds GetIOTime() {
-        return io_time_;
-    }
+    // for analysis
+    std::chrono::milliseconds log_write_time_{0};
+    std::chrono::milliseconds log_read_time_{0};
     
 private:
     /**
@@ -125,8 +125,6 @@ private:
     int allocate_count_;
     int deallocate_count_;
 
-    // for analysis, currently, i'm only recording log io time
-    std::chrono::milliseconds io_time_{0};
 };
 
 }
