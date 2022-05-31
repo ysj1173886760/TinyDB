@@ -16,16 +16,27 @@ namespace TinyDB {
 
 lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
     std::unique_lock<std::mutex> latch(latch_);
-    if (log_record.GetSize() + log_size_ > LOG_BUFFER_SIZE) {
+    while (log_record.GetSize() + log_size_ > LOG_BUFFER_SIZE) {
+        // wakeup flush thread
+        flush_cv_.notify_one();
         // wait until we have some space to insert the log
-        operation_cv_.wait(latch, [&]() { return log_record.GetSize() + log_size_ <= LOG_BUFFER_SIZE; });
+        // operation_cv_.wait(latch, [&]() { return log_record.GetSize() + log_size_ <= LOG_BUFFER_SIZE; });
+        // since i want to keep waking up flush thread, so i choose to mimic "wait" logic and notify flush thread
+        // every time we wakeup
+        operation_cv_.wait(latch);
     }
+
+    auto t1 = std::chrono::steady_clock::now();
     
     // fetch new lsn
     lsn_t lsn = next_lsn_++;
     log_record.SetLSN(lsn);
     log_record.SerializeTo(log_buffer_ + log_size_);
     log_size_ += log_record.GetSize();
+
+    auto t2 = std::chrono::steady_clock::now();
+    auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    operation_time_ += interval;
 
     return lsn;
 }

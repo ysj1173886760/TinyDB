@@ -163,6 +163,7 @@ int DiskManager::GetFileSize(const std::string &filename) {
 }
 
 bool DiskManager::ReadLog(char *log_data, int size, int offset) {
+
     // this is stupid. we should cache the log size then read it till end
     // since log file won't change while performing recovery protocol.
     if (offset >= GetFileSize(log_name_)) {
@@ -183,10 +184,14 @@ bool DiskManager::ReadLog(char *log_data, int size, int offset) {
         // pad with zero
         memset(log_data + read_count, 0, size - read_count);
     }
+
     return true;
 }
 
 void DiskManager::WriteLog(char *log_data, int size) {
+    // count time
+    auto t1 = std::chrono::steady_clock::now();
+
     // deprecated
     // enforce swap log buffer
     // assert(log_data != buffer_used_);
@@ -207,6 +212,12 @@ void DiskManager::WriteLog(char *log_data, int size) {
 
     // flush to disk
     log_file_.flush();
+
+    auto t2 = std::chrono::steady_clock::now();
+    io_time_ += std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+    // another approach to calc elapsed time
+    // std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
+    // LOG_INFO("%f", fp_ms.count());
 }
 
 }

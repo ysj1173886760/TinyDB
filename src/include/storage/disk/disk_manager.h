@@ -14,6 +14,7 @@
 
 #include <string>
 #include <fstream>
+#include <chrono>
 
 #include "common/config.h"
 
@@ -89,6 +90,10 @@ public:
      * @param size 
      */
     void WriteLog(char *log_data, int size);
+
+    std::chrono::milliseconds GetIOTime() {
+        return io_time_;
+    }
     
 private:
     /**
@@ -119,6 +124,9 @@ private:
     // for debug purpose
     int allocate_count_;
     int deallocate_count_;
+
+    // for analysis, currently, i'm only recording log io time
+    std::chrono::milliseconds io_time_{0};
 };
 
 }

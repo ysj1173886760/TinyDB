@@ -15,6 +15,7 @@
 #include <memory>
 #include <random>
 #include <gtest/gtest.h>
+#include <chrono>
 
 namespace TinyDB {
 
@@ -59,15 +60,32 @@ TEST(LogManagerTest, BasicFlushTest) {
     // shrink the time to speed up the test
     log_timeout = std::chrono::milliseconds(300);
     
-    // append the log
-    for (int i = 0; i < log_num; i++) {
-        auto log = GenerateRandomLogRecord(static_cast<LogRecordType>(dis(mt)));
-        log_list.push_back(log);
-        lm->AppendLogRecord(log_list[i]);
+    {
+        auto t1 = std::chrono::steady_clock::now();
+        // append the log
+        for (int i = 0; i < log_num; i++) {
+            auto log = GenerateRandomLogRecord(static_cast<LogRecordType>(dis(mt)));
+            log_list.push_back(log);
+            lm->AppendLogRecord(log_list[i]);
+        }
+        auto t2 = std::chrono::steady_clock::now();
+        auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        LOG_INFO("AppendLog time: %ld", interval.count());
     }
+    LOG_INFO("LogManager time: %ld", lm->GetOperationTime().count());
+
     lsn_t max_lsn = log_list.back().GetLSN();
-    // wait until all log has been flushed to disk
-    lm->Flush(max_lsn, false);
+
+    {
+        auto t1 = std::chrono::steady_clock::now();
+        // wait until all log has been flushed to disk
+        lm->Flush(max_lsn, false);
+        auto t2 = std::chrono::steady_clock::now();
+        auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+        LOG_INFO("Flush time: %ld", interval.count());
+    }
+
+    LOG_INFO("IO time: %ld", dm->GetIOTime().count());
     // then we stop the log manager
     delete lm;
     delete dm;

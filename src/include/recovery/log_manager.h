@@ -19,6 +19,7 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <chrono>
 
 namespace TinyDB {
 
@@ -61,6 +62,10 @@ public:
      */
     void Flush(lsn_t lsn, bool force);
 
+    std::chrono::milliseconds GetOperationTime() {
+        return operation_time_;
+    }
+
 private:
     // helper function
     void FlushThread();
@@ -98,6 +103,9 @@ private:
     std::condition_variable flush_cv_;
     // cv used to block normal operation
     std::condition_variable operation_cv_;
+
+    // for analyse
+    std::chrono::milliseconds operation_time_{0};
 };
     
 } // namespace TinyDB
