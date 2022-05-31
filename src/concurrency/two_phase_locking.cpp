@@ -191,6 +191,12 @@ TransactionContext *TwoPLManager::Begin(IsolationLevel isolation_level) {
     TransactionContext *context = new TwoPLContext(txn_id, isolation_level);
     txn_map_->AddTransactionContext(context);
 
+    if (log_manager_ != nullptr) {
+        auto log = LogRecord(txn_id, INVALID_LSN, LogRecordType::BEGIN);
+        auto lsn = log_manager_->AppendLogRecord(log);
+        context->SetPrevLSN(lsn);
+    }
+
     return context;
 }
 
@@ -203,7 +209,19 @@ void TwoPLManager::Commit(TransactionContext *txn_context) {
         action();
     }
 
+    if (log_manager_ != nullptr) {
+        auto log = LogRecord(txn_context->GetTxnId(), txn_context->GetPrevLSN(), LogRecordType::COMMIT);
+        auto lsn = log_manager_->AppendLogRecord(log);
+        txn_context->SetPrevLSN(lsn);
+        // we need to wait until commit record has been flushed to disk.
+        // i.e. Commit has been persisted
+        // amortize the cost of fsync
+        log_manager_->Flush(lsn, false);
+    }
+
     // release all locks
+    // sheep: we need to write commit record before we release all locks, otherwise, 
+    // we might "not able to commit" a txn that has been committed during recovery
     ReleaseAllLocks(txn_context);
 
     // free the txn context
@@ -221,6 +239,14 @@ void TwoPLManager::Abort(TransactionContext *txn_context) {
     // should we abort in reverse order?
     for (auto &action : context->abort_action_) {
         action();
+    }
+
+    if (log_manager_ != nullptr) {
+        auto log = LogRecord(txn_context->GetTxnId(), txn_context->GetPrevLSN(), LogRecordType::ABORT);
+        auto lsn = log_manager_->AppendLogRecord(log);
+        txn_context->SetPrevLSN(lsn);
+        // don't need to wait until abort log has been flushed to disk,
+        // since the default behaviour for undefined txn is to abort it.
     }
 
     // release all locks

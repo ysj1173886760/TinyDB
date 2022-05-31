@@ -73,8 +73,8 @@ public:
      * 
      * @param lock_manager lock manager, moving the ownership
      */
-    TwoPLManager(std::unique_ptr<LockManager> &&lock_manager)
-        : TransactionManager(Protocol::TwoPL),
+    TwoPLManager(std::unique_ptr<LockManager> &&lock_manager, LogManager *log_manager = nullptr)
+        : TransactionManager(Protocol::TwoPL, log_manager),
           lock_manager_(std::move(lock_manager)) {}
     
     ~TwoPLManager() = default;

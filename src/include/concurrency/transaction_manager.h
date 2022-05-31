@@ -17,6 +17,7 @@
 #include "storage/table/tuple.h"
 #include "catalog/catalog.h"
 #include "common/result.h"
+#include "recovery/log_manager.h"
 
 #include <atomic>
 #include <memory>
@@ -46,9 +47,10 @@ public:
      * 
      * @param protocol protocol we want to use
      */
-    TransactionManager(Protocol protocol)
+    TransactionManager(Protocol protocol, LogManager *log_manager = nullptr)
         : protocol_(protocol),
-          txn_map_(new TransactionMap) {}
+          txn_map_(new TransactionMap),
+          log_manager_(log_manager) {}
     
     virtual ~TransactionManager() {}
     
@@ -142,6 +144,8 @@ protected:
     std::atomic<txn_id_t> next_txn_id_{0};
     // global transaction map
     std::unique_ptr<TransactionMap> txn_map_;
+    // log manager
+    LogManager *log_manager_{nullptr};
 };
 
 }
