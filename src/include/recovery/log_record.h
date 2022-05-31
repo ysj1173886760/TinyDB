@@ -157,6 +157,50 @@ public:
         lsn_ = lsn;
     }
 
+    // for debug purpose
+    bool operator==(const LogRecord &rhs) const {
+        if (type_ != rhs.type_) {
+            return false;
+        }
+        switch (type_) {
+        case LogRecordType::COMMIT:
+        case LogRecordType::ABORT:
+        case LogRecordType::BEGIN:
+            return size_ == rhs.size_ &&
+                   prev_lsn_ == rhs.prev_lsn_ &&
+                   txn_id_ == rhs.txn_id_ &&
+                   lsn_ == rhs.lsn_;
+        case LogRecordType::APPLYDELETE:
+        case LogRecordType::ROLLBACKDELETE:
+        case LogRecordType::MARKDELETE:
+            return size_ == rhs.size_ &&
+                   prev_lsn_ == rhs.prev_lsn_ &&
+                   txn_id_ == rhs.txn_id_ &&
+                   lsn_ == rhs.lsn_ &&
+                   rid_ == rhs.rid_ &&
+                   old_tuple_ == rhs.old_tuple_;
+        case LogRecordType::INSERT:
+            return size_ == rhs.size_ &&
+                   prev_lsn_ == rhs.prev_lsn_ &&
+                   txn_id_ == rhs.txn_id_ &&
+                   lsn_ == rhs.lsn_ &&
+                   rid_ == rhs.rid_ &&
+                   new_tuple_ == rhs.new_tuple_;
+        case LogRecordType::UPDATE:
+            return size_ == rhs.size_ &&
+                   prev_lsn_ == rhs.prev_lsn_ &&
+                   txn_id_ == rhs.txn_id_ &&
+                   lsn_ == rhs.lsn_ &&
+                   rid_ == rhs.rid_ &&
+                   old_tuple_ == rhs.old_tuple_ &&
+                   new_tuple_ == rhs.new_tuple_;
+        case LogRecordType::INVALID:
+            return true;
+        default:
+            TINYDB_ASSERT(false, "Invalid Log Type");
+        }
+    }
+
     std::string ToString() const {
         std::ostringstream os;
         os << "Log["
@@ -170,30 +214,37 @@ public:
 
     void SerializeTo(char *storage) {
         assert(type_ != LogRecordType::INVALID);
+        auto serialize_header = [&]() {
+            memcpy(storage, (char *)this, HEADER_SIZE);
+            storage += HEADER_SIZE;
+        };
+
         switch (type_) {
         case LogRecordType::COMMIT:
         case LogRecordType::ABORT:
         case LogRecordType::BEGIN:
             // only serialize header
-            memcpy(storage, (char *)this, HEADER_SIZE);
-            storage += HEADER_SIZE;
-            [[fallthrough]];
+            serialize_header();
+            break;
         case LogRecordType::APPLYDELETE:
         case LogRecordType::ROLLBACKDELETE:
         case LogRecordType::MARKDELETE: {
+            serialize_header();
             auto size = rid_.SerializeTo(storage);
             old_tuple_.SerializeToWithSize(storage + size);
             break;
         }
         case LogRecordType::INSERT: {
+            serialize_header();
             auto size = rid_.SerializeTo(storage);
             new_tuple_.SerializeToWithSize(storage + size);
             break;
         }
         case LogRecordType::UPDATE: {
-            auto size = rid_.SerializeTo(storage);
-            auto tp_size = old_tuple_.SerializeToWithSize(storage + size);
-            new_tuple_.SerializeToWithSize(storage + tp_size);
+            serialize_header();
+            storage += rid_.SerializeTo(storage);
+            storage += old_tuple_.SerializeToWithSize(storage);
+            new_tuple_.SerializeToWithSize(storage);
             break;
         }
         default:
