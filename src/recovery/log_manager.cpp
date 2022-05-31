@@ -14,16 +14,20 @@
 namespace TinyDB {
 
 
-lsn_t LogManager::AppendLogRecord(LogRecord *log_record) {
+lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
     std::unique_lock<std::mutex> latch(latch_);
-    if (log_record->GetSize() + log_size_ > LOG_BUFFER_SIZE) {
+    if (log_record.GetSize() + log_size_ > LOG_BUFFER_SIZE) {
         // wait until we have some space to insert the log
-        operation_cv_.wait(latch, [&]() { return log_record->GetSize() + log_size_ <= LOG_BUFFER_SIZE; });
+        operation_cv_.wait(latch, [&]() { return log_record.GetSize() + log_size_ <= LOG_BUFFER_SIZE; });
     }
     
     // fetch new lsn
     lsn_t lsn = next_lsn_++;
+    log_record.SetLSN(lsn);
+    log_record.SerializeTo(log_buffer_ + log_size_);
+    log_size_ += log_record.GetSize();
 
+    return lsn;
 }
 
 void LogManager::FlushThread() {

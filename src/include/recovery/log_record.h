@@ -153,6 +153,10 @@ public:
         return txn_id_;
     }
 
+    void SetLSN(lsn_t lsn) {
+        lsn_ = lsn;
+    }
+
     std::string ToString() const {
         std::ostringstream os;
         os << "Log["
@@ -173,7 +177,7 @@ public:
             // only serialize header
             memcpy(storage, (char *)this, HEADER_SIZE);
             storage += HEADER_SIZE;
-            // fall though
+            [[fallthrough]];
         case LogRecordType::APPLYDELETE:
         case LogRecordType::ROLLBACKDELETE:
         case LogRecordType::MARKDELETE: {

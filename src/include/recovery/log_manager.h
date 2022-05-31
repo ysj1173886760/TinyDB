@@ -50,7 +50,7 @@ public:
      * @param log_record 
      * @return lsn_t 
      */
-    lsn_t AppendLogRecord(LogRecord *log_record);
+    lsn_t AppendLogRecord(LogRecord &log_record);
 
 
     /**
