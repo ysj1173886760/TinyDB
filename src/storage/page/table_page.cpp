@@ -16,8 +16,10 @@
 
 namespace TinyDB {
 
-void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id) {
+void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id, TransactionContext *txn, LogManager *log_manager) {
     SetPageId(page_id);
+
+    // TODO: loggging this
 
     // we are double-linked list
     // and we are at the tail of the list
@@ -28,7 +30,7 @@ void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_
     SetTupleCount(0);
 }
 
-bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, LogManager *log_manager) {
+bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(tuple.GetSize() > 0, "you shouldn't insert empty tuple");
 
     // check whether we can store this tuple
@@ -73,10 +75,13 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, LogManager *log_manage
         SetTupleCount(tuple_cnt + 1);
     }
 
+    if (log_manager != nullptr) {
+    }
+
     return true;
 }
 
-bool TablePage::MarkDelete(const RID &rid, LogManager *log_manager) {
+bool TablePage::MarkDelete(const RID &rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(rid.GetPageId() == GetPageId(), "Wrong page");
     uint32_t slot_id = rid.GetSlotId();
     // check whether slot id is vaild
@@ -99,7 +104,7 @@ bool TablePage::MarkDelete(const RID &rid, LogManager *log_manager) {
     return true;
 }
 
-bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid, LogManager *log_manager) {
+bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(rid.GetPageId() == GetPageId(), "Wrong page");
     TINYDB_ASSERT(new_tuple.GetSize() > 0, "cannot insert empty tuples");
     uint32_t slot_id = rid.GetSlotId();
@@ -161,7 +166,7 @@ bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID 
 }
 
 // perform the direct deletion.
-void TablePage::ApplyDelete(const RID &rid, LogManager *log_manager) {
+void TablePage::ApplyDelete(const RID &rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(rid.GetPageId() == GetPageId(), "Wrong page");
     uint32_t slot_id = rid.GetSlotId();
     TINYDB_ASSERT(slot_id < GetTupleCount(), "invalid slot id");
@@ -194,7 +199,7 @@ void TablePage::ApplyDelete(const RID &rid, LogManager *log_manager) {
     }
 }
 
-void TablePage::RollbackDelete(const RID &rid, LogManager *log_manager) {
+void TablePage::RollbackDelete(const RID &rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(rid.GetPageId() == GetPageId(), "Wrong page");
     // just unset the delete flag
     uint32_t slot_id = rid.GetSlotId();

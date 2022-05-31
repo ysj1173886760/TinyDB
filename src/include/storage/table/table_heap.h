@@ -18,6 +18,7 @@
 #include "common/exception.h"
 #include "common/result.h"
 #include "recovery/log_manager.h"
+#include "concurrency/transaction_context.h"
 
 namespace TinyDB {
 
@@ -46,37 +47,38 @@ public:
      * @brief 
      * create a new table heap
      * @param buffer_pool_manager 
+     * @param txn txn context used to create this table
+     * @param log_manager 
      */
-    TableHeap(BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr) {
+    TableHeap(BufferPoolManager *buffer_pool_manager, TransactionContext *txn = nullptr, LogManager *log_manager = nullptr) {
         page_id_t first_page_id = INVALID_PAGE_ID;
         auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
 
-        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
+        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID, txn, log_manager);
         buffer_pool_manager->UnpinPage(first_page_id, true);
         buffer_pool_manager_ = buffer_pool_manager;
         log_manager_ = log_manager;
         first_page_id_ = first_page_id;
-        
-        // TODO: shall we log this? i.e. logging that we are creating table heap?
     }
 
+    // sheep: is this api necessary?
+
     /**
-     * @brief 
+     * @brief
      * create a new table heap.
      * @param buffer_pool_manager 
+     * @param txn txn context used to create this table
+     * @param log_manager 
      * @return TableHeap* pointer to the new table heap. return nullptr when failure
      */
-    static TableHeap *CreateNewTableHeap(BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr) {
+    static TableHeap *CreateNewTableHeap(BufferPoolManager *buffer_pool_manager, TransactionContext *txn = nullptr, LogManager *log_manager = nullptr) {
         page_id_t first_page_id = INVALID_PAGE_ID;
         auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
         
-        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
+        new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID, txn, log_manager);
         buffer_pool_manager->UnpinPage(first_page_id, true);
-
-        // same as above
-        // sheep: is this api necessary?
 
         return new TableHeap(first_page_id, buffer_pool_manager, log_manager);
     }
@@ -86,19 +88,21 @@ public:
      * insert new tuple into table heap
      * @param tuple tuple to be inserted
      * @param rid rid of new tuple
+     * @param txn txn context
      * @param callback callback function to be called after the insertion is done. this is used for 
      * 2PL concurrency control protocols since we need to acquire the lock right after we inserted a new tuple
      * @return true when insertion succeed
      */
-    Result<> InsertTuple(const Tuple &tuple, RID *rid, const std::function<void(const RID &)> &callback = nullptr);
+    Result<> InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn = nullptr, const std::function<void(const RID &)> &callback = nullptr);
 
     /**
      * @brief 
      * mark tuple as deleted
      * @param rid rid of target tuple
+     * @param txn txn context
      * @return true when mark succeed
      */
-    Result<> MarkDelete(const RID &rid);
+    Result<> MarkDelete(const RID &rid, TransactionContext *txn = nullptr);
 
     /**
      * @brief 
@@ -107,23 +111,26 @@ public:
      * to handle this situation
      * @param tuple new tuple value
      * @param rid target tuple rid
+     * @param txn txn context
      * @return true when updation succeed
      */
-    Result<> UpdateTuple(const Tuple &tuple, const RID &rid);
+    Result<> UpdateTuple(const Tuple &tuple, const RID &rid, TransactionContext *txn = nullptr);
 
     /**
      * @brief 
      * delete the tuple. this will perform real deletion
      * @param rid target tuple rid
+     * @param txn txn context
      */
-    void ApplyDelete(const RID &rid);
+    void ApplyDelete(const RID &rid, TransactionContext *txn = nullptr);
 
     /**
      * @brief 
      * clear the deletion flag of tuple
      * @param rid target tuple rid
+     * @param txn txn context
      */
-    void RollbackDelete(const RID &rid);
+    void RollbackDelete(const RID &rid, TransactionContext *txn = nullptr);
 
     /**
      * @brief

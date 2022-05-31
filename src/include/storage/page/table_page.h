@@ -21,6 +21,7 @@
 #include "storage/table/tuple.h"
 #include "storage/page/page_header.h"
 #include "recovery/log_manager.h"
+#include "concurrency/transaction_context.h"
 
 namespace TinyDB {
 
@@ -65,10 +66,11 @@ public:
      * @param page_size size of this page
      * @param prev_page_id previous page id
      */
-    void Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id);
+    void Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id, 
+              TransactionContext *txn = nullptr, LogManager *log_manager = nullptr);
 
     // interface is really strange
-    // FIXME: more elegant interface
+    // TODO: more elegant interface
 
     inline page_id_t GetPrevPageId() {
         return prev_page_id_;
@@ -95,7 +97,8 @@ public:
      * @param rid RID indicating tuple RID
      * @return true when insertion is succeed. i.e. there is enough space
      */
-    bool InsertTuple(const Tuple &tuple, RID *rid, LogManager *log_manager = nullptr);
+    bool InsertTuple(const Tuple &tuple, RID *rid, 
+                     TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     /**
      * @brief 
@@ -103,7 +106,8 @@ public:
      * @param rid rid to the tuple to mark as deleted
      * @return true when deletion is succeed. i.e. tuple exists
      */
-    bool MarkDelete(const RID &rid, LogManager *log_manager = nullptr);
+    bool MarkDelete(const RID &rid, 
+                    TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     /**
      * @brief 
@@ -114,7 +118,8 @@ public:
      * @return true when updation is succeed. i.e. tuple exists and we have enough space
      * to perform updation
      */
-    bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid, LogManager *log_manager = nullptr);
+    bool UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID &rid, 
+                     TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     // TODO: figure out should we add a batch cleaning method
     // for lock-based CC protocol, we might need to perform operation directly on one copy. So mark-apply deletion
@@ -129,14 +134,16 @@ public:
      * delete tuple corresponding to rid. this will perform real deletion
      * @param rid 
      */
-    void ApplyDelete(const RID &rid, LogManager *log_manager = nullptr);
+    void ApplyDelete(const RID &rid, 
+                     TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     /**
      * @brief 
      * to be called on abort. Rollback a delete. this will reverses a MarkDelete
      * @param rid 
      */
-    void RollbackDelete(const RID &rid, LogManager *log_manager = nullptr);
+    void RollbackDelete(const RID &rid, 
+                        TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     /**
      * @brief get the tuple. GetTuple won't return a deleted tuple(real deleted or mark deleted)

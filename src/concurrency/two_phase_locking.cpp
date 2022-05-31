@@ -80,7 +80,7 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
         lock_manager->LockExclusive(context, rid);
     };
 
-    auto res = table_info->table_->InsertTuple(tuple, rid, callback);
+    auto res = table_info->table_->InsertTuple(tuple, rid, context, callback);
     if (res.IsErr()) {
         // we abort the transaction
         throw TransactionAbortException(context->GetTxnId(), "Failed to insert tuple");
@@ -117,7 +117,7 @@ void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, c
     }
 
     // mark the tuple
-    auto res = table_info->table_->MarkDelete(rid);
+    auto res = table_info->table_->MarkDelete(rid, context);
 
     if (res.GetErr() == ErrorCode::SKIP) {
         // skip this tuple
@@ -136,11 +136,11 @@ void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, c
         }
         // delete tuple on table
         context->RegisterCommitAction([=]() {
-            table_info->table_->ApplyDelete(rid);
+            table_info->table_->ApplyDelete(rid, context);
         });
         // register abort action
         context->RegisterAbortAction([=]() {
-            table_info->table_->RollbackDelete(rid);
+            table_info->table_->RollbackDelete(rid, context);
         });
     }
 }
@@ -161,7 +161,7 @@ void TwoPLManager::Update(TransactionContext *txn_context,
         lock_manager_->LockExclusive(txn_context, rid);
     }
 
-    auto res = table_info->table_->UpdateTuple(new_tuple, rid);
+    auto res = table_info->table_->UpdateTuple(new_tuple, rid, context);
     if (res.GetErr() == ErrorCode::ABORT) {
         throw TransactionAbortException(context->GetTxnId(), "Failed to update");
     }
