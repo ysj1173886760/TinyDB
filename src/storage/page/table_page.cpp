@@ -76,6 +76,11 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *tx
     }
 
     if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::INSERT, RID(GetPageId(), slot_id), tuple);
+        auto lsn = log_manager->AppendLogRecord(log);
+        SetLSN(lsn);
+        txn->SetPrevLSN(lsn);
     }
 
     return true;
@@ -99,6 +104,15 @@ bool TablePage::MarkDelete(const RID &rid, TransactionContext *txn, LogManager *
     // we are encountering double marking, i.e. ww-conflict
     // this should be a logic error
     TINYDB_ASSERT(IsDeleted(tuple_size) == false, "Deleting an tuple with deletion mark");
+
+    if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        Tuple dummy_tuple;
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::MARKDELETE, rid, dummy_tuple);
+        auto lsn = log_manager->AppendLogRecord(log);
+        SetLSN(lsn);
+        txn->SetPrevLSN(lsn);
+    }
 
     SetTupleSize(slot_id, SetDeletedFlag(tuple_size));
     return true;
@@ -161,6 +175,14 @@ bool TablePage::UpdateTuple(const Tuple &new_tuple, Tuple *old_tuple, const RID 
             SetTupleOffset(i, tuple_offset_i + tuple_size - new_tuple.GetSize());
         }
     }
+
+    if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::UPDATE, rid, *old_tuple, new_tuple);
+        auto lsn = log_manager->AppendLogRecord(log);
+        SetLSN(lsn);
+        txn->SetPrevLSN(lsn);
+    }
     
     return true;
 }
@@ -178,6 +200,16 @@ void TablePage::ApplyDelete(const RID &rid, TransactionContext *txn, LogManager 
     if (IsDeleted(tuple_size)) {
         // mask out the delete bit
         tuple_size = UnsetDeletedFlag(tuple_size);
+    }
+
+    // copyout the deleted tuple for undo purposes
+    if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        Tuple deleted_tuple = Tuple::DeserializeFrom(GetRawPointer() + tuple_offset, tuple_size);
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::APPLYDELETE, rid, deleted_tuple);
+        auto lsn = log_manager->AppendLogRecord(log);
+        SetLSN(lsn);
+        txn->SetPrevLSN(lsn);
     }
 
     // move the data
@@ -205,6 +237,15 @@ void TablePage::RollbackDelete(const RID &rid, TransactionContext *txn, LogManag
     uint32_t slot_id = rid.GetSlotId();
     TINYDB_ASSERT(slot_id < GetTupleCount(), "invalid slot id");
     uint32_t tuple_size = GetTupleSize(slot_id);
+
+    if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        Tuple dummy_tuple;
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::ROLLBACKDELETE, rid, dummy_tuple);
+        auto lsn = log_manager->AppendLogRecord(log);
+        SetLSN(lsn);
+        txn->SetPrevLSN(lsn);
+    }
 
     if (IsDeleted(tuple_size)) {
         SetTupleSize(slot_id, UnsetDeletedFlag(tuple_size));

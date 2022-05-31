@@ -75,6 +75,14 @@ public:
         state_ = TransactionState::COMMITTED;
     }
 
+    void SetPrevLSN(lsn_t prev_lsn) {
+        prev_lsn_ = prev_lsn;
+    }
+
+    lsn_t GetPrevLSN() {
+        return prev_lsn_;
+    }
+
     /**
      * @brief 
      * Register the action that to be executed when txn commits
@@ -117,6 +125,8 @@ protected:
     std::forward_list<TxnEndAction> abort_action_;
     // isolatin level
     IsolationLevel isolation_level_;
+    // lsn of the last record written by current txn
+    lsn_t prev_lsn_{INVALID_LSN};
     
 };
 
