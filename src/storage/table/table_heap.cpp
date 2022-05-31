@@ -31,7 +31,7 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, const std::functio
 
     cur_page->WLatch();
     
-    while (!table_page->InsertTuple(tuple, rid)) {
+    while (!table_page->InsertTuple(tuple, rid, log_manager_)) {
         auto next_page_id = table_page->GetNextPageId();
         
         // if next page is a valid page
@@ -88,7 +88,7 @@ Result<> TableHeap::MarkDelete(const RID &rid) {
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
     page->WLatch();
-    bool res = table_page->MarkDelete(rid);
+    bool res = table_page->MarkDelete(rid, log_manager_);
     page->WUnlatch();
     // if we failed to mark delete, then we don't need to flush the page
     buffer_pool_manager_->UnpinPage(page->GetPageId(), res);
@@ -112,7 +112,7 @@ Result<> TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid) {
     // only used in single-version CC protocol
     Tuple old_tuple;
     page->WLatch();
-    bool res = table_page->UpdateTuple(tuple, &old_tuple, rid);
+    bool res = table_page->UpdateTuple(tuple, &old_tuple, rid, log_manager_);
     page->WUnlatch();
     // same as MarkDelete
     // if we failed to update tuple, then we don't need to flush the page
@@ -134,7 +134,7 @@ void TableHeap::ApplyDelete(const RID &rid) {
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
     page->WLatch();
-    table_page->ApplyDelete(rid);
+    table_page->ApplyDelete(rid, log_manager_);
     page->WUnlatch();
     buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
 }
@@ -149,7 +149,7 @@ void TableHeap::RollbackDelete(const RID &rid) {
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
     page->WLatch();
-    table_page->RollbackDelete(rid);
+    table_page->RollbackDelete(rid, log_manager_);
     page->WUnlatch();
     buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
 }

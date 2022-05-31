@@ -17,6 +17,7 @@
 #include "storage/table/table_iterator.h"
 #include "common/exception.h"
 #include "common/result.h"
+#include "recovery/log_manager.h"
 
 namespace TinyDB {
 
@@ -36,8 +37,8 @@ public:
      * @param first_page_id id of the first page
      * @param buffer_pool_manager 
      */
-    TableHeap(page_id_t first_page_id, BufferPoolManager *buffer_pool_manager):
-        buffer_pool_manager_(buffer_pool_manager), first_page_id_(first_page_id) {
+    TableHeap(page_id_t first_page_id, BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr):
+        buffer_pool_manager_(buffer_pool_manager), log_manager_(log_manager), first_page_id_(first_page_id) {
         TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "Existing table heap should have at least one page");
     }
 
@@ -46,7 +47,7 @@ public:
      * create a new table heap
      * @param buffer_pool_manager 
      */
-    TableHeap(BufferPoolManager *buffer_pool_manager) {
+    TableHeap(BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr) {
         page_id_t first_page_id = INVALID_PAGE_ID;
         auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
@@ -54,7 +55,10 @@ public:
         new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
         buffer_pool_manager->UnpinPage(first_page_id, true);
         buffer_pool_manager_ = buffer_pool_manager;
+        log_manager_ = log_manager;
         first_page_id_ = first_page_id;
+        
+        // TODO: shall we log this? i.e. logging that we are creating table heap?
     }
 
     /**
@@ -63,16 +67,18 @@ public:
      * @param buffer_pool_manager 
      * @return TableHeap* pointer to the new table heap. return nullptr when failure
      */
-    static TableHeap *CreateNewTableHeap(BufferPoolManager *buffer_pool_manager) {
+    static TableHeap *CreateNewTableHeap(BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr) {
         page_id_t first_page_id = INVALID_PAGE_ID;
         auto new_page = reinterpret_cast<TablePage *> (buffer_pool_manager->NewPage(&first_page_id));
-        if (new_page == nullptr) {
-            return nullptr;
-        }
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(new_page != nullptr, "");
+        
         new_page->Init(first_page_id, PAGE_SIZE, INVALID_PAGE_ID);
         buffer_pool_manager->UnpinPage(first_page_id, true);
 
-        return new TableHeap(first_page_id, buffer_pool_manager);
+        // same as above
+        // sheep: is this api necessary?
+
+        return new TableHeap(first_page_id, buffer_pool_manager, log_manager);
     }
 
     /**
@@ -148,6 +154,7 @@ public:
 
 private:
     BufferPoolManager *buffer_pool_manager_;
+    LogManager *log_manager_{nullptr};
     page_id_t first_page_id_{INVALID_PAGE_ID};
 };
 
