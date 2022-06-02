@@ -110,6 +110,11 @@ TEST(RecoveryTest, RedoTest) {
             }
         }
 
+        LOG_INFO("%s", tm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", bpm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", lm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", dm->GetTimeConsumption().c_str());
+
         delete tm;
         delete bpm;
         delete lm;
@@ -153,6 +158,11 @@ TEST(RecoveryTest, RedoTest) {
             auto money = result_set[i].GetValue(&schema, 1).GetAs<int>();
             EXPECT_EQ(money, accounts[id]);
         }
+
+        LOG_INFO("%s", tm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", bpm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", lm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", dm->GetTimeConsumption().c_str());
 
         delete tm;
         delete bpm;
@@ -251,6 +261,11 @@ TEST(RecoveryTest, ConcurrentRedoTest) {
             }
         }
 
+        LOG_INFO("%s", tm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", bpm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", lm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", dm->GetTimeConsumption().c_str());
+
         delete tm;
         delete bpm;
         delete lm;
@@ -294,6 +309,11 @@ TEST(RecoveryTest, ConcurrentRedoTest) {
             auto money = result_set[i].GetValue(&schema, 1).GetAs<int>();
             EXPECT_EQ(money, accounts[id]);
         }
+
+        LOG_INFO("%s", tm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", bpm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", lm->GetTimeConsumption().c_str());
+        LOG_INFO("%s", dm->GetTimeConsumption().c_str());
 
         delete tm;
         delete bpm;

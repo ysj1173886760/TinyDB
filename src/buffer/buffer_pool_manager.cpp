@@ -137,8 +137,12 @@ void BufferPoolManager::FlushPageHelper(frame_id_t frame_id) {
         // get lsn of current page
         auto header = reinterpret_cast<PageHeader *>(page->GetData());
         auto lsn = header->GetLSN();
+        // flush the log and record the time
+        auto t1 = std::chrono::steady_clock::now();
         // force the log
         log_manager_->Flush(lsn, true);
+        auto t2 = std::chrono::steady_clock::now();
+        flush_wait_time_ += std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     }
     disk_manager_->WritePage(page->GetPageId(), page->GetData());
     page->is_dirty_ = false;

@@ -74,7 +74,7 @@ TEST(LogManagerTest, BasicFlushTest) {
         auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
         LOG_INFO("AppendLog time: %ld", interval.count());
     }
-    LOG_INFO("LogManager time: %ld", lm->GetOperationTime().count());
+    LOG_INFO("%s", lm->GetTimeConsumption().c_str());
 
     lsn_t max_lsn = log_list.back().GetLSN();
 
@@ -87,7 +87,7 @@ TEST(LogManagerTest, BasicFlushTest) {
         LOG_INFO("Flush time: %ld", interval.count());
     }
 
-    LOG_INFO("Log write time: %ld", dm->log_write_time_.count());
+    LOG_INFO("%s", dm->GetTimeConsumption().c_str());
     // then we stop the log manager
     delete lm;
     delete dm;
@@ -120,7 +120,7 @@ TEST(LogManagerTest, BasicFlushTest) {
         offset += inner_offset;
     }
 
-    LOG_INFO("Log read time %ld", dm->log_read_time_.count());
+    LOG_INFO("%s", dm->GetTimeConsumption().c_str());
     LOG_INFO("Deserialization time %ld", deserialization_time.count());
 
     EXPECT_EQ(log_list.size(), new_log_list.size());
@@ -159,7 +159,7 @@ TEST(LogManagerTest, ForceFlushTest) {
         auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
         LOG_INFO("AppendLog time: %ld", interval.count());
     }
-    LOG_INFO("LogManager time: %ld", lm->GetOperationTime().count());
+    LOG_INFO("%s", lm->GetTimeConsumption().c_str());
 
     lsn_t max_lsn = log_list.back().GetLSN();
 
@@ -172,7 +172,7 @@ TEST(LogManagerTest, ForceFlushTest) {
         LOG_INFO("Flush time: %ld", interval.count());
     }
 
-    LOG_INFO("Log write time: %ld", dm->log_write_time_.count());
+    LOG_INFO("%s", dm->GetTimeConsumption().c_str());
     // then we stop the log manager
     delete lm;
     delete dm;
@@ -205,7 +205,7 @@ TEST(LogManagerTest, ForceFlushTest) {
         offset += inner_offset;
     }
 
-    LOG_INFO("Log read time %ld", dm->log_read_time_.count());
+    LOG_INFO("%s", dm->GetTimeConsumption().c_str());
     LOG_INFO("Deserialization time %ld", deserialization_time.count());
 
     EXPECT_EQ(log_list.size(), new_log_list.size());

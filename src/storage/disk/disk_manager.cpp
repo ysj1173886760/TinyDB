@@ -110,6 +110,7 @@ void DiskManager::DeallocatePage(page_id_t page_id) {
 }
 
 void DiskManager::ReadPage(page_id_t pageId, char *data, bool outbound_is_error) {
+    auto t1 = std::chrono::steady_clock::now();
     // disable this check for now, we shall add it back 
     // once we figured out how to store the metadata
     // assert(pageId < next_page_id_);
@@ -143,10 +144,14 @@ void DiskManager::ReadPage(page_id_t pageId, char *data, bool outbound_is_error)
         // set those random data to 0
         memset(data + readCount, 0, PAGE_SIZE - readCount);
     }
+
+    auto t2 = std::chrono::steady_clock::now();
+    data_read_time_ += std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
 }
 
 void DiskManager::WritePage(page_id_t pageId, const char *data) {
     // assert(pageId < next_page_id_);
+    auto t1 = std::chrono::steady_clock::now();
 
     int offset = pageId * PAGE_SIZE;
     db_file_.seekp(offset);
@@ -158,6 +163,9 @@ void DiskManager::WritePage(page_id_t pageId, const char *data) {
     }
 
     db_file_.flush();
+
+    auto t2 = std::chrono::steady_clock::now();
+    data_write_time_ += std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
 }
 
 int DiskManager::GetFileSize(const std::string &filename) {

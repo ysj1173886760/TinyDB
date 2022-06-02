@@ -60,6 +60,8 @@ Result<> TwoPLManager::Read(TransactionContext *txn_context,
 }
 
 void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, RID *rid, TableInfo *table_info) {
+    auto t1 = std::chrono::steady_clock::now();
+
     TINYDB_ASSERT(txn_context->IsAborted() == false, "Trying to executing aborted transaction");
     auto context = txn_context->Cast<TwoPLContext>();
     // for insertion, we will first try to acquire the exclusive lock on an empty slot
@@ -102,6 +104,8 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
         });
     }
 
+    auto t2 = std::chrono::steady_clock::now();
+    insert_time_.fetch_add(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
 }
 
 void TwoPLManager::Delete(TransactionContext *txn_context, const Tuple &tuple, const RID &rid, TableInfo *table_info) {
@@ -210,6 +214,8 @@ void TwoPLManager::Commit(TransactionContext *txn_context) {
     }
 
     if (log_manager_ != nullptr) {
+        auto t1 = std::chrono::steady_clock::now();
+
         auto log = LogRecord(txn_context->GetTxnId(), txn_context->GetPrevLSN(), LogRecordType::COMMIT);
         auto lsn = log_manager_->AppendLogRecord(log);
         txn_context->SetPrevLSN(lsn);
@@ -217,6 +223,9 @@ void TwoPLManager::Commit(TransactionContext *txn_context) {
         // i.e. Commit has been persisted
         // amortize the cost of fsync
         log_manager_->Flush(lsn, false);
+
+        auto t2 = std::chrono::steady_clock::now();
+        commit_wait_time_.fetch_add(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
     }
 
     // release all locks

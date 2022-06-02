@@ -109,6 +109,15 @@ public:
      */
     bool CheckPinCount();
 
+    std::string GetTimeConsumption() {
+        std::stringstream os;
+
+        os << "BufferPoolManagerTimeConsumption: "
+           << "FlushWaitTime: " << flush_wait_time_.count() << "ms";
+        
+        return os.str();
+    }
+
 private:
     void FlushPageHelper(frame_id_t frame_id);
 
@@ -129,6 +138,9 @@ private:
     std::mutex latch_;
     // log manager
     LogManager *log_manager_;
+
+    // debug and analyse
+    std::chrono::milliseconds flush_wait_time_{0};
 };
 
 }

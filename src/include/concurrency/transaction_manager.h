@@ -20,6 +20,7 @@
 #include "recovery/log_manager.h"
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 
 namespace TinyDB {
@@ -137,6 +138,20 @@ public:
         return txn_map_->IsTransactionAlive(txn_id);
     }
 
+    /**
+     * @brief 
+     * record how much time we spend on each step
+     */
+    std::string GetTimeConsumption() {
+        std::stringstream os;
+
+        os << "TransactionManagerTimeConsumption: "
+           << "CommitWaitTime: " << commit_wait_time_ << "ms, "
+           << "InsertTime: " << insert_time_ << "ms";
+
+        return os.str();
+    }
+
 protected:
     // protocol of this transaction manager
     Protocol protocol_;
@@ -146,6 +161,10 @@ protected:
     std::unique_ptr<TransactionMap> txn_map_;
     // log manager
     LogManager *log_manager_{nullptr};
+
+    // logging the time
+    std::atomic<long> commit_wait_time_{0};
+    std::atomic<long> insert_time_{0};
 };
 
 }

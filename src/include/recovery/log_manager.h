@@ -62,8 +62,13 @@ public:
      */
     void Flush(lsn_t lsn, bool force);
 
-    std::chrono::milliseconds GetOperationTime() {
-        return operation_time_;
+    std::string GetTimeConsumption() {
+        std::stringstream os;
+
+        os << "LogManagerTimeConsumption: "
+           << "OperationTime: " << operation_time_.count() << "ms";
+        
+        return os.str();
     }
 
 private:

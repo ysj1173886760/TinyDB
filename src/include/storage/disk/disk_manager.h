@@ -15,6 +15,7 @@
 #include <string>
 #include <fstream>
 #include <chrono>
+#include <sstream>
 
 #include "common/config.h"
 
@@ -93,9 +94,17 @@ public:
      */
     void WriteLog(char *log_data, int size);
 
-    // for analysis
-    std::chrono::milliseconds log_write_time_{0};
-    std::chrono::milliseconds log_read_time_{0};
+    std::string GetTimeConsumption() {
+        std::stringstream os;
+
+        os << "DiskManagerTimeConsumption: "
+           << "LogWrite: " << log_write_time_.count() << "ms, "
+           << "LogRead: " << log_read_time_.count() << "ms, "
+           << "DataWrite: " << data_write_time_.count() << "ms, "
+           << "DataRead: " << data_read_time_.count() << "ms";
+
+        return os.str();
+    }
     
 private:
     /**
@@ -126,6 +135,12 @@ private:
     // for debug purpose
     int allocate_count_;
     int deallocate_count_;
+
+    // for analysis
+    std::chrono::milliseconds log_write_time_{0};
+    std::chrono::milliseconds log_read_time_{0};
+    std::chrono::milliseconds data_write_time_{0};
+    std::chrono::milliseconds data_read_time_{0};
 
 };
 
