@@ -165,4 +165,145 @@ TEST(RecoveryTest, RedoTest) {
     remove("test.log");
 }
 
+TEST(RecoveryTest, ConcurrentRedoTest) {
+    remove("test.db");
+    remove("test.log");
+
+    auto colA = Column("ID", TypeId::INTEGER);
+    auto colC = Column("Money", TypeId::INTEGER);
+    auto schema = Schema({colA, colC});
+    
+    LOG_TIMEOUT = std::chrono::milliseconds(300);
+
+    // id -> money
+    std::unordered_map<int, int> accounts;
+    {
+        auto dm = new DiskManager("test.db");
+        auto lm = new LogManager(dm);
+        auto bpm = new BufferPoolManager(10, dm, lm);
+        auto lock_manager = std::make_unique<LockManager>(DeadLockResolveProtocol::DL_DETECT);
+        auto tm = new TwoPLManager(std::move(lock_manager), lm);
+        
+        auto catalog = Catalog(bpm, lm);
+        {
+            // use txn to create table
+            auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+            catalog.CreateTable("table", schema, txn_context);
+            tm->Commit(txn_context);
+        }
+        // scenario: insert many tuple then shutdown the database
+        // after recovery, we should see all of insertions
+
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        // generate account num
+        std::uniform_int_distribution<int> money_gen;
+        int num_of_txn = 3;
+        int num_of_worker = 8;
+        int op_per_txn = 10;
+        std::vector<std::thread> worker_list;
+        std::mutex mu;
+
+        for (int k = 0; k < num_of_worker; k++) {
+            worker_list.push_back(std::thread([&](int k){
+                for (int i = 0; i < num_of_txn; i++) {
+                    auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+                    auto exec_context = ExecutionContext(&catalog, bpm, tm, txn_context);
+                    for (int j = 0; j < op_per_txn; j++) {
+                        auto ID = ValueFactory::GetIntegerValue(k * num_of_txn * op_per_txn + i * op_per_txn + j);
+                        auto money = ValueFactory::GetIntegerValue(money_gen(mt));
+                        auto tuple = Tuple({ID, money}, &schema);
+
+                        mu.lock();
+                        accounts[ID.GetAs<int>()] = money.GetAs<int>();
+                        mu.unlock();
+                        if (!PerformInsertion(&exec_context, tuple)) {
+                            LOG_INFO("Txn %d aborted", txn_context->GetTxnId());
+                            break;
+                        }
+                    }
+                    if (!txn_context->IsAborted()) {
+                        tm->Commit(txn_context);
+                    }
+                }
+            }, k));
+        }
+
+        for (int i = 0; i < num_of_worker; i++) {
+            worker_list[i].join();
+        }
+
+        {
+            std::vector<Tuple> result_set;
+            {
+                auto scan_plan = std::make_unique<SeqScanPlan>(&schema, nullptr, catalog.GetTable("table")->oid_);
+                auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+                auto exec_context = ExecutionContext(&catalog, bpm, tm, txn_context);
+                ExecutionEngine engine;
+                engine.Execute(&exec_context, scan_plan.get(), &result_set);
+                tm->Commit(txn_context);
+            }
+            EXPECT_EQ(result_set.size(), accounts.size());
+            for (uint i = 0; i < result_set.size(); i++) {
+                auto id = result_set[i].GetValue(&schema, 0).GetAs<int>();
+                auto money = result_set[i].GetValue(&schema, 1).GetAs<int>();
+                EXPECT_EQ(money, accounts[id]);
+            }
+        }
+
+        delete tm;
+        delete bpm;
+        delete lm;
+        delete dm;
+    }
+
+    {
+        // restart database
+        auto dm = new DiskManager("test.db");
+        auto lm = new LogManager(dm);
+        auto bpm = new BufferPoolManager(10, dm, lm);
+        auto lock_manager = std::make_unique<LockManager>(DeadLockResolveProtocol::DL_DETECT);
+        auto tm = new TwoPLManager(std::move(lock_manager), lm);
+        
+        // fake the new catalog, since we aren't logging metadata now
+        auto catalog = Catalog(bpm, lm);
+        {
+            // use txn to create table
+            auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+            catalog.CreateTable("table", schema, txn_context);
+            tm->Commit(txn_context);
+        }
+
+        // perform recovery
+        auto rm = new RecoveryManager(dm, bpm);
+        rm->ARIES();
+
+        // after recovery, try to scan the tuple
+        std::vector<Tuple> result_set;
+        {
+            auto scan_plan = std::make_unique<SeqScanPlan>(&schema, nullptr, catalog.GetTable("table")->oid_);
+            auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+            auto exec_context = ExecutionContext(&catalog, bpm, tm, txn_context);
+            ExecutionEngine engine;
+            engine.Execute(&exec_context, scan_plan.get(), &result_set);
+            tm->Commit(txn_context);
+        }
+        EXPECT_EQ(result_set.size(), accounts.size());
+        for (uint i = 0; i < result_set.size(); i++) {
+            auto id = result_set[i].GetValue(&schema, 0).GetAs<int>();
+            auto money = result_set[i].GetValue(&schema, 1).GetAs<int>();
+            EXPECT_EQ(money, accounts[id]);
+        }
+
+        delete tm;
+        delete bpm;
+        delete lm;
+        delete dm;
+        delete rm;
+    }
+
+    remove("test.db");
+    remove("test.log");
+}
+
 }
