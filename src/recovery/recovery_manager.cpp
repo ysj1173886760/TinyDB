@@ -76,7 +76,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         // i think rid should be same as the one in log
         RID rid;
         if (!table_page->InsertTuple(log_record.GetNewTuple(), &rid)) {
-            THROW_UNKNOWN_TYPE_EXCEPTION("Failed to insert tuple while recovering");
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
         }
         TINYDB_ASSERT(rid == log_record.GetRID(), "Logic Error");
         // update in-memory lsn
@@ -84,12 +84,100 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
         break;
     }
+    case LogRecordType::MARKDELETE: {
+        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
-    case LogRecordType::MARKDELETE:
-    case LogRecordType::APPLYDELETE:
-    case LogRecordType::ROLLBACKDELETE:
-    case LogRecordType::UPDATE:
-    case LogRecordType::INITPAGE:
+        // if this log has been persisted on disk, then we don't need to redo it
+        if (table_page->GetLSN() >= log_record.GetLSN()) {
+            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+            break;
+        }
+        if (!table_page->MarkDelete(log_record.GetRID())) {
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
+        }
+        // update lsn
+        table_page->SetLSN(log_record.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::APPLYDELETE: {
+        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        // if this log has been persisted on disk, then we don't need to redo it
+        if (table_page->GetLSN() >= log_record.GetLSN()) {
+            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+            break;
+        }
+        table_page->ApplyDelete(log_record.GetRID());
+        // update lsn
+        table_page->SetLSN(log_record.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::ROLLBACKDELETE: {
+        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        // if this log has been persisted on disk, then we don't need to redo it
+        if (table_page->GetLSN() >= log_record.GetLSN()) {
+            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+            break;
+        }
+        table_page->RollbackDelete(log_record.GetRID());
+        // update lsn
+        table_page->SetLSN(log_record.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::UPDATE: {
+        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        // if this log has been persisted on disk, then we don't need to redo it
+        if (table_page->GetLSN() >= log_record.GetLSN()) {
+            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+            break;
+        }
+
+        Tuple dummy_tuple;
+        if (!table_page->UpdateTuple(log_record.GetNewTuple(), &dummy_tuple, log_record.GetRID())) {
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
+        }
+
+        // update lsn
+        table_page->SetLSN(log_record.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::INITPAGE: {
+        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        // if this log has been persisted on disk, then we don't need to redo it
+        if (table_page->GetLSN() >= log_record.GetLSN()) {
+            buffer_pool_manager_->UnpinPage(page->GetPageId(), false);
+            break;
+        }
+
+        table_page->Init(page->GetPageId(), PAGE_SIZE, log_record.prev_page_id_);
+        auto prev_page = buffer_pool_manager_->FetchOrAllocatePage(log_record.prev_page_id_);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(prev_page != nullptr, "");
+        auto prev_table_page = reinterpret_cast<TablePage *> (prev_page->GetData());
+        // overwrite next page id to make sure the link is set
+        prev_table_page->SetNextPageId(page->GetPageId());
+        buffer_pool_manager_->UnpinPage(prev_page->GetPageId(), true);
+
+        table_page->SetLSN(log_record.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
     default:
         TINYDB_ASSERT(false, "Invalid Log Type");
     }
