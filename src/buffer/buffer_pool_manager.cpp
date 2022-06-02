@@ -15,11 +15,13 @@
 #include "buffer/buffer_pool_manager.h"
 #include "buffer/lru_replacer.h"
 #include "common/logger.h"
+#include "recovery/log_manager.h"
+#include "storage/page/page_header.h"
 
 namespace TinyDB {
 
-BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager)
-    : pool_size_(pool_size), disk_manager_(disk_manager) {
+BufferPoolManager::BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager)
+    : pool_size_(pool_size), disk_manager_(disk_manager), log_manager_(log_manager) {
     // allocate the in-memory page array
     pages_ = new Page[pool_size_];
     // pool size has no meaning for lru replacer, because we(buffer pool manager)
@@ -68,7 +70,7 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id, bool outbound_is_error) {
 
         auto page = &pages_[frame_id];
         if (page->is_dirty_) {
-            disk_manager_->WritePage(page->GetPageId(), page->GetData());
+            FlushPageHelper(frame_id);
         }
         // evict this page
         page_table_.erase(page->GetPageId());
@@ -122,10 +124,24 @@ bool BufferPoolManager::FlushPage(page_id_t page_id) {
 
     // flush to disk
     frame_id_t frame_id = it->second;
-    disk_manager_->WritePage(pages_[frame_id].GetPageId(), pages_[frame_id].GetData());
-    pages_[frame_id].is_dirty_ = false;
+    FlushPageHelper(frame_id);
 
     return true;
+}
+
+void BufferPoolManager::FlushPageHelper(frame_id_t frame_id) {
+    // write ahead log protocol: 
+    // before writting a page into disk, all related logs has to be flush into disk first.
+    auto page = &pages_[frame_id];
+    if (log_manager_ != nullptr) {
+        // get lsn of current page
+        auto header = reinterpret_cast<PageHeader *>(page->GetData());
+        auto lsn = header->GetLSN();
+        // force the log
+        log_manager_->Flush(lsn, true);
+    }
+    disk_manager_->WritePage(page->GetPageId(), page->GetData());
+    page->is_dirty_ = false;
 }
 
 Page *BufferPoolManager::NewPage(page_id_t *page_id) {
@@ -150,7 +166,7 @@ Page *BufferPoolManager::NewPage(page_id_t *page_id) {
 
         auto page = &pages_[frame_id];
         if (page->is_dirty_) {
-            disk_manager_->WritePage(page->GetPageId(), page->GetData());
+            FlushPageHelper(frame_id);
         }
 
         page_table_.erase(page->GetPageId());
@@ -201,8 +217,7 @@ void BufferPoolManager::FlushAllPages() {
         if (page_table_.count(pages_[i].GetPageId()) == 0) {
             continue;
         }
-        disk_manager_->WritePage(pages_[i].GetPageId(), pages_[i].GetData());
-        pages_[i].is_dirty_ = false;
+        FlushPageHelper(i);
     }
 }
 

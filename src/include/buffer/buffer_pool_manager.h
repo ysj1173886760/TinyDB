@@ -23,6 +23,8 @@
 
 namespace TinyDB {
 
+class LogManager;
+
 class BufferPoolManager {
 public:
     /**
@@ -31,7 +33,7 @@ public:
      * @param pool_size size of buffer pool
      * @param disk_manager disk manager
      */
-    BufferPoolManager(size_t pool_size, DiskManager *disk_manager);
+    BufferPoolManager(size_t pool_size, DiskManager *disk_manager, LogManager *log_manager = nullptr);
 
     /**
      * @brief Destroy the Buffer Pool Manager object
@@ -108,6 +110,8 @@ public:
     bool CheckPinCount();
 
 private:
+    void FlushPageHelper(frame_id_t frame_id);
+
     // number of pages in the buffer pool
     size_t pool_size_;
     // array of in-memory pages
@@ -123,6 +127,8 @@ private:
     // big latch, currently it will protect whole buffer pool manager
     // i.e. no fine-grained locking
     std::mutex latch_;
+    // log manager
+    LogManager *log_manager_;
 };
 
 }
