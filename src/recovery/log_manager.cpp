@@ -27,7 +27,6 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
     }
 
     auto t1 = std::chrono::steady_clock::now();
-    
     // fetch new lsn
     lsn_t lsn = next_lsn_++;
     log_record.SetLSN(lsn);
@@ -37,6 +36,8 @@ lsn_t LogManager::AppendLogRecord(LogRecord &log_record) {
     auto t2 = std::chrono::steady_clock::now();
     auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     operation_time_ += interval;
+
+    // LOG_INFO("Appending Log %s", log_record.ToString().c_str());
 
     return lsn;
 }

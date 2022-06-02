@@ -43,7 +43,7 @@ LogRecord GenerateRandomLogRecord(LogRecordType type) {
     case LogRecordType::UPDATE:
         return LogRecord(1, 1, type, rid, tuple, tuple);
     case LogRecordType::INITPAGE:
-        return LogRecord(1, 1, type, 1);
+        return LogRecord(1, 1, type, 1, 1);
     default:
         TINYDB_ASSERT(false, "invalid type");
     }

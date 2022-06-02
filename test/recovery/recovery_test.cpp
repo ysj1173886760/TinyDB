@@ -57,8 +57,13 @@ TEST(RecoveryTest, RedoTest) {
         auto lock_manager = std::make_unique<LockManager>(DeadLockResolveProtocol::DL_DETECT);
         auto tm = new TwoPLManager(std::move(lock_manager), lm);
         
-        auto catalog = Catalog(bpm);
-        catalog.CreateTable("table", schema);
+        auto catalog = Catalog(bpm, lm);
+        {
+            // use txn to create table
+            auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+            catalog.CreateTable("table", schema, txn_context);
+            tm->Commit(txn_context);
+        }
         // scenario: insert many tuple then shutdown the database
         // after recovery, we should see all of insertions
 
@@ -66,13 +71,13 @@ TEST(RecoveryTest, RedoTest) {
         std::mt19937 mt(rd());
         // generate account num
         std::uniform_int_distribution<int> money_gen;
-        int num_of_txn = 1;
+        int num_of_txn = 3;
         int op_per_txn = 10;
         for (int i = 0; i < num_of_txn; i++) {
             auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
             auto exec_context = ExecutionContext(&catalog, bpm, tm, txn_context);
             for (int j = 0; j < op_per_txn; j++) {
-                auto ID = ValueFactory::GetIntegerValue(i * num_of_txn + j);
+                auto ID = ValueFactory::GetIntegerValue(i * op_per_txn + j);
                 auto money = ValueFactory::GetIntegerValue(money_gen(mt));
                 auto tuple = Tuple({ID, money}, &schema);
                 accounts[ID.GetAs<int>()] = money.GetAs<int>();
@@ -120,8 +125,13 @@ TEST(RecoveryTest, RedoTest) {
         auto tm = new TwoPLManager(std::move(lock_manager), lm);
         
         // fake the new catalog, since we aren't logging metadata now
-        auto catalog = Catalog(bpm);
-        catalog.CreateTable("table", schema);
+        auto catalog = Catalog(bpm, lm);
+        {
+            // use txn to create table
+            auto txn_context = tm->Begin(IsolationLevel::SERIALIZABLE);
+            catalog.CreateTable("table", schema, txn_context);
+            tm->Commit(txn_context);
+        }
 
         // perform recovery
         auto rm = new RecoveryManager(dm, bpm);

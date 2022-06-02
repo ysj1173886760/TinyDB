@@ -82,11 +82,20 @@ public:
      * @brief 
      * Create in-memory catalog object
      * @param bpm 
+     * @param log_manager
      */
-    Catalog(BufferPoolManager *bpm)
-        : bpm_(bpm) {}
+    Catalog(BufferPoolManager *bpm, LogManager *log_manager = nullptr)
+        : bpm_(bpm), log_manager_(log_manager) {}
 
-    TableInfo *CreateTable(const std::string &table_name, const Schema &schema) {
+    /**
+     * @brief 
+     * Create a table
+     * @param table_name 
+     * @param schema 
+     * @param context context for txn to create this table
+     * @return TableInfo* 
+     */
+    TableInfo *CreateTable(const std::string &table_name, const Schema &schema, TransactionContext *context = nullptr) {
         std::lock_guard<std::mutex> guard(latch_);
         TINYDB_ASSERT(table_names_.count(table_name) == 0, "Table name should be unique");
         table_oid_t new_oid = next_table_oid_++;
@@ -94,7 +103,7 @@ public:
         auto new_table = 
             std::make_unique<TableInfo>(schema,
                                         table_name,
-                                        std::make_unique<TableHeap>(bpm_),
+                                        std::make_unique<TableHeap>(bpm_, context, log_manager_),
                                         new_oid);
         tables_[new_oid] = std::move(new_table);
         return tables_[new_oid].get();
@@ -210,6 +219,9 @@ private:
 
     // short-time latch
     std::mutex latch_;
+
+    // log manager used to create table
+    LogManager *log_manager_;
 };
 
 }

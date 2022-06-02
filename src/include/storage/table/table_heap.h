@@ -41,6 +41,9 @@ public:
     TableHeap(page_id_t first_page_id, BufferPoolManager *buffer_pool_manager, LogManager *log_manager = nullptr):
         buffer_pool_manager_(buffer_pool_manager), log_manager_(log_manager), first_page_id_(first_page_id) {
         TINYDB_ASSERT(first_page_id_ != INVALID_PAGE_ID, "Existing table heap should have at least one page");
+        if (log_manager != nullptr) {
+            LOG_INFO("Initialize TableHeap with Logging Enabled");
+        }
     }
 
     /**
@@ -60,6 +63,10 @@ public:
         buffer_pool_manager_ = buffer_pool_manager;
         log_manager_ = log_manager;
         first_page_id_ = first_page_id;
+
+        if (log_manager != nullptr) {
+            LOG_INFO("Initialize TableHeap with Logging Enabled");
+        }
     }
 
     // sheep: is this api necessary?

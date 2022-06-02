@@ -21,7 +21,7 @@ void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_
 
     if (log_manager != nullptr) {
         TINYDB_ASSERT(txn != nullptr, "txn context is null");
-        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::INITPAGE, prev_page_id);
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::INITPAGE, page_id, prev_page_id);
         auto lsn = log_manager->AppendLogRecord(log);
         txn->SetPrevLSN(lsn);
         SetLSN(lsn);

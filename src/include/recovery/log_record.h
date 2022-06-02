@@ -58,9 +58,9 @@ enum class LogRecordType {
  * ----------------------------------------------------------------------------------
  * For init page type log record, i will not store prev page id since sooner doubly linked-list will be abandoned.
  * Above statement is not true, since we still need this information to set the link from prev page to current page.
- * -------------------------
- * | HEADER | prev_page_id |
- * -------------------------
+ * ---------------------------------------
+ * | HEADER | cur_page_id | prev_page_id |
+ * ---------------------------------------
  * 
  * sheep: i wonder do we need to store tuple size? for insert and delete type log since we can
  * simply derive it from total size
@@ -96,10 +96,10 @@ public:
      * @param type 
      * @param prev_page_id 
      */
-    LogRecord(txn_id_t txn_id, lsn_t prev_lsn, LogRecordType type, page_id_t prev_page_id)
-        : txn_id_(txn_id), prev_lsn_(prev_lsn), type_(type), prev_page_id_(prev_page_id) {
+    LogRecord(txn_id_t txn_id, lsn_t prev_lsn, LogRecordType type, page_id_t cur_page_id, page_id_t prev_page_id)
+        : txn_id_(txn_id), prev_lsn_(prev_lsn), type_(type), cur_page_id_(cur_page_id), prev_page_id_(prev_page_id) {
         TINYDB_ASSERT(type == LogRecordType::INITPAGE, "Invalid Log Type");
-        size_ = HEADER_SIZE + sizeof(page_id_t);
+        size_ = HEADER_SIZE + sizeof(page_id_t) * 2;
     }
     
     /**
@@ -221,7 +221,8 @@ public:
                    prev_lsn_ == rhs.prev_lsn_ &&
                    txn_id_ == rhs.txn_id_ &&
                    lsn_ == rhs.lsn_ &&
-                   prev_page_id_ == rhs.prev_page_id_;
+                   prev_page_id_ == rhs.prev_page_id_ &&
+                   cur_page_id_ == rhs.cur_page_id_;
         case LogRecordType::INVALID:
             return true;
         default:
@@ -277,6 +278,8 @@ public:
         }
         case LogRecordType::INITPAGE: {
             serialize_header();
+            memcpy(storage, &cur_page_id_, sizeof(page_id_t));
+            storage += sizeof(page_id_t);
             memcpy(storage, &prev_page_id_, sizeof(page_id_t));
             break;
         }
@@ -335,8 +338,10 @@ public:
             return res;
         }
         case LogRecordType::INITPAGE: {
+            auto cur_page_id = *reinterpret_cast<const page_id_t *>(storage);
+            storage += sizeof(page_id_t);
             auto prev_page_id = *reinterpret_cast<const page_id_t *>(storage);
-            auto res = LogRecord(txn_id, prev_lsn, type, prev_page_id);
+            auto res = LogRecord(txn_id, prev_lsn, type, cur_page_id, prev_page_id);
             res.lsn_ = lsn;
             TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
             return res;
@@ -375,6 +380,7 @@ private:
     RID rid_;
 
     // for init page log record
+    page_id_t cur_page_id_{INVALID_PAGE_ID};
     page_id_t prev_page_id_{INVALID_PAGE_ID};
 };
 

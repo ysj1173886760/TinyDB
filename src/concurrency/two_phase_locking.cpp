@@ -182,7 +182,7 @@ void TwoPLManager::Update(TransactionContext *txn_context,
     }
     // restore the tuple when aborts
     context->RegisterAbortAction([=] {
-        TINYDB_ASSERT(table_info->table_->UpdateTuple(old_tuple, rid).IsOk(), "Failed to update");
+        TINYDB_ASSERT(table_info->table_->UpdateTuple(old_tuple, rid, context).IsOk(), "Failed to update");
     });
 }
 

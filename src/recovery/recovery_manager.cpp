@@ -43,6 +43,7 @@ void RecoveryManager::Redo() {
             auto log = LogRecord::DeserializeFrom(buffer + inner_offset);
             // remember the necessary information to retrieve log based on lsn
             lsn_mapping_[log.GetLSN()] = std::make_pair(offset + inner_offset, size);
+            // LOG_INFO("redo log %s", log.ToString().c_str());
             // redo the log if necessary
             RedoLog(log);
 
@@ -52,8 +53,8 @@ void RecoveryManager::Redo() {
     }
 }
 
+// should we inline this method inside LogRecord?
 void RecoveryManager::RedoLog(LogRecord &log_record) {
-    // should we inline this method inside LogRecord?
     switch (log_record.type_) {
     case LogRecordType::COMMIT:
     case LogRecordType::ABORT:
@@ -156,7 +157,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::INITPAGE: {
-        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        auto page = buffer_pool_manager_->FetchPage(log_record.cur_page_id_, false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -167,12 +168,15 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         }
 
         table_page->Init(page->GetPageId(), PAGE_SIZE, log_record.prev_page_id_);
-        auto prev_page = buffer_pool_manager_->FetchPage(log_record.prev_page_id_, false);
-        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(prev_page != nullptr, "");
-        auto prev_table_page = reinterpret_cast<TablePage *> (prev_page->GetData());
-        // overwrite next page id to make sure the link is set
-        prev_table_page->SetNextPageId(page->GetPageId());
-        buffer_pool_manager_->UnpinPage(prev_page->GetPageId(), true);
+        // if current page is not the first page, then we reset the link
+        if (log_record.prev_page_id_ != INVALID_PAGE_ID) {
+            auto prev_page = buffer_pool_manager_->FetchPage(log_record.prev_page_id_, false);
+            TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(prev_page != nullptr, "");
+            auto prev_table_page = reinterpret_cast<TablePage *> (prev_page->GetData());
+            // overwrite next page id to make sure the link is set
+            prev_table_page->SetNextPageId(page->GetPageId());
+            buffer_pool_manager_->UnpinPage(prev_page->GetPageId(), true);
+        }
 
         table_page->SetLSN(log_record.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
