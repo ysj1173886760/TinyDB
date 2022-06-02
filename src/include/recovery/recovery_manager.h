@@ -35,6 +35,10 @@ public:
         delete[] buffer;
     }
     
+    /**
+     * @brief 
+     * Perform the recovery procedure
+     */
     void ARIES();
 
 private:
