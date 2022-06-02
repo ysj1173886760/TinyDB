@@ -43,17 +43,10 @@ public:
      * @brief 
      * fetch a page though page id ignoring whether it's from disk or memory
      * @param page_id 
+     * @param outbound_is_error used in ReadPage in disk manager, check it for more details.
      * @return pointer pointing to corresponding page, or nullptr when we don't have more slots
      */
-    Page *FetchPage(page_id_t page_id);
-
-    /**
-     * @brief 
-     * fetch a page though page id, if page is not allocated yet, then we allocate it.
-     * @param page_id 
-     * @return Page* 
-     */
-    Page *FetchOrAllocatePage(page_id_t page_id);
+    Page *FetchPage(page_id_t page_id, bool outbound_is_error = false);
 
     /**
      * @brief 

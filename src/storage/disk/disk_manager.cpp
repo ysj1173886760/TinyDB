@@ -109,7 +109,7 @@ void DiskManager::DeallocatePage(page_id_t page_id) {
     deallocate_count_++;
 }
 
-void DiskManager::ReadPage(page_id_t pageId, char *data) {
+void DiskManager::ReadPage(page_id_t pageId, char *data, bool outbound_is_error) {
     // disable this check for now, we shall add it back 
     // once we figured out how to store the metadata
     // assert(pageId < next_page_id_);
@@ -119,36 +119,15 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
     // getFileSize everytime, really?
     // TODO: we need to cache it
     if (offset > GetFileSize(db_name_)) {
-        LOG_ERROR("read past end of file, page_id: %d", pageId);
+        if (outbound_is_error) {
+            LOG_ERROR("read past end of file, page_id: %d", pageId);
+        } else {
+            memset(data, 0, PAGE_SIZE);
+        }
         return;
     }
 
     // seekp and seekg works the same in file stream, so don't worry here
-    db_file_.seekp(offset);
-    db_file_.read(data, PAGE_SIZE);
-    if (db_file_.bad()) {
-        LOG_ERROR("I/O error while reading page %d", pageId);
-        return;
-    }
-
-    uint32_t readCount = db_file_.gcount();
-    if (readCount < PAGE_SIZE) {
-        LOG_ERROR("read less than a page, page_id: %d", pageId);
-        db_file_.clear();
-
-        // set those random data to 0
-        memset(data + readCount, 0, PAGE_SIZE - readCount);
-    }
-}
-
-void DiskManager::ReadPageOrZero(page_id_t pageId, char *data) {
-    int offset = pageId * PAGE_SIZE;
-    
-    if (offset > GetFileSize(db_name_)) {
-        memset(data, 0, PAGE_SIZE);
-        return;
-    }
-
     db_file_.seekp(offset);
     db_file_.read(data, PAGE_SIZE);
     if (db_file_.bad()) {

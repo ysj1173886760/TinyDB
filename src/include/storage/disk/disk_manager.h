@@ -48,17 +48,10 @@ public:
      * 
      * @param pageId id of the page you want to read
      * @param data buffer which will store the result
+     * @param outbound_is_error determine whether page out of bounds is an error. when this set to false, 
+     * we will return with an zero page when page id is out of bounds.
      */
-    void ReadPage(page_id_t pageId, char *data);
-
-    /**
-     * @brief 
-     * read the page from disk. the difference from ReadPage and this method is that 
-     * we won't get an error when page is out of bound, instead we will return with all zero
-     * @param pageId 
-     * @param data 
-     */
-    void ReadPageOrZero(page_id_t pageId, char *data);
+    void ReadPage(page_id_t pageId, char *data, bool outbound_is_error = true);
 
     /**
      * @brief allocate a new page

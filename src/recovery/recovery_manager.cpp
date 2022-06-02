@@ -63,7 +63,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         active_txn_[log_record.GetTxnId()] = log_record.GetLSN();
         break;
     case LogRecordType::INSERT: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -85,7 +85,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::MARKDELETE: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -103,7 +103,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::APPLYDELETE: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -119,7 +119,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::ROLLBACKDELETE: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -135,7 +135,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::UPDATE: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -156,7 +156,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         break;
     }
     case LogRecordType::INITPAGE: {
-        auto page = buffer_pool_manager_->FetchOrAllocatePage(log_record.GetRID().GetPageId());
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
         auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
@@ -167,7 +167,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
         }
 
         table_page->Init(page->GetPageId(), PAGE_SIZE, log_record.prev_page_id_);
-        auto prev_page = buffer_pool_manager_->FetchOrAllocatePage(log_record.prev_page_id_);
+        auto prev_page = buffer_pool_manager_->FetchPage(log_record.prev_page_id_, false);
         TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(prev_page != nullptr, "");
         auto prev_table_page = reinterpret_cast<TablePage *> (prev_page->GetData());
         // overwrite next page id to make sure the link is set
