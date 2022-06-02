@@ -28,10 +28,11 @@ enum class LogRecordType {
     APPLYDELETE,
     ROLLBACKDELETE,
     UPDATE,
+    INITPAGE,
     // txn related
     BEGIN,
     COMMIT,
-    ABORT,
+    ABORT,  // always keep abort the last one
 };
 
 /**
@@ -55,6 +56,11 @@ enum class LogRecordType {
  * ----------------------------------------------------------------------------------
  * | HEADER | tuple_rid | tuple_size | old_tuple_data | tuple_size | new_tuple_data |
  * ----------------------------------------------------------------------------------
+ * For init page type log record, i will not store prev page id since sooner doubly linked-list will be abandoned.
+ * Above statement is not true, since we still need this information to set the link from prev page to current page.
+ * -------------------------
+ * | HEADER | prev_page_id |
+ * -------------------------
  * 
  * sheep: i wonder do we need to store tuple size? for insert and delete type log since we can
  * simply derive it from total size
@@ -78,6 +84,21 @@ public:
         TINYDB_ASSERT(type == LogRecordType::BEGIN ||
                       type == LogRecordType::COMMIT ||
                       type == LogRecordType::ABORT, "Invalid Log Type");
+    }
+
+
+    /**
+     * @brief
+     * Constructor for init page log record
+     * @param txn_id 
+     * @param prev_lsn 
+     * @param type 
+     * @param prev_page_id 
+     */
+    LogRecord(txn_id_t txn_id, lsn_t prev_lsn, LogRecordType type, page_id_t prev_page_id)
+        : txn_id_(txn_id), prev_lsn_(prev_lsn), type_(type), prev_page_id_(prev_page_id) {
+        TINYDB_ASSERT(type == LogRecordType::INITPAGE, "Invalid Log Type");
+        size_ = HEADER_SIZE + sizeof(page_id_t);
     }
     
     /**
@@ -194,6 +215,12 @@ public:
                    rid_ == rhs.rid_ &&
                    old_tuple_ == rhs.old_tuple_ &&
                    new_tuple_ == rhs.new_tuple_;
+        case LogRecordType::INITPAGE:
+            return size_ == rhs.size_ &&
+                   prev_lsn_ == rhs.prev_lsn_ &&
+                   txn_id_ == rhs.txn_id_ &&
+                   lsn_ == rhs.lsn_ &&
+                   prev_page_id_ == rhs.prev_page_id_;
         case LogRecordType::INVALID:
             return true;
         default:
@@ -247,6 +274,11 @@ public:
             new_tuple_.SerializeToWithSize(storage);
             break;
         }
+        case LogRecordType::INITPAGE: {
+            serialize_header();
+            memcpy(storage, &prev_page_id_, sizeof(page_id_t));
+            break;
+        }
         default:
             TINYDB_ASSERT(false, "Invalid Log Type");
         }
@@ -265,9 +297,10 @@ public:
         storage += sizeof(lsn_t);
         LogRecordType type = *reinterpret_cast<const LogRecordType *>(storage);
         storage += sizeof(LogRecordType);
-        
+
         assert(type != LogRecordType::INVALID);
         // then deserialize data based on type
+        // WARNING!!! don't forget to set lsn since constructor won't provide parameter to initialize lsn
         switch (type) {
         case LogRecordType::COMMIT:
         case LogRecordType::ABORT:
@@ -296,6 +329,13 @@ public:
             storage += old_tuple.GetSerializationSize();
             auto new_tuple = Tuple::DeserializeFromWithSize(storage);
             auto res = LogRecord(txn_id, prev_lsn, type, rid, old_tuple, new_tuple);
+            res.lsn_ = lsn;
+            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
+            return res;
+        }
+        case LogRecordType::INITPAGE: {
+            auto prev_page_id = *reinterpret_cast<const page_id_t *>(storage);
+            auto res = LogRecord(txn_id, prev_lsn, type, prev_page_id);
             res.lsn_ = lsn;
             TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
             return res;
@@ -333,6 +373,8 @@ private:
     // coallpse insert_rid_, delete_rid_ and update_rid_ to rid_;
     RID rid_;
 
+    // for init page log record
+    page_id_t prev_page_id_{INVALID_PAGE_ID};
 };
 
 }
