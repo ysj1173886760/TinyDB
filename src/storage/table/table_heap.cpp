@@ -56,7 +56,7 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext
             // initialize the new page
             new_page->WLatch();
             table_page->SetNextPageId(new_page->GetPageId());
-            new_table_page->Init(new_page->GetPageId(), PAGE_SIZE, cur_page->GetPageId());
+            new_table_page->Init(new_page->GetPageId(), PAGE_SIZE, cur_page->GetPageId(), txn, log_manager_);
             // release the previous page
             cur_page->WUnlatch();
             // since we've modified the next page id, we need to flush it back to disk

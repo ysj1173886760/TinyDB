@@ -19,7 +19,12 @@ namespace TinyDB {
 void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_id, TransactionContext *txn, LogManager *log_manager) {
     SetPageId(page_id);
 
-    // TODO: loggging this
+    if (log_manager != nullptr) {
+        TINYDB_ASSERT(txn != nullptr, "txn context is null");
+        auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::INITPAGE, prev_page_id);
+        auto lsn = log_manager->AppendLogRecord(log);
+        txn->SetPrevLSN(lsn);
+    }
 
     // we are double-linked list
     // and we are at the tail of the list
