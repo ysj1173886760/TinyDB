@@ -141,6 +141,31 @@ void DiskManager::ReadPage(page_id_t pageId, char *data) {
     }
 }
 
+void DiskManager::ReadPageOrZero(page_id_t pageId, char *data) {
+    int offset = pageId * PAGE_SIZE;
+    
+    if (offset > GetFileSize(db_name_)) {
+        memset(data, 0, PAGE_SIZE);
+        return;
+    }
+
+    db_file_.seekp(offset);
+    db_file_.read(data, PAGE_SIZE);
+    if (db_file_.bad()) {
+        LOG_ERROR("I/O error while reading page %d", pageId);
+        return;
+    }
+
+    uint32_t readCount = db_file_.gcount();
+    if (readCount < PAGE_SIZE) {
+        LOG_ERROR("read less than a page, page_id: %d", pageId);
+        db_file_.clear();
+
+        // set those random data to 0
+        memset(data + readCount, 0, PAGE_SIZE - readCount);
+    }
+}
+
 void DiskManager::WritePage(page_id_t pageId, const char *data) {
     // assert(pageId < next_page_id_);
 

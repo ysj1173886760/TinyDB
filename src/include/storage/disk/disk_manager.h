@@ -52,6 +52,15 @@ public:
     void ReadPage(page_id_t pageId, char *data);
 
     /**
+     * @brief 
+     * read the page from disk. the difference from ReadPage and this method is that 
+     * we won't get an error when page is out of bound, instead we will return with all zero
+     * @param pageId 
+     * @param data 
+     */
+    void ReadPageOrZero(page_id_t pageId, char *data);
+
+    /**
      * @brief allocate a new page
      * 
      * @return page_id_t the id of allocated page

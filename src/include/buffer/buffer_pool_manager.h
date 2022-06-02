@@ -49,6 +49,14 @@ public:
 
     /**
      * @brief 
+     * fetch a page though page id, if page is not allocated yet, then we allocate it.
+     * @param page_id 
+     * @return Page* 
+     */
+    Page *FetchOrAllocatePage(page_id_t page_id);
+
+    /**
+     * @brief 
      * unpin the page. Now it can be swapped out from memory.
      * if we've modified it, then is_dirty should set to true
      * @param page_id 

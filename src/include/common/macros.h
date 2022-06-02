@@ -12,7 +12,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#include "common/macros.h"
+#include "common/exception.h"
 
 #include <cassert>
 #include <stdexcept>

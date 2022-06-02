@@ -68,6 +68,7 @@ enum class LogRecordType {
 
 class LogRecord {
     friend class LogManager;
+    friend class RecoveryManager;
 
 public:
     LogRecord() = default;

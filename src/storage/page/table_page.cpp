@@ -24,6 +24,7 @@ void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_
         auto log = LogRecord(txn->GetTxnId(), txn->GetPrevLSN(), LogRecordType::INITPAGE, prev_page_id);
         auto lsn = log_manager->AppendLogRecord(log);
         txn->SetPrevLSN(lsn);
+        SetLSN(lsn);
     }
 
     // we are double-linked list

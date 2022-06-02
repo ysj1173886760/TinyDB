@@ -86,6 +86,55 @@ Page *BufferPoolManager::FetchPage(page_id_t page_id) {
     return page;
 }
 
+Page *BufferPoolManager::FetchOrAllocatePage(page_id_t page_id) {
+    std::lock_guard<std::mutex> guard(latch_);
+
+    // if the page is cached
+    auto it = page_table_.find(page_id);
+    if (it != page_table_.end()) {
+        auto page = &pages_[it->second];
+        // pin this frame
+        replacer_->Pin(it->second);
+        // increment the pin count
+        page->pin_count_ += 1;
+        return page;
+    }
+
+    // allocate a new slot
+    frame_id_t frame_id = -1;
+    if (!free_list_.empty()) {
+        // we will use free slot first
+        frame_id = free_list_.back();
+        free_list_.pop_back();
+    } else {
+        // otherwise, let's evict a page and reuse it's slot
+        if (!replacer_->Evict(&frame_id)) {
+            // maybe we should throw runtime error?
+            // because this means there is no more slot.
+            // or sleep on conditional variable waiting for a slot
+            return nullptr;
+        }
+
+        auto page = &pages_[frame_id];
+        if (page->is_dirty_) {
+            disk_manager_->WritePage(page->GetPageId(), page->GetData());
+        }
+        // evict this page
+        page_table_.erase(page->GetPageId());
+    }
+
+    page_table_[page_id] = frame_id;
+
+    auto page = &pages_[frame_id];
+    // initialize the in-memory page representation
+    page->page_id_ = page_id;
+    page->is_dirty_ = false;
+    page->pin_count_ = 1;
+    disk_manager_->ReadPageOrZero(page_id, page->data_);
+
+    return page;
+}
+
 bool BufferPoolManager::UnpinPage(page_id_t page_id, bool is_dirty) {
     std::lock_guard<std::mutex> guard(latch_);
     // failed to find this page
