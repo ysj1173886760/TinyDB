@@ -40,10 +40,10 @@ enum class LogRecordType {
  * Comments from bustub:
  * For every write operation on the table page, you should write ahead a corresponding log record.
  * 
- * For EACH log record, HEADER is like (5 fields in common, 20 bytes in total)
- * --------------------------------------------
- * | size | LSN | txnID | prevLSN | LogType |
- * --------------------------------------------
+ * Log HEADER 
+ * --------------------------------------------------
+ * | size | LSN | txnID | prevLSN | LogType | IsCLR |
+ * --------------------------------------------------
  * For insert type log record
  * --------------------------------------------------------------
  * | HEADER | tuple_rid | tuple_size | tuple_data(char[] array) |
@@ -179,6 +179,14 @@ public:
         lsn_ = lsn;
     }
 
+    bool IsCLR() {
+        return is_clr_;
+    }
+
+    void SetCLR() {
+        is_clr_ = true;
+    }
+
     // for debug purpose
     bool operator==(const LogRecord &rhs) const {
         if (type_ != rhs.type_) {
@@ -301,7 +309,10 @@ public:
         storage += sizeof(lsn_t);
         LogRecordType type = *reinterpret_cast<const LogRecordType *>(storage);
         storage += sizeof(LogRecordType);
+        bool is_clr = *reinterpret_cast<const bool *>(storage);
+        storage += sizeof(bool);
 
+        LogRecord res;
         assert(type != LogRecordType::INVALID);
         // then deserialize data based on type
         // WARNING!!! don't forget to set lsn since constructor won't provide parameter to initialize lsn
@@ -309,10 +320,8 @@ public:
         case LogRecordType::COMMIT:
         case LogRecordType::ABORT:
         case LogRecordType::BEGIN: {
-            auto res = LogRecord(txn_id, prev_lsn, type);
-            res.lsn_ = lsn;
-            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
-            return res;
+            res = LogRecord(txn_id, prev_lsn, type);
+            break;
         }
         case LogRecordType::INSERT:
         case LogRecordType::APPLYDELETE:
@@ -321,10 +330,8 @@ public:
             auto rid = RID::DeserializeFrom(storage);
             storage += rid.GetSerializationSize();
             auto tuple = Tuple::DeserializeFromWithSize(storage);
-            auto res = LogRecord(txn_id, prev_lsn, type, rid, tuple);
-            res.lsn_ = lsn;
-            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
-            return res;
+            res = LogRecord(txn_id, prev_lsn, type, rid, tuple);
+            break;
         }
         case LogRecordType::UPDATE: {
             auto rid = RID::DeserializeFrom(storage);
@@ -332,27 +339,28 @@ public:
             auto old_tuple = Tuple::DeserializeFromWithSize(storage);
             storage += old_tuple.GetSerializationSize();
             auto new_tuple = Tuple::DeserializeFromWithSize(storage);
-            auto res = LogRecord(txn_id, prev_lsn, type, rid, old_tuple, new_tuple);
-            res.lsn_ = lsn;
-            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
-            return res;
+            res = LogRecord(txn_id, prev_lsn, type, rid, old_tuple, new_tuple);
+            break;
         }
         case LogRecordType::INITPAGE: {
             auto cur_page_id = *reinterpret_cast<const page_id_t *>(storage);
             storage += sizeof(page_id_t);
             auto prev_page_id = *reinterpret_cast<const page_id_t *>(storage);
-            auto res = LogRecord(txn_id, prev_lsn, type, cur_page_id, prev_page_id);
-            res.lsn_ = lsn;
-            TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
-            return res;
+            res = LogRecord(txn_id, prev_lsn, type, cur_page_id, prev_page_id);
+            break;
         }
         default:
             TINYDB_ASSERT(false, "Invalid Log Type");
         }
+
+        res.lsn_ = lsn;
+        res.is_clr_ = is_clr;
+        TINYDB_ASSERT(size == res.GetSize(), "Deserialization LogRecord Failed");
+        return res;
     }
 
     static constexpr uint32_t HEADER_SIZE = 
-        sizeof(uint32_t) + sizeof(lsn_t) + sizeof(txn_id_t) + sizeof(lsn_t) + sizeof(LogRecordType);
+        sizeof(uint32_t) + sizeof(lsn_t) + sizeof(txn_id_t) + sizeof(lsn_t) + sizeof(LogRecordType) + sizeof(bool);
 
 private:
     // length of log record, for serialization
@@ -362,6 +370,7 @@ private:
     txn_id_t txn_id_{INVALID_TXN_ID};
     lsn_t prev_lsn_{INVALID_LSN};
     LogRecordType type_{LogRecordType::INVALID};
+    bool is_clr_{false};
 
     // for insert type log record
     // RID insert_rid_;

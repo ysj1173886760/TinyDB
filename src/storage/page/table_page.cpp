@@ -98,6 +98,33 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, std::function<bool(con
     return true;
 }
 
+bool TablePage::InsertTupleWithRID(const Tuple &tuple, const RID &rid) {
+    TINYDB_ASSERT(tuple.GetSize() > 0, "you shouldn't insert empty tuple");
+
+    // check whether we can store this tuple
+    if (GetFreeSpaceRemaining() < tuple.GetSize()) {
+        return false;
+    }
+
+    if (rid.GetSlotId() >= GetTupleCount()) {
+        return false;
+    }
+
+    uint32_t tuple_size = GetTupleSize(rid.GetSlotId());
+    if (tuple_size != 0) {
+        return false;
+    }
+
+    SetFreeSpacePointer(GetFreeSpacePointer() - tuple.GetSize());
+    // serialize it into the page
+    tuple.SerializeTo(GetRawPointer() + GetFreeSpacePointer());
+
+    // then update the slot pointer and size
+    SetTupleOffset(rid.GetSlotId(), GetFreeSpacePointer());
+    SetTupleSize(rid.GetSlotId(), tuple.GetSize());
+    return true;
+}
+
 bool TablePage::MarkDelete(const RID &rid, TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(rid.GetPageId() == GetPageId(), "Wrong page");
     uint32_t slot_id = rid.GetSlotId();

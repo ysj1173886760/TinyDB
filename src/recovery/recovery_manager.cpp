@@ -15,6 +15,8 @@
 #include "common/exception.h"
 #include "storage/page/table_page.h"
 
+#include <set>
+
 namespace TinyDB {
 
 void RecoveryManager::ARIES() {
@@ -30,17 +32,20 @@ void RecoveryManager::Scan() {
 void RecoveryManager::Redo() {
     // currently, we only support recovery from empty database, so there is no dirty page
     int offset = 0;
-    while (disk_manager_->ReadLog(buffer, LOG_BUFFER_SIZE, offset)) {
+    int max_lsn = INVALID_LSN;
+    while (disk_manager_->ReadLog(buffer_, LOG_BUFFER_SIZE, offset)) {
         int inner_offset = 0;
         while (true) {
             // first probe the size
-            uint32_t size = *reinterpret_cast<const uint32_t *>(buffer + inner_offset);
+            uint32_t size = *reinterpret_cast<const uint32_t *>(buffer_ + inner_offset);
             // size = 0 means there is no more log records
             // we shall stop when buffer is empty or there is no more log records
             if (size == 0 || size + inner_offset > LOG_BUFFER_SIZE) {
                 break;
             }
-            auto log = LogRecord::DeserializeFrom(buffer + inner_offset);
+            auto log = LogRecord::DeserializeFrom(buffer_ + inner_offset);
+            // update max lsn
+            max_lsn = std::max(max_lsn, log.GetLSN());
             // remember the necessary information to retrieve log based on lsn
             lsn_mapping_[log.GetLSN()] = std::make_pair(offset + inner_offset, size);
             // LOG_INFO("redo log %s", log.ToString().c_str());
@@ -51,10 +56,14 @@ void RecoveryManager::Redo() {
         }
         offset += inner_offset;
     }
+    log_manager_->SetNextLsn(max_lsn + 1);
 }
 
 // should we inline this method inside LogRecord?
 void RecoveryManager::RedoLog(LogRecord &log_record) {
+    // record last lsn
+    active_txn_[log_record.GetTxnId()] = log_record.GetLSN();
+
     switch (log_record.type_) {
     case LogRecordType::COMMIT:
     case LogRecordType::ABORT:
@@ -188,6 +197,166 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
 }
 
 void RecoveryManager::Undo() {
+    // abort all the active transactions
+    // at every step in undo phase, we need to execute the log record with max lsn in undo-list
+    std::set<lsn_t> next_lsn;
+    for (auto &[key, lsn]: active_txn_) {
+        next_lsn.insert(lsn);
+    }
+
+    // currently, i'm just reading a log record at a time.
+    // We can use batch reading for further optimization
+    while (!next_lsn.empty()) {
+        auto lsn = *next_lsn.rbegin();
+        // first fetch the offset and size
+        auto [offset, size] = lsn_mapping_[lsn];
+        disk_manager_->ReadLog(buffer_, offset, size);
+        // deserialize the log
+        auto log = LogRecord::DeserializeFrom(buffer_);
+        // undo log
+        UndoLog(log);
+        // erase current lsn and insert the previous lsn
+        next_lsn.erase(lsn);
+        if (log.prev_lsn_ != INVALID_LSN) {
+            next_lsn.insert(log.prev_lsn_);
+        }
+    }
+}
+
+void RecoveryManager::UndoLog(LogRecord &log_record) {
+    // redo only, skip this log
+    if (log_record.IsCLR()) {
+        return;
+    }
+
+    switch (log_record.type_) {
+    case LogRecordType::BEGIN:
+        // do nothing
+        break;
+    case LogRecordType::INSERT: {
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        table_page->ApplyDelete(log_record.GetRID());
+        // append CLR
+        Tuple dummy_tuple;
+        auto log = LogRecord(log_record.GetTxnId(), 
+                             log_record.GetPrevLSN(), 
+                             LogRecordType::APPLYDELETE, 
+                             log_record.GetRID(), 
+                             dummy_tuple);
+        log.SetCLR();
+        log_manager_->AppendLogRecord(log);
+        // update in-memory lsn
+        table_page->SetLSN(log.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::MARKDELETE: {
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        table_page->RollbackDelete(log_record.GetRID());
+        // append CLR
+        Tuple dummy_tuple;
+        auto log = LogRecord(log_record.GetTxnId(), 
+                             log_record.GetPrevLSN(), 
+                             LogRecordType::ROLLBACKDELETE, 
+                             log_record.GetRID(), 
+                             dummy_tuple);
+        log.SetCLR();
+        log_manager_->AppendLogRecord(log);
+        // update lsn
+        table_page->SetLSN(log.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::APPLYDELETE: {
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        // this could fail. because while committing, we might delete some tuples and it will release some free space,
+        // then whole database is down, and we need to rollback previous deletion, it could be the case that the free space 
+        // previously released by us was used by other transactions, and they commits. So even we are holding the lock on that tuple,
+        // we still might failed to insert the tuple due to the lack of space.
+        // currently, as long as there is an pending "ApplyDelete" operation, we will skip this page
+
+        // FIXME: this implementation is not robust, since i make assumption based on 2PL
+        if (!table_page->InsertTupleWithRID(log_record.GetNewTuple(), log_record.GetRID())) {
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
+        }
+        // append CLR
+        auto log = LogRecord(log_record.GetTxnId(), 
+                             log_record.GetPrevLSN(), 
+                             LogRecordType::INSERT, 
+                             log_record.GetRID(), 
+                             log_record.GetNewTuple());
+        log.SetCLR();
+        log_manager_->AppendLogRecord(log);
+        // update lsn
+        table_page->SetLSN(log.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::ROLLBACKDELETE: {
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+        if (!table_page->MarkDelete(log_record.GetRID())) {
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
+        }
+        // append CLR
+        Tuple dummy_tuple;
+        auto log = LogRecord(log_record.GetTxnId(), 
+                             log_record.GetPrevLSN(), 
+                             LogRecordType::MARKDELETE, 
+                             log_record.GetRID(), 
+                             dummy_tuple);
+        log.SetCLR();
+        log_manager_->AppendLogRecord(log);
+        // update lsn
+        table_page->SetLSN(log.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::UPDATE: {
+        auto page = buffer_pool_manager_->FetchPage(log_record.GetRID().GetPageId(), false);
+        TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+        auto table_page = reinterpret_cast<TablePage *> (page->GetData());
+
+
+        Tuple dummy_tuple;
+        if (!table_page->UpdateTuple(log_record.GetOldTuple(), &dummy_tuple, log_record.GetRID())) {
+            THROW_UNKNOWN_TYPE_EXCEPTION("Unknown Failure while recovering");
+        }
+        TINYDB_ASSERT(dummy_tuple == log_record.GetNewTuple(), "LogicError");
+        // clear dummy tuple
+        dummy_tuple = Tuple();
+        auto log = LogRecord(log_record.GetTxnId(), 
+                             log_record.GetPrevLSN(), 
+                             LogRecordType::UPDATE, 
+                             log_record.GetRID(), 
+                             dummy_tuple, 
+                             log_record.GetOldTuple());
+        log.SetCLR();
+        log_manager_->AppendLogRecord(log);
+        // update lsn
+        table_page->SetLSN(log.GetLSN());
+        buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        break;
+    }
+    case LogRecordType::INITPAGE: {
+        // don't undo init page since it's metadata change
+        // do nothing
+        break;
+    }
+    default:
+        TINYDB_ASSERT(false, "Invalid Log Type");
+    }
 
 }
 

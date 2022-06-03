@@ -99,6 +99,16 @@ public:
      */
     bool InsertTuple(const Tuple &tuple, RID *rid, std::function<bool(const RID &)> condition = nullptr,
                      TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
+    
+    /**
+     * @brief 
+     * Insert a tuple into current page with specific rid, only used in recovery manager
+     * @param tuple 
+     * @param rid 
+     * @return true 
+     * @return false 
+     */
+    bool InsertTupleWithRID(const Tuple &tuple, const RID &rid);
 
     /**
      * @brief 

@@ -71,6 +71,15 @@ public:
         return os.str();
     }
 
+    /**
+     * @brief
+     * used to reset the max lsn
+     * @param lsn 
+     */
+    void SetNextLsn(lsn_t lsn) {
+        next_lsn_ = lsn;
+    }
+
 private:
     // helper function
     void FlushThread();

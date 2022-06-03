@@ -14,6 +14,7 @@
 
 #include "buffer/buffer_pool_manager.h"
 #include "storage/disk/disk_manager.h"
+#include "recovery/log_manager.h"
 #include "recovery/log_record.h"
 
 #include <unordered_map>
@@ -26,13 +27,13 @@ namespace TinyDB {
  */
 class RecoveryManager {
 public:
-    RecoveryManager(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager)
-        : disk_manager_(disk_manager), buffer_pool_manager_(buffer_pool_manager) {
-        buffer = new char[LOG_BUFFER_SIZE];
+    RecoveryManager(DiskManager *disk_manager, BufferPoolManager *buffer_pool_manager, LogManager *log_manager)
+        : disk_manager_(disk_manager), buffer_pool_manager_(buffer_pool_manager), log_manager_(log_manager) {
+        buffer_ = new char[LOG_BUFFER_SIZE];
     }
 
     ~RecoveryManager() {
-        delete[] buffer;
+        delete[] buffer_;
     }
     
     /**
@@ -47,12 +48,14 @@ private:
     void Redo();
     void Undo();
     void RedoLog(LogRecord &log_record);
+    void UndoLog(LogRecord &log_record);
 
     // buffer used to store log data
-    char *buffer{nullptr};
+    char *buffer_{nullptr};
 
     DiskManager *disk_manager_;
     BufferPoolManager *buffer_pool_manager_;
+    LogManager *log_manager_;
     // we need to keep track of what txn we need to undo
     // txn -> last lsn
     std::unordered_map<txn_id_t, lsn_t> active_txn_;

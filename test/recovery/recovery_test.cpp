@@ -139,7 +139,7 @@ TEST(RecoveryTest, RedoTest) {
         }
 
         // perform recovery
-        auto rm = new RecoveryManager(dm, bpm);
+        auto rm = new RecoveryManager(dm, bpm, lm);
         rm->ARIES();
 
         // after recovery, try to scan the tuple
@@ -290,7 +290,7 @@ TEST(RecoveryTest, ConcurrentRedoTest) {
         }
 
         // perform recovery
-        auto rm = new RecoveryManager(dm, bpm);
+        auto rm = new RecoveryManager(dm, bpm, lm);
         rm->ARIES();
 
         // after recovery, try to scan the tuple
@@ -454,7 +454,7 @@ TEST(RecoveryTest, AbortRedoTest) {
         }
 
         // perform recovery
-        auto rm = new RecoveryManager(dm, bpm);
+        auto rm = new RecoveryManager(dm, bpm, lm);
         rm->ARIES();
 
         // after recovery, try to scan the tuple
