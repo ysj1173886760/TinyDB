@@ -20,7 +20,7 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [x] execution
 - [x] transaction
 - [x] logger
-- [ ] finish database kernel
+- [x] finish database kernel
 - [ ] parser
 - [ ] planner
 - [ ] support TPCC
@@ -33,6 +33,7 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [ ] B+Tree may still contains bugs, especially when handling deleted pages, pinned pages and dirty pages. After we've implemented page management, we shall use it to check whether B+Tree will give the deleted page back safely.
 - [ ] Figure out how to manage expression tree, currently i just stored the raw pointer, and delete all expressions i've created at the end of scope. Storing raw pointer allows us to reuse the expression, but makes creating expression tree and freeing it more complicated. So maybe we should use something like unique_pointer to manage expression tree just like what i did in executor.
 - [ ] Find a way to automatically generate tuples and tables that can support strong tests. Currently i just hardcode the tuple value. Or maybe we can construct some ad-hoc test cases, i.e. table for join only, table for updation only.
+- [ ] Currently, we cann't handle very correctly the faiure while some transaction is committing. This could be resolved by multi-version storage engine since we can perform deletion in background. In current implementation, since i'm performing in-place deletion, there is no good way to handle the atomic deletion. A possible appoach would be to use some special mark and transaction id to indicate the tuple was deleted, and launch background thread periodically to perform garbage collection.
 
 # Design Choices
 
