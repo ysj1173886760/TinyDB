@@ -62,7 +62,6 @@ void LogManager::FlushThread() {
         disk_manager_->WriteLog(flush_buffer, flush_size);
         // store persistent_lsn
         persistent_lsn_.store(lsn);
-        // TODO: set need flush to false then wakeup the Flush call
         // i think we should use lsn to determine it
         // a good way to handle this would be to register future/promise into a map
         // currently, i chose to use busy waiting

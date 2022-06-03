@@ -16,7 +16,7 @@
 
 namespace TinyDB {
 
-Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn, const std::function<void(const RID &)> &callback) {
+Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn, const std::function<bool(const RID &)> &condition) {
     // we couldn't store it anyway
     if (tuple.GetSize() + TablePage::SIZE_TABLE_PAGE_HEADER + TablePage::SIZE_SLOT > PAGE_SIZE) {
         THROW_NOT_IMPLEMENTED_EXCEPTION("TinyDB Couldn't support very large tuple");
@@ -31,7 +31,7 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext
 
     cur_page->WLatch();
     
-    while (!table_page->InsertTuple(tuple, rid, txn, log_manager_)) {
+    while (!table_page->InsertTuple(tuple, rid, condition, txn, log_manager_)) {
         auto next_page_id = table_page->GetNextPageId();
         
         // if next page is a valid page
@@ -65,11 +65,6 @@ Result<> TableHeap::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext
         }
 
         table_page = reinterpret_cast<TablePage *> (cur_page->GetData());
-    }
-
-    // callback, acquire the ownership of newly inserted tuple
-    if (callback) {
-        callback(*rid);
     }
 
     // insertion is done
@@ -128,9 +123,8 @@ Result<> TableHeap::UpdateTuple(const Tuple &tuple, const RID &rid, TransactionC
 
 void TableHeap::ApplyDelete(const RID &rid, TransactionContext *txn) {
     auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
-    if (page == nullptr) {
-        return;
-    }
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
     page->WLatch();
@@ -143,9 +137,8 @@ void TableHeap::ApplyDelete(const RID &rid, TransactionContext *txn) {
 // refactor is needed
 void TableHeap::RollbackDelete(const RID &rid, TransactionContext *txn) {
     auto page = buffer_pool_manager_->FetchPage(rid.GetPageId());
-    if (page == nullptr) {
-        return;
-    }
+    TINYDB_CHECK_OR_THROW_OUT_OF_MEMORY_EXCEPTION(page != nullptr, "");
+
     auto table_page = reinterpret_cast<TablePage *> (page->GetData());
 
     page->WLatch();

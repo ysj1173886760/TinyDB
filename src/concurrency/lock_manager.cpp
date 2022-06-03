@@ -354,6 +354,16 @@ void LockManager::RunCycleDetection() {
                 }
             }
 
+            // LOG_INFO("Printing Lock Info");
+            // for (const auto &[rid, lock_queue] : lock_table_) {
+            //     for (const auto &lock_request : lock_queue.request_queue_) {
+            //         if (lock_request.granted_) {
+            //             LOG_INFO("%d is holding lock on %s with %d mode", lock_request.txn_id_, rid.ToString().c_str(), lock_request.lock_mode_);
+            //             break;
+            //         }
+            //     }
+            // }
+
             // LOG_INFO("print graph:");
             // for (const auto &[txn_id, list] : waits_for) {
             //     for (const auto &to : list) {

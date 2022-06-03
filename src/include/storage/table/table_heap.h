@@ -96,11 +96,13 @@ public:
      * @param tuple tuple to be inserted
      * @param rid rid of new tuple
      * @param txn txn context
-     * @param callback callback function to be called after the insertion is done. this is used for 
-     * 2PL concurrency control protocols since we need to acquire the lock right after we inserted a new tuple
+     * @param condition to determine whether insertion can be done. We can't just find a empty slot then place the new tuple
+     * since this slot might be owned by other active transaction.
+     * So we will insert the tuple only when we have ownership on that empty slot
      * @return true when insertion succeed
      */
-    Result<> InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn = nullptr, const std::function<void(const RID &)> &callback = nullptr);
+    Result<> InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn = nullptr, 
+        const std::function<bool(const RID &)> &condition = nullptr);
 
     /**
      * @brief 

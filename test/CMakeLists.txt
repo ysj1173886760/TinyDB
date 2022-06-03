@@ -9,6 +9,15 @@ else()
     message(STATUS " tinydb/test found valgrind at ${VALGRIND_BIN}")
 endif()
 
+set(VALGRIND_OPTIONS
+        --error-exitcode=1                      # if leaks are detected, return nonzero value
+        # --gen-suppressions=all  # uncomment for leak suppression syntax
+        --leak-check=full                       # detailed leak information
+        --soname-synonyms=somalloc=*jemalloc*   # also intercept jemalloc
+        --trace-children=yes                    # trace child processes
+        --track-origins=yes                     # track origin of uninitialized values
+        )
+
 # "make unittests"
 ##########################################
 add_custom_target(show-tests COMMAND ${CMAKE_CTEST_COMMAND} --show-only)

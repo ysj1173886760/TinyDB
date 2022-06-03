@@ -36,7 +36,8 @@ void TablePage::Init(page_id_t page_id, uint32_t page_size, page_id_t prev_page_
     SetTupleCount(0);
 }
 
-bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *txn, LogManager *log_manager) {
+bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, std::function<bool(const RID &)> condition, 
+                            TransactionContext *txn, LogManager *log_manager) {
     TINYDB_ASSERT(tuple.GetSize() > 0, "you shouldn't insert empty tuple");
 
     // check whether we can store this tuple
@@ -59,6 +60,11 @@ bool TablePage::InsertTuple(const Tuple &tuple, RID *rid, TransactionContext *tx
     // If there is no more empty slot, then we need to recheck whether there is space left
     // for us to store tuple and one more slot
     if (slot_id == tuple_cnt && GetFreeSpaceRemaining() < tuple.GetSize() + SIZE_SLOT) {
+        return false;
+    }
+
+    // check the condition
+    if (condition != nullptr && !condition(RID(GetPageId(), slot_id))) {
         return false;
     }
 

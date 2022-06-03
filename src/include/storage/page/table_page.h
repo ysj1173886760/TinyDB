@@ -97,7 +97,7 @@ public:
      * @param rid RID indicating tuple RID
      * @return true when insertion is succeed. i.e. there is enough space
      */
-    bool InsertTuple(const Tuple &tuple, RID *rid, 
+    bool InsertTuple(const Tuple &tuple, RID *rid, std::function<bool(const RID &)> condition = nullptr,
                      TransactionContext *context = nullptr, LogManager *log_manager = nullptr);
 
     /**

@@ -78,8 +78,8 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
     // capture lock manager and txn context
     // make an intermediate copy, since cpp doesn't allow us to capture member variable
     auto lock_manager = lock_manager_.get();
-    std::function<void(const RID &)> callback = [lock_manager, context](const RID &rid) {
-        lock_manager->LockExclusive(context, rid);
+    std::function<bool(const RID &)> callback = [lock_manager, context](const RID &rid) {
+        return lock_manager->TryLockExclusive(context, rid).IsOk();
     };
 
     auto res = table_info->table_->InsertTuple(tuple, rid, context, callback);
@@ -87,10 +87,11 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
         // we abort the transaction
         throw TransactionAbortException(context->GetTxnId(), "Failed to insert tuple");
     }
-    // we should already holding the exclusive lock
-    TINYDB_ASSERT(context->IsExclusiveLocked(*rid) != 0, "we should have acquired exclusive lock on new tuple");
 
     auto tuple_rid = *rid;
+    // we should already holding the exclusive lock
+    TINYDB_ASSERT(context->IsExclusiveLocked(tuple_rid) != 0, "we should have acquired exclusive lock on new tuple");
+
     // insert index directly, and remove these entries when we aborted
     auto indexes = table_info->GetIndexes();
     for (auto index_info : indexes) {
@@ -103,6 +104,10 @@ void TwoPLManager::Insert(TransactionContext *txn_context, const Tuple &tuple, R
             index->DeleteEntryTupleSchema(tuple, tuple_rid);
         });
     }
+    context->RegisterAbortAction([=]() {
+        TINYDB_ASSERT(context->IsExclusiveLocked(tuple_rid) != 0, "we should have acquired exclusive lock on new tuple");
+        table_info->table_->ApplyDelete(tuple_rid, context);
+    });
 
     auto t2 = std::chrono::steady_clock::now();
     insert_time_.fetch_add(std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count());
