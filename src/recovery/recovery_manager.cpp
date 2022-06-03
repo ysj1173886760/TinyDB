@@ -199,6 +199,7 @@ void RecoveryManager::RedoLog(LogRecord &log_record) {
 void RecoveryManager::Undo() {
     // abort all the active transactions
     // at every step in undo phase, we need to execute the log record with max lsn in undo-list
+    LOG_INFO("Start Undo Phase, %ld txn need to be aborted", active_txn_.size());
     std::set<lsn_t> next_lsn;
     for (auto &[key, lsn]: active_txn_) {
         next_lsn.insert(lsn);
@@ -210,7 +211,7 @@ void RecoveryManager::Undo() {
         auto lsn = *next_lsn.rbegin();
         // first fetch the offset and size
         auto [offset, size] = lsn_mapping_[lsn];
-        disk_manager_->ReadLog(buffer_, offset, size);
+        disk_manager_->ReadLog(buffer_, size, offset);
         // deserialize the log
         auto log = LogRecord::DeserializeFrom(buffer_);
         // undo log
@@ -220,6 +221,12 @@ void RecoveryManager::Undo() {
         if (log.prev_lsn_ != INVALID_LSN) {
             next_lsn.insert(log.prev_lsn_);
         }
+    }
+
+    // after redo phase is done, write abort record
+    for (auto &[txn_id, lsn]: active_txn_) {
+        auto log = LogRecord(txn_id, lsn, LogRecordType::ABORT);
+        log_manager_->AppendLogRecord(log);
     }
 }
 
@@ -251,6 +258,8 @@ void RecoveryManager::UndoLog(LogRecord &log_record) {
         // update in-memory lsn
         table_page->SetLSN(log.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        // update last lsn
+        active_txn_[log_record.GetTxnId()] = log.GetLSN();
         break;
     }
     case LogRecordType::MARKDELETE: {
@@ -271,6 +280,7 @@ void RecoveryManager::UndoLog(LogRecord &log_record) {
         // update lsn
         table_page->SetLSN(log.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        active_txn_[log_record.GetTxnId()] = log.GetLSN();
         break;
     }
     case LogRecordType::APPLYDELETE: {
@@ -299,6 +309,7 @@ void RecoveryManager::UndoLog(LogRecord &log_record) {
         // update lsn
         table_page->SetLSN(log.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        active_txn_[log_record.GetTxnId()] = log.GetLSN();
         break;
     }
     case LogRecordType::ROLLBACKDELETE: {
@@ -321,6 +332,7 @@ void RecoveryManager::UndoLog(LogRecord &log_record) {
         // update lsn
         table_page->SetLSN(log.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        active_txn_[log_record.GetTxnId()] = log.GetLSN();
         break;
     }
     case LogRecordType::UPDATE: {
@@ -347,6 +359,7 @@ void RecoveryManager::UndoLog(LogRecord &log_record) {
         // update lsn
         table_page->SetLSN(log.GetLSN());
         buffer_pool_manager_->UnpinPage(page->GetPageId(), true);
+        active_txn_[log_record.GetTxnId()] = log.GetLSN();
         break;
     }
     case LogRecordType::INITPAGE: {
