@@ -1,8 +1,10 @@
 # TinyDB
 
-I'm borrowing code from bustub as begining for the overall code architecture, later i will build new modules and replace the original one.
+The initial version of database kernel is done, currently we have a single version storage, with 2PL concurrency control and ARIES recovery algorithm.
 
 The initial design intuition is i'm trying to build a dbms that decouple the transaction layer, execution layer and storage layer. And my goal is to support tpcc test and i want to figure out how slow it will be if i didn't aware the performance issue while coding.
+
+Next step would be to implement more modules. e.g. multi-version storage, other concurrency control algorithm, front-end of database and support tpcc test.
 
 # Implementation Map
 
@@ -34,6 +36,7 @@ The initial design intuition is i'm trying to build a dbms that decouple the tra
 - [ ] Figure out how to manage expression tree, currently i just stored the raw pointer, and delete all expressions i've created at the end of scope. Storing raw pointer allows us to reuse the expression, but makes creating expression tree and freeing it more complicated. So maybe we should use something like unique_pointer to manage expression tree just like what i did in executor.
 - [ ] Find a way to automatically generate tuples and tables that can support strong tests. Currently i just hardcode the tuple value. Or maybe we can construct some ad-hoc test cases, i.e. table for join only, table for updation only.
 - [ ] Currently, we cann't handle very correctly the faiure while some transaction is committing. This could be resolved by multi-version storage engine since we can perform deletion in background. In current implementation, since i'm performing in-place deletion, there is no good way to handle the atomic deletion. A possible appoach would be to use some special mark and transaction id to indicate the tuple was deleted, and launch background thread periodically to perform garbage collection.
+- [ ] Some module are not test coverage is not enough, we still need more unit test to make sure our component is strong enough.
 
 # Design Choices
 
